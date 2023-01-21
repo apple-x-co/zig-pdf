@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/apple-x-co/zig-pdf/schema/pdf.json",
+  "title": "zig-pdf schema",
+  "type": "object",
+  "definitions": {
+    "layout_width": {
+      "enum": [
+        "match_parent",
+        "wrap_content"
+      ]
+    },
+    "layout_height": {
+      "enum": [
+        "match_parent",
+        "wrap_content"
+      ]
+    }
+  },
+  "properties": {
+    "author": {
+      "title": "作成者",
+      "description": "ドキュメントの情報属性を設定",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "creator": {
+      "title": "アプリケーション",
+      "description": "ドキュメントの情報属性を設定",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "compression": {
+      "title": "圧縮モード",
+      "description": "ドキュメントの圧縮モードを設定",
+      "type": "string",
+      "enum": [
+        "none",
+        "text",
+        "image",
+        "metadata",
+        "all"
+      ]
+    },
+    "encryption": {
+      "title": "暗号化モード",
+      "description": "ドキュメントの暗号化モードを設定",
+      "properties": {
+        "mode": {
+          "title": "アルゴリズム",
+          "type": "string",
+          "enum": [
+            "Revision2",
+            "Revision3"
+          ]
+        },
+        "length": {
+          "title": "暗号キーの長さ",
+          "type": "integer",
+          "minimum": 5,
+          "maximum": 16
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "Revision3"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "length"
+        ]
+      }
+    },
+    "password": {
+      "title": "パスワード",
+      "description": "ドキュメントにパスワードを設定",
+      "properties": {
+        "owner": {
+          "title": "所有者パスワード",
+          "description": "ユーザーパスワードと同じ文字列を指定することはできません",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "user": {
+          "title": "利用者パスワード",
+          "description": "NULLや空文字可",
+          "type": [
+            "null",
+            "string"
+          ],
+          "minLength": 1,
+          "maxLength": 100
+        }
+      },
+      "required": [
+        "owner"
+      ]
+    },
+    "permission": {
+      "title": "使用権限",
+      "description": "ドキュメントの使用権限を設定",
+      "type": "string",
+      "enum": [
+        "read",
+        "print",
+        "edit_all",
+        "copy",
+        "edit"
+      ]
+    },
+    "title": {
+      "title": "タイトル",
+      "description": "ドキュメントの情報属性を設定",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "subject": {
+      "title": "サブタイトル",
+      "description": "ドキュメントの情報属性を設定",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "pages": {
+      "title": "ページ",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "integer"
+          },
+          "height": {
+            "type": "integer"
+          },
+          "constraint": {
+            "properties": {
+              "layout_width": {
+                "$ref": "#/definitions/layout_width"
+              },
+              "layout_height": {
+                "$ref": "#/definitions/layout_height"
+              }
+            },
+            "required": [
+              "layout_width",
+              "layout_height"
+            ]
+          }
+        },
+        "required": [
+          "width",
+          "height",
+          "constraint"
+        ]
+      },
+      "minItems": 1
+    }
+  },
+  "required": [
+    "author",
+    "title",
+    "pages"
+  ]
+}

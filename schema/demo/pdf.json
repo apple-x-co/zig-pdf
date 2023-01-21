@@ -1,0 +1,25 @@
+{
+  "$schema": "../pdf.json",
+  "author": "apple-x-co",
+  "creator": "zig-pdf",
+  "title": "demo",
+  "subject": "demo1",
+  "compression": "all",
+  "encryption": {
+    "mode": "Revision2"
+  },
+  "password": {
+    "owner": "password"
+  },
+  "permission": "read",
+  "pages": [
+    {
+      "width": 595,
+      "height": 842,
+      "constraint": {
+        "layout_width": "match_parent",
+        "layout_height": "match_parent"
+      }
+    }
+  ]
+}
