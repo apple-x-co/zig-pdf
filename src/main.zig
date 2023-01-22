@@ -1,4 +1,7 @@
 const std = @import("std");
+const c = @cImport({
+    @cInclude("hpdf.h");
+});
 
 pub fn main() !void {
     // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
@@ -10,7 +13,7 @@ pub fn main() !void {
     const stdout_file = std.io.getStdOut().writer();
     var bw = std.io.bufferedWriter(stdout_file);
     const stdout = bw.writer();
-    
+
     try stdout.print("Run `zig build test` to run the tests.\n", .{});
 
     // 引数
@@ -24,4 +27,8 @@ pub fn main() !void {
     // $pdfWriter.saver('/tmp/z.pdf');
 
     try bw.flush(); // don't forget to flush!
+}
+
+test "HELLO" {
+    std.debug.assert(true);
 }
