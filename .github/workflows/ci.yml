@@ -17,6 +17,8 @@ jobs:
         with:
           version: 0.10.1
       - uses: apple-x-co/setup-libharu@v1
+        with:
+          libharu-version: 2.4.3
       - run: zig build test
   lint:
     runs-on: ubuntu-latest
