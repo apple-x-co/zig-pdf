@@ -1,0 +1,28 @@
+name: Install libharu library
+description: Install libharu library
+inputs:
+  libharu-version:
+    default: 2.4.3
+    required: false
+    description: version of libharu
+runs:
+  using: "composite"
+  steps:
+    - name: make temporary directory
+      shell: bash
+      run: |
+        mkdir -p /tmp/libharu/build
+    - name: download libharu
+      shell: bash
+      run: |
+        cd /tmp/libharu
+        wget https://github.com/libharu/libharu/archive/refs/tags/v${{ inputs.libharu-version }}.tar.gz -O v${{ inputs.libharu-version }}.tar.gz
+        tar -xvzf v${{ inputs.libharu-version }}.tar.gz
+    - name: install libharu
+      shell: bash
+      run: |
+        cd /tmp/libharu/build
+        sudo cmake ../libharu-${{ inputs.libharu-version }}
+        sudo make clean
+        sudo make
+        sudo make install

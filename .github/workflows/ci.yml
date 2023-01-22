@@ -17,20 +17,22 @@ jobs:
         with:
           version: 0.10.1
       - name: install libharu
-        run: |
-          mkdir -p /tmp/libharu
-          cd /tmp/libharu
-          wget https://github.com/libharu/libharu/archive/refs/tags/v2.4.3.tar.gz -O v2.4.3.tar.gz
-          tar -xvzf v2.4.3.tar.gz
-          mkdir build
-          cd build
-          sudo cmake ../libharu-2.4.3
-          sudo make clean
-          ls -l /usr/local/include/
-          sudo make
-          ls -l /usr/local/include/
-          sudo make install
-          ls -l /usr/local/include/
+        uses: ./.github/actions/libharu
+      # - name: install libharu
+      #   run: |
+      #     mkdir -p /tmp/libharu
+      #     cd /tmp/libharu
+      #     wget https://github.com/libharu/libharu/archive/refs/tags/v2.4.3.tar.gz -O v2.4.3.tar.gz
+      #     tar -xvzf v2.4.3.tar.gz
+      #     mkdir build
+      #     cd build
+      #     sudo cmake ../libharu-2.4.3
+      #     sudo make clean
+      #     ls -l /usr/local/include/
+      #     sudo make
+      #     ls -l /usr/local/include/
+      #     sudo make install
+      #     ls -l /usr/local/include/
       - run: zig build test
   lint:
     runs-on: ubuntu-latest
