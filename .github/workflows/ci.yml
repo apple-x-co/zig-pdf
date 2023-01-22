@@ -22,6 +22,7 @@ jobs:
           tar -xvzf /tmp/v2.4.3.tar.gz
           mkdir /tmp/build
           cd /tmp/build
+          ls -l /tmp
           cmake ../libharu-2.4.3
       - run: zig build test
   lint:
