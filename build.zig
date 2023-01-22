@@ -12,11 +12,11 @@ pub fn build(b: *std.build.Builder) void {
     const mode = b.standardReleaseOptions();
 
     const exe = b.addExecutable("zig-pdf", "src/main.zig");
-    // exe.addIncludePath("/usr/local/include");
-    // exe.addLibraryPath("/usr/local/lib");
-    // exe.linkSystemLibrary("hpdf");
+    exe.addIncludePath("/usr/local/include");
+    exe.addLibraryPath("/usr/local/lib");
+    exe.linkSystemLibrary("hpdf");
     // exe.addCSourceFiles(&.{"libs/libharu/src/hpdf_doc.c"}, &.{});
-    // exe.linkLibC();
+    exe.linkLibC();
     exe.setTarget(target);
     exe.setBuildMode(mode);
     exe.install();
@@ -31,11 +31,11 @@ pub fn build(b: *std.build.Builder) void {
     run_step.dependOn(&run_cmd.step);
 
     const exe_tests = b.addTest("src/main.zig");
-    // exe_tests.addIncludePath("/usr/local/include");
-    // exe_tests.addLibraryPath("/usr/local/lib");
-    // exe_tests.linkSystemLibrary("hpdf");
+    exe_tests.addIncludePath("/usr/local/include");
+    exe_tests.addLibraryPath("/usr/local/lib");
+    exe_tests.linkSystemLibrary("hpdf");
     // exe_tests.addCSourceFiles(&.{"libs/libharu/src/hpdf_doc.c"}, &.{});
-    // exe_tests.linkLibC();
+    exe_tests.linkLibC();
     exe_tests.setTarget(target);
     exe_tests.setBuildMode(mode);
 
