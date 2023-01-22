@@ -24,12 +24,12 @@ jobs:
           tar -xvzf v2.4.3.tar.gz
           mkdir build
           cd build
-          cmake ../libharu-2.4.3
-          make clean
+          sudo cmake ../libharu-2.4.3
+          sudo make clean
           ls -l /usr/local/include/
-          make
+          sudo make
           ls -l /usr/local/include/
-          make install
+          sudo make install
           ls -l /usr/local/include/
       - run: zig build test
   lint:
