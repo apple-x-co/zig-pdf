@@ -25,6 +25,9 @@ jobs:
           mkdir build
           cd build
           cmake ../libharu-2.4.3
+          make clean
+          make
+          make install
           ls -l /usr/local/include
       - run: zig build test
   lint:
