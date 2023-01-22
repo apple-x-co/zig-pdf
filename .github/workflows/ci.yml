@@ -18,11 +18,13 @@ jobs:
           version: 0.10.1
       - name: install libharu
         run: |
-          wget https://github.com/libharu/libharu/archive/refs/tags/v2.4.3.tar.gz -O /tmp/v2.4.3.tar.gz
-          tar -xvzf /tmp/v2.4.3.tar.gz
-          mkdir /tmp/build
-          cd /tmp/build
-          ls -l /tmp
+          mkdir -p /tmp/libharu
+          cd /tmp/libharu
+          wget https://github.com/libharu/libharu/archive/refs/tags/v2.4.3.tar.gz -O v2.4.3.tar.gz
+          tar -xvzf v2.4.3.tar.gz
+          mkdir build
+          cd build
+          ls -l /tmp/libharu
           cmake ../libharu-2.4.3
       - run: zig build test
   lint:
