@@ -1,5 +1,10 @@
 # zig-pdf
 
+## Versions
+
+* ziglang: 0.10.1
+* libHaru: 2.4.3
+
 ## Reference
 
 * [libHaru](http://libharu.org/)
