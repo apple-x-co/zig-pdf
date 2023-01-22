@@ -26,15 +26,12 @@ jobs:
           cd build
           cmake ../libharu-2.4.3
           make clean
+          ls -l /usr/local/include/
           make
+          ls -l /usr/local/include/
           make install
+          ls -l /usr/local/include/
       - run: zig build test
-      - name: debug1
-        run: |
-          ls -l /tmp/libharu
-      - name: debug2
-        run: |
-          ls -l /usr/local/include
   lint:
     runs-on: ubuntu-latest
     steps:
