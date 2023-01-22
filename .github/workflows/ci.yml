@@ -24,8 +24,8 @@ jobs:
           tar -xvzf v2.4.3.tar.gz
           mkdir build
           cd build
-          ls -l /tmp/libharu
           cmake ../libharu-2.4.3
+          ls -l /usr/local/include
       - run: zig build test
   lint:
     runs-on: ubuntu-latest
