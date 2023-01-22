@@ -12,15 +12,19 @@ jobs:
         os: [ubuntu-latest]
     runs-on: ${{matrix.os}}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: goto-bus-stop/setup-zig@v2
         with:
           version: 0.10.1
+      - name: install libharu
+        run: |
+          sudo apt-get update
+          sudo apt-get install libharu
       - run: zig build test
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: goto-bus-stop/setup-zig@v2
         with:
           version: 0.10.1
