@@ -29,7 +29,7 @@ pub fn build(b: *std.build.Builder) void {
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
 
-    const exe_tests = b.addTest("src/main.zig");
+    const exe_tests = b.addTest("src/test.zig");
     exe_tests.addIncludePath("/usr/local/include");
     exe_tests.addLibraryPath("/usr/local/lib");
     exe_tests.linkSystemLibrary("hpdf");

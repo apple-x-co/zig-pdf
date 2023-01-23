@@ -1,7 +1,4 @@
 const std = @import("std");
-const c = @cImport({
-    @cInclude("hpdf.h");
-});
 
 pub fn main() !void {
     // Prints to stderr (it's a shortcut based on `std.io.getStdErr()`)
@@ -16,19 +13,5 @@ pub fn main() !void {
 
     try stdout.print("Run `zig build test` to run the tests.\n", .{});
 
-    // 引数
-    // 1. JSONパス
-    // 2. 保存ディレクトリ
-
-    // PHP Code
-    // $parser = new JsonFileParser('xxx/yyy/z.json');
-    // $pdf = $parser.parse();
-    // $pdfWriter = new PdfWriter($pdf);
-    // $pdfWriter.saver('/tmp/z.pdf');
-
     try bw.flush(); // don't forget to flush!
-}
-
-test "HELLO" {
-    std.debug.assert(true);
 }
