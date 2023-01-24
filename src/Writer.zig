@@ -4,6 +4,7 @@ const c = @cImport({
     @cInclude("hpdf.h");
 });
 const Pdf = @import("Pdf.zig");
+const Date = @import("Date.zig");
 
 pdf: Pdf,
 
@@ -16,6 +17,22 @@ pub fn init(pdf: Pdf) Self {
 pub fn save(self: Self, file_name: []const u8) void {
     const hpdf = c.HPDF_New(null, null); // FIXME: self.error_handler を指定するとエラーになる
     defer c.HPDF_Free(hpdf);
+
+    const date = Date.now();
+    const hdate = c.HPDF_Date{
+        .year = date.year,
+        .month = date.month,
+        .day = date.day,
+        .hour = date.hours,
+        .minutes= date.minutes,
+        .seconds = date.seconds,
+        .ind = ' ',
+        .off_hour = 0,
+        .off_minutes = 0
+    };
+
+    _ = c.HPDF_SetInfoDateAttr(hpdf, c.HPDF_INFO_CREATION_DATE, hdate);
+    _ = c.HPDF_SetInfoDateAttr(hpdf, c.HPDF_INFO_MOD_DATE, hdate);
 
     if (self.pdf.author) |author| {
         _ = c.HPDF_SetInfoAttr(hpdf, c.HPDF_INFO_AUTHOR, author.ptr);
@@ -52,4 +69,5 @@ test {
     pdfWriter.save("/tmp/zig-pdf.pdf");
 
     // TODO: Cleanup file
+    // TODO: 一時ディレクトリw std.testing.tmpDir から取得できないか!?
 }

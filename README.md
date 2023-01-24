@@ -31,14 +31,15 @@
     - [ ] Margin
     - [ ] Padding
 - [ ] Renderer
-  - [ ] Author
-  - [ ] Creator
-  - [ ] Title
-  - [ ] Subject
-  - [ ] Compression
-  - [ ] Encryption
-  - [ ] Password
-  - [ ] Permission
+  - [x] Meta:Date
+  - [x] Meta:Author
+  - [x] Meta:Creator
+  - [x] Meta:Title
+  - [x] Meta:Subject
+  - [ ] Meta:Compression
+  - [ ] Meta:Encryption
+  - [ ] Meta:Password
+  - [ ] Meta:Permission
   - [ ] Layout
     - [ ] Text
       - [ ] Font
