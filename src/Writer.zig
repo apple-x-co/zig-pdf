@@ -6,6 +6,7 @@ const c = @cImport({
 const Pdf = @import("Pdf.zig");
 const Date = @import("Date.zig");
 const CompressionMode = @import("Compression.zig").Mode;
+const EncryptionMode = @import("Encryption.zig").Mode;
 
 pdf: Pdf,
 
@@ -58,6 +59,14 @@ pub fn save(self: Self, file_name: []const u8) void {
         } else {
             _ = c.HPDF_SetPassword(hpdf, owner_password.ptr, null);
         }
+
+        if (self.pdf.encryption_mode) |encryption_mode| {
+            const hencryption: c.HPDF_UINT = switch (encryption_mode) {
+                EncryptionMode.Revision2 => c.HPDF_ENCRYPT_R2,
+                EncryptionMode.Revision3 => c.HPDF_ENCRYPT_R3,
+            };
+            _ = c.HPDF_SetEncryptionMode(hpdf, hencryption, self.pdf.encryption_length orelse 5);
+        }
     }
 
     const hpage = c.HPDF_AddPage(hpdf);
@@ -74,7 +83,7 @@ fn error_handler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?
 }
 
 test {
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, "Revision2", null);
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null);
     const pdfWriter = init(pdf);
     pdfWriter.save("/tmp/zig-pdf.pdf");
 
