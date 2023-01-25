@@ -5,6 +5,7 @@ const c = @cImport({
 });
 const Pdf = @import("Pdf.zig");
 const Date = @import("Date.zig");
+const CompressionMode = @import("Compression.zig").Mode;
 
 pdf: Pdf,
 
@@ -19,17 +20,7 @@ pub fn save(self: Self, file_name: []const u8) void {
     defer c.HPDF_Free(hpdf);
 
     const date = Date.now();
-    const hdate = c.HPDF_Date{
-        .year = date.year,
-        .month = date.month,
-        .day = date.day,
-        .hour = date.hours,
-        .minutes= date.minutes,
-        .seconds = date.seconds,
-        .ind = ' ',
-        .off_hour = 0,
-        .off_minutes = 0
-    };
+    const hdate = c.HPDF_Date{ .year = date.year, .month = date.month, .day = date.day, .hour = date.hours, .minutes = date.minutes, .seconds = date.seconds, .ind = ' ', .off_hour = 0, .off_minutes = 0 };
 
     _ = c.HPDF_SetInfoDateAttr(hpdf, c.HPDF_INFO_CREATION_DATE, hdate);
     _ = c.HPDF_SetInfoDateAttr(hpdf, c.HPDF_INFO_MOD_DATE, hdate);
@@ -50,6 +41,17 @@ pub fn save(self: Self, file_name: []const u8) void {
         _ = c.HPDF_SetInfoAttr(hpdf, c.HPDF_INFO_SUBJECT, subject.ptr);
     }
 
+    if (self.pdf.compression_mode) |compression_mode| {
+        const hcompression_mode: c.HPDF_UINT = switch (compression_mode) {
+            CompressionMode.all => c.HPDF_COMP_ALL,
+            CompressionMode.image => c.HPDF_COMP_IMAGE,
+            CompressionMode.text => c.HPDF_COMP_TEXT,
+            CompressionMode.metadata => c.HPDF_COMP_METADATA,
+            else => c.HPDF_COMP_NONE,
+        };
+        _ = c.HPDF_SetCompressionMode(hpdf, hcompression_mode);
+    }
+
     const hpage = c.HPDF_AddPage(hpdf);
     _ = hpage;
 
@@ -64,7 +66,7 @@ fn error_handler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?
 }
 
 test {
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", "all", "Revision2", null);
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "Revision2", null);
     const pdfWriter = init(pdf);
     pdfWriter.save("/tmp/zig-pdf.pdf");
 

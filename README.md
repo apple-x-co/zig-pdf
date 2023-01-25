@@ -36,7 +36,7 @@
   - [x] Meta:Creator
   - [x] Meta:Title
   - [x] Meta:Subject
-  - [ ] Meta:Compression
+  - [x] Meta:Compression
   - [ ] Meta:Encryption
   - [ ] Meta:Password
   - [ ] Meta:Permission
