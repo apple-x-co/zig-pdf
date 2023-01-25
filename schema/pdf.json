@@ -44,6 +44,32 @@
         "all"
       ]
     },
+    "password": {
+      "title": "パスワード",
+      "description": "ドキュメントにパスワードを設定",
+      "properties": {
+        "owner": {
+          "title": "所有者パスワード",
+          "description": "ユーザーパスワードと同じ文字列を指定することはできません",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "user": {
+          "title": "利用者パスワード",
+          "description": "NULLや空文字可",
+          "type": [
+            "null",
+            "string"
+          ],
+          "minLength": 1,
+          "maxLength": 100
+        }
+      },
+      "required": [
+        "owner"
+      ]
+    },
     "encryption": {
       "title": "暗号化モード",
       "description": "ドキュメントの暗号化モードを設定",
@@ -78,32 +104,6 @@
           "length"
         ]
       }
-    },
-    "password": {
-      "title": "パスワード",
-      "description": "ドキュメントにパスワードを設定",
-      "properties": {
-        "owner": {
-          "title": "所有者パスワード",
-          "description": "ユーザーパスワードと同じ文字列を指定することはできません",
-          "type": "string",
-          "minLength": 1,
-          "maxLength": 100
-        },
-        "user": {
-          "title": "利用者パスワード",
-          "description": "NULLや空文字可",
-          "type": [
-            "null",
-            "string"
-          ],
-          "minLength": 1,
-          "maxLength": 100
-        }
-      },
-      "required": [
-        "owner"
-      ]
     },
     "permission": {
       "title": "使用権限",

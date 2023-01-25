@@ -5,11 +5,11 @@
   "title": "demo",
   "subject": "demo1",
   "compression": "all",
-  "encryption": {
-    "mode": "Revision2"
-  },
   "password": {
     "owner": "password"
+  },
+  "encryption": {
+    "mode": "Revision2"
   },
   "permission": "read",
   "pages": [

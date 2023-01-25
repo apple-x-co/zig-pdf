@@ -52,6 +52,14 @@ pub fn save(self: Self, file_name: []const u8) void {
         _ = c.HPDF_SetCompressionMode(hpdf, hcompression_mode);
     }
 
+    if (self.pdf.owner_password) |owner_password| {
+        if (self.pdf.user_password) |user_password| {
+            _ = c.HPDF_SetPassword(hpdf, owner_password.ptr, user_password.ptr);
+        } else {
+            _ = c.HPDF_SetPassword(hpdf, owner_password.ptr, null);
+        }
+    }
+
     const hpage = c.HPDF_AddPage(hpdf);
     _ = hpage;
 
@@ -66,7 +74,7 @@ fn error_handler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?
 }
 
 test {
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "Revision2", null);
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, "Revision2", null);
     const pdfWriter = init(pdf);
     pdfWriter.save("/tmp/zig-pdf.pdf");
 
