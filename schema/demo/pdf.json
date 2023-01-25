@@ -9,7 +9,8 @@
     "owner": "password"
   },
   "encryption": {
-    "mode": "Revision2"
+    "mode": "Revision2",
+    "length": 5
   },
   "permission": "read",
   "pages": [

@@ -73,37 +73,46 @@
     "encryption": {
       "title": "暗号化モード",
       "description": "ドキュメントの暗号化モードを設定",
-      "properties": {
-        "mode": {
-          "title": "アルゴリズム",
-          "type": "string",
-          "enum": [
-            "Revision2",
-            "Revision3"
-          ]
+      "oneOf": [
+        {
+          "properties": {
+            "mode": {
+              "title": "アルゴリズム",
+              "type": "string",
+              "enum": ["Revision2"]
+            },
+            "length": {
+              "title": "暗号キーの長さ",
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 5
+            }
+          },
+          "required": [
+            "mode",
+            "length"
+          ]    
         },
-        "length": {
-          "title": "暗号キーの長さ",
-          "type": "integer",
-          "minimum": 5,
-          "maximum": 16
+        {
+          "properties": {
+            "mode": {
+              "title": "アルゴリズム",
+              "type": "string",
+              "enum": ["Revision3"]
+            },
+            "length": {
+              "title": "暗号キーの長さ",
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 16
+            }
+          },
+          "required": [
+            "mode",
+            "length"
+          ]    
         }
-      },
-      "required": [
-        "mode"
-      ],
-      "if": {
-        "properties": {
-          "mode": {
-            "const": "Revision3"
-          }
-        }
-      },
-      "then": {
-        "required": [
-          "length"
-        ]
-      }
+      ]
     },
     "permission": {
       "title": "使用権限",
