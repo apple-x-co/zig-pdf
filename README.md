@@ -9,7 +9,6 @@
 
 * [libHaru](http://libharu.org/)
 * [libHaruの部屋](http://www.t-net.ne.jp/~cyfis/libharu/)  
-* [ConstraintLayout](https://developer.android.com/training/constraint-layout?hl=ja)
 * [JSON Schema](https://json-schema.org/)
 
 ## TODO
@@ -25,11 +24,8 @@
   - [x] Encryption
   - [x] Password
   - [x] Permission
-  - [ ] Layout
-    - [ ] Text
-    - [ ] Image
-    - [ ] Margin
-    - [ ] Padding
+  - [x] Layout
+- [ ] Load JSON
 - [ ] Renderer
   - [x] Meta:Date
   - [x] Meta:Author
@@ -40,14 +36,34 @@
   - [x] Meta:Encryption
   - [x] Meta:Password
   - [x] Meta:Permission
-  - [ ] Layout
-    - [ ] Text
-      - [ ] Font
-      - [ ] Color
-      - [ ] Size
-    - [ ] Image
+  - [ ] Page
+    - [ ] Size
+    - [ ] Color
     - [ ] Margin
+    - [ ] Border
     - [ ] Padding
+    - [ ] Containers
+  - [ ] Container
+    - [ ] Color
+    - [ ] Coordinate
+    - [ ] Direction
+    - [ ] Margin
+    - [ ] Border
+    - [ ] Padding
+    - [ ] Contents
+  - [ ] Content
+    - [ ] Text
+      - [ ] Content
+      - [ ] Color
+      - [ ] Font
+        - [ ] Name, EncodingName
+        - [ ] TTC
+        - [ ] TTF
+        - [ ] Type1
+      - [ ] TextSize
+    - [ ] Image
+      - [ ] Path
+      - [ ] Size
 
 ### Priority: Low
 

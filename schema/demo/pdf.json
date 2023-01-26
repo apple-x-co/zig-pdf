@@ -18,12 +18,47 @@
   ],
   "pages": [
     {
-      "width": 595,
-      "height": 842,
-      "constraint": {
-        "layout_width": "match_parent",
-        "layout_height": "match_parent"
-      }
+      "size": {
+        "width": 595,
+        "height": 842
+      },
+      "color": "#FFF0F5",
+      "margin": {
+        "top": 100,
+        "right": 100,
+        "bottom": 100,
+        "left": 100
+      },
+      "border": {
+        "width": 2,
+        "color": "#EEEEEE"
+      },
+      "padding": {
+        "top": 50,
+        "right": 50,
+        "bottom": 50,
+        "left": 50
+      },
+      "containers": [
+        {
+          "color": "#CCECCC",
+          "contents": [
+            {
+              "type": "text",
+              "content": "HELLO"
+            },
+            {
+              "type": "text",
+              "content": "WORLD.",
+              "color": "#FFCC00"
+            }
+          ],
+          "border": {
+            "width": 1,
+            "bottom": 1
+          }
+        }
+      ]
     }
   ]
 }
