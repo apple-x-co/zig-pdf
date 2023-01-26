@@ -26,6 +26,8 @@ pub fn save(self: Self, file_name: []const u8) void {
 
     _ = c.HPDF_SetInfoDateAttr(hpdf, c.HPDF_INFO_CREATION_DATE, hdate);
     _ = c.HPDF_SetInfoDateAttr(hpdf, c.HPDF_INFO_MOD_DATE, hdate);
+    _ = c.HPDF_UseJPFonts(hpdf);
+    _ = c.HPDF_UseJPEncodings(hpdf);
 
     if (self.pdf.author) |author| {
         _ = c.HPDF_SetInfoAttr(hpdf, c.HPDF_INFO_AUTHOR, author.ptr);

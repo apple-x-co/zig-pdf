@@ -8,7 +8,7 @@
 ## Reference
 
 * [libHaru](http://libharu.org/)
-* [libHaruの部屋](http://www.t-net.ne.jp/~cyfis/libharu/index.html)  
+* [libHaruの部屋](http://www.t-net.ne.jp/~cyfis/libharu/)  
 * [ConstraintLayout](https://developer.android.com/training/constraint-layout?hl=ja)
 * [JSON Schema](https://json-schema.org/)
 
