@@ -3,6 +3,8 @@ const std = @import("std");
 const CompressionMode = @import("compression.zig").Mode;
 const EncryptionMode = @import("encryption.zig").Mode;
 const PermissionName = @import("permission.zig").Name;
+const Page = @import("Pdf/Page.zig");
+const Size = @import("Pdf/Size.zig");
 
 author: ?[]const u8,
 creator: ?[]const u8,
@@ -14,8 +16,9 @@ user_password: ?[]const u8,
 encryption_mode: ?EncryptionMode,
 encryption_length: ?u32,
 permission_names: ?[]const PermissionName,
+pages: []Page,
 
-pub fn init(author: ?[]const u8, creator: ?[]const u8, title: ?[]const u8, subject: ?[]const u8, compression_mode: ?CompressionMode, owner_password: ?[]const u8, user_password: ?[]const u8, encryption_mode: ?EncryptionMode, encryption_length: ?u32, permission_names: ?[]const PermissionName) Self {
+pub fn init(author: ?[]const u8, creator: ?[]const u8, title: ?[]const u8, subject: ?[]const u8, compression_mode: ?CompressionMode, owner_password: ?[]const u8, user_password: ?[]const u8, encryption_mode: ?EncryptionMode, encryption_length: ?u32, permission_names: ?[]const PermissionName, pages: []Page) Self {
     return .{
         .author = author,
         .creator = creator,
@@ -27,6 +30,7 @@ pub fn init(author: ?[]const u8, creator: ?[]const u8, title: ?[]const u8, subje
         .encryption_mode = encryption_mode,
         .encryption_length = encryption_length,
         .permission_names = permission_names,
+        .pages = pages,
     };
 }
 
@@ -36,7 +40,9 @@ test {
         PermissionName.print,
     };
 
-    const pdf = init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.all, null, null, EncryptionMode.Revision2, null, &permissions);
+    const pages = [_]Page{};
+
+    const pdf = init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.all, null, null, EncryptionMode.Revision2, null, &permissions, &pages);
     try std.testing.expectEqual(pdf.author, "apple-x-co");
     try std.testing.expectEqual(pdf.creator, "zig-pdf");
     try std.testing.expectEqual(pdf.title, "demo");

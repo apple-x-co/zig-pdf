@@ -8,6 +8,8 @@ const Date = @import("Date.zig");
 const CompressionMode = @import("compression.zig").Mode;
 const EncryptionMode = @import("encryption.zig").Mode;
 const PermissionName = @import("permission.zig").Name;
+const Page = @import("Pdf/Page.zig");
+const Size = @import("Pdf/Size.zig");
 
 pdf: Pdf,
 
@@ -21,6 +23,24 @@ pub fn save(self: Self, file_name: []const u8) void {
     const hpdf = c.HPDF_New(null, null); // FIXME: self.error_handler を指定するとエラーになる
     defer c.HPDF_Free(hpdf);
 
+    self.set_attributes(hpdf);
+
+    for (self.pdf.pages) |page| {
+        const hpage = c.HPDF_AddPage(hpdf);
+
+        if (page.size.width) |width| {
+            _ = c.HPDF_Page_SetWidth(hpage, width);
+        }
+
+        if (page.size.height) |height| {
+            _ = c.HPDF_Page_SetHeight(hpage, height);
+        }
+    }
+
+    _ = c.HPDF_SaveToFile(hpdf, file_name.ptr);
+}
+
+fn set_attributes(self: Self, hpdf: c.HPDF_Doc) void {
     const date = Date.now();
     const hdate = c.HPDF_Date{ .year = date.year, .month = date.month, .day = date.day, .hour = date.hours, .minutes = date.minutes, .seconds = date.seconds, .ind = ' ', .off_hour = 0, .off_minutes = 0 };
 
@@ -95,11 +115,6 @@ pub fn save(self: Self, file_name: []const u8) void {
         }
         _ = c.HPDF_SetPermission(hpdf, hpermission);
     }
-
-    const hpage = c.HPDF_AddPage(hpdf);
-    _ = hpage;
-
-    _ = c.HPDF_SaveToFile(hpdf, file_name.ptr);
 }
 
 fn error_handler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?*anyopaque) callconv(.C) void {
@@ -116,7 +131,13 @@ test {
         PermissionName.print,
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions);
+    var pages = [_]Page{
+        Page.init(Size.init(@as(f32, 100), @as(f32, 100))),
+        Page.init(Size.init(@as(f32, 595), @as(f32, 842))),
+        Page.init(Size.init(@as(f32, 842), @as(f32, 595))),
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
     const pdfWriter = init(pdf);
     pdfWriter.save("/tmp/zig-pdf.pdf");
 
