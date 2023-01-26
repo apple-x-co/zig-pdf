@@ -117,14 +117,17 @@
     "permission": {
       "title": "使用権限",
       "description": "ドキュメントの使用権限を設定",
-      "type": "string",
-      "enum": [
-        "read",
-        "print",
-        "edit_all",
-        "copy",
-        "edit"
-      ]
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "read",
+          "print",
+          "edit_all",
+          "copy",
+          "edit"
+        ]
+      }
     },
     "title": {
       "title": "タイトル",

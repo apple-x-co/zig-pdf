@@ -12,7 +12,10 @@
     "mode": "Revision2",
     "length": 5
   },
-  "permission": "read",
+  "permission": [
+    "read",
+    "print"
+  ],
   "pages": [
     {
       "width": 595,

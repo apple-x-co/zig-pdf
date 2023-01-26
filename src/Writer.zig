@@ -5,8 +5,9 @@ const c = @cImport({
 });
 const Pdf = @import("Pdf.zig");
 const Date = @import("Date.zig");
-const CompressionMode = @import("Compression.zig").Mode;
-const EncryptionMode = @import("Encryption.zig").Mode;
+const CompressionMode = @import("compression.zig").Mode;
+const EncryptionMode = @import("encryption.zig").Mode;
+const PermissionName = @import("permission.zig").Name;
 
 pdf: Pdf,
 
@@ -69,6 +70,30 @@ pub fn save(self: Self, file_name: []const u8) void {
         }
     }
 
+    if (self.pdf.permission_names) |_| {
+        var hpermission: c.HPDF_UINT = 0;
+        for (self.pdf.permission_names.?) |permission_name| {
+            switch (permission_name) {
+                PermissionName.read => {
+                    hpermission |= c.HPDF_ENABLE_READ;
+                },
+                PermissionName.print => {
+                    hpermission |= c.HPDF_ENABLE_PRINT;
+                },
+                PermissionName.edit_all => {
+                    hpermission |= c.HPDF_ENABLE_EDIT_ALL;
+                },
+                PermissionName.copy => {
+                    hpermission |= c.HPDF_ENABLE_COPY;
+                },
+                PermissionName.edit => {
+                    hpermission |= c.HPDF_ENABLE_EDIT;
+                },
+            }
+        }
+        _ = c.HPDF_SetPermission(hpdf, hpermission);
+    }
+
     const hpage = c.HPDF_AddPage(hpdf);
     _ = hpage;
 
@@ -83,7 +108,13 @@ fn error_handler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?
 }
 
 test {
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null);
+    const permissions = [_]PermissionName{
+        PermissionName.read,
+        PermissionName.copy,
+        PermissionName.print,
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions);
     const pdfWriter = init(pdf);
     pdfWriter.save("/tmp/zig-pdf.pdf");
 

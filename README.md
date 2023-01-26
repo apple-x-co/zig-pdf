@@ -37,9 +37,9 @@
   - [x] Meta:Title
   - [x] Meta:Subject
   - [x] Meta:Compression
-  - [ ] Meta:Encryption
+  - [x] Meta:Encryption
   - [x] Meta:Password
-  - [ ] Meta:Permission
+  - [x] Meta:Permission
   - [ ] Layout
     - [ ] Text
       - [ ] Font
