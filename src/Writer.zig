@@ -199,7 +199,7 @@ test {
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
     const pdfWriter = init(pdf);
-    try pdfWriter.save("/tmp/zig-pdf.pdf");
+    try pdfWriter.save("demo/demo.pdf");
 
     // TODO: Cleanup file
     // TODO: 一時ディレクトリw std.testing.tmpDir から取得できないか!?
