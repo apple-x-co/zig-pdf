@@ -38,7 +38,7 @@
   - [x] Meta:Permission
   - [ ] Page
     - [x] Size
-    - [ ] Color
+    - [x] Color
     - [ ] Margin
     - [ ] Border
     - [ ] Padding

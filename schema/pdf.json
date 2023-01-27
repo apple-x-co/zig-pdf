@@ -53,11 +53,11 @@
     "color": {
       "title": "色",
       "description": "色を設定",
-      "default": "#000000",
+      "default": "000000",
       "type": "string",
-      "minLength": 7,
-      "maxLength": 7,
-      "pattern": "#[a-zA-Z0-9]{6}"
+      "minLength": 6,
+      "maxLength": 6,
+      "pattern": "[a-zA-Z0-9]{6}"
     },
     "container": {
       "title": "コンテナー",

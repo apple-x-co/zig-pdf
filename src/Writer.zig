@@ -10,6 +10,8 @@ const EncryptionMode = @import("encryption.zig").Mode;
 const PermissionName = @import("permission.zig").Name;
 const Page = @import("Pdf/Page.zig");
 const Size = @import("Pdf/Size.zig");
+const Color = @import("Pdf/Color.zig");
+const Rgb = @import("Pdf/Rgb.zig");
 
 pdf: Pdf,
 
@@ -19,7 +21,7 @@ pub fn init(pdf: Pdf) Self {
     };
 }
 
-pub fn save(self: Self, file_name: []const u8) void {
+pub fn save(self: Self, file_name: []const u8) !void {
     const hpdf = c.HPDF_New(null, null); // FIXME: self.error_handler を指定するとエラーになる
     defer c.HPDF_Free(hpdf);
 
@@ -28,13 +30,7 @@ pub fn save(self: Self, file_name: []const u8) void {
     for (self.pdf.pages) |page| {
         const hpage = c.HPDF_AddPage(hpdf);
 
-        if (page.size.width) |width| {
-            _ = c.HPDF_Page_SetWidth(hpage, width);
-        }
-
-        if (page.size.height) |height| {
-            _ = c.HPDF_Page_SetHeight(hpage, height);
-        }
+        try self.render_page(hpdf, hpage, page);
     }
 
     _ = c.HPDF_SaveToFile(hpdf, file_name.ptr);
@@ -117,6 +113,32 @@ fn set_attributes(self: Self, hpdf: c.HPDF_Doc) void {
     }
 }
 
+fn render_page(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !void {
+    _ = self;
+    _ = hpdf;
+
+    if (page.size.width) |width| {
+        _ = c.HPDF_Page_SetWidth(hpage, width);
+    }
+
+    if (page.size.height) |height| {
+        _ = c.HPDF_Page_SetHeight(hpage, height);
+    }
+
+    const width = c.HPDF_Page_GetWidth(hpage);
+    const height = c.HPDF_Page_GetHeight(hpage);
+
+    if (page.color.value) |hex| {
+        const rgb = try Rgb.hex(hex);
+        _ = c.HPDF_Page_SetRGBFill(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
+        _ = c.HPDF_Page_MoveTo(hpage, 0, 0);
+        _ = c.HPDF_Page_LineTo(hpage, 0, height);
+        _ = c.HPDF_Page_LineTo(hpage, width, height);
+        _ = c.HPDF_Page_LineTo(hpage, width, 0);
+        _ = c.HPDF_Page_Fill(hpage);
+    }
+}
+
 fn error_handler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?*anyopaque) callconv(.C) void {
     _ = user_data;
 
@@ -132,14 +154,14 @@ test {
     };
 
     var pages = [_]Page{
-        Page.init(Size.init(@as(f32, 100), @as(f32, 100))),
-        Page.init(Size.init(@as(f32, 595), @as(f32, 842))),
-        Page.init(Size.init(@as(f32, 842), @as(f32, 595))),
+        Page.init(Size.init(@as(f32, 100), @as(f32, 100)), Color.init(null)),
+        Page.init(Size.init(@as(f32, 595), @as(f32, 842)), Color.init("CCECCC")),
+        Page.init(Size.init(@as(f32, 842), @as(f32, 595)), Color.init(null)),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
     const pdfWriter = init(pdf);
-    pdfWriter.save("/tmp/zig-pdf.pdf");
+    try pdfWriter.save("/tmp/zig-pdf.pdf");
 
     // TODO: Cleanup file
     // TODO: 一時ディレクトリw std.testing.tmpDir から取得できないか!?
