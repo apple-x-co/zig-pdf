@@ -38,12 +38,12 @@
   - [x] Meta:Permission
   - [ ] Page
     - [x] Size
-    - [x] Color
+    - [x] Background Color
     - [x] Border
     - [x] Padding
     - [ ] Containers
   - [ ] Container
-    - [ ] Color
+    - [ ] Background Color
     - [ ] Coordinate
     - [ ] Direction
     - [ ] Border
@@ -52,7 +52,7 @@
   - [ ] Content
     - [ ] Text
       - [ ] Content
-      - [ ] Color
+      - [ ] Text Color
       - [ ] Font
         - [ ] Name, EncodingName
         - [ ] TTC
