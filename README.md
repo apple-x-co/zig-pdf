@@ -39,15 +39,13 @@
   - [ ] Page
     - [x] Size
     - [x] Color
-    - [ ] Margin
     - [ ] Border
-    - [ ] Padding
+    - [x] Padding
     - [ ] Containers
   - [ ] Container
     - [ ] Color
     - [ ] Coordinate
     - [ ] Direction
-    - [ ] Margin
     - [ ] Border
     - [ ] Padding
     - [ ] Contents

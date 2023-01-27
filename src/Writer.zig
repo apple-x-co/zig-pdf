@@ -12,6 +12,7 @@ const Page = @import("Pdf/Page.zig");
 const Size = @import("Pdf/Size.zig");
 const Color = @import("Pdf/Color.zig");
 const Rgb = @import("Pdf/Rgb.zig");
+const Padding = @import("Pdf/Padding.zig");
 
 pdf: Pdf,
 
@@ -117,24 +118,29 @@ fn render_page(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
     _ = self;
     _ = hpdf;
 
-    if (page.size.width) |width| {
-        _ = c.HPDF_Page_SetWidth(hpage, width);
-    }
+    _ = c.HPDF_Page_SetWidth(hpage, page.frame.width);
+    _ = c.HPDF_Page_SetHeight(hpage, page.frame.height);
 
-    if (page.size.height) |height| {
-        _ = c.HPDF_Page_SetHeight(hpage, height);
-    }
+    const pageWidth = c.HPDF_Page_GetWidth(hpage);
+    const pageHeight = c.HPDF_Page_GetHeight(hpage);
 
-    const width = c.HPDF_Page_GetWidth(hpage);
-    const height = c.HPDF_Page_GetHeight(hpage);
-
-    if (page.color.value) |hex| {
+    if (page.backgroundColor.value) |hex| {
         const rgb = try Rgb.hex(hex);
         _ = c.HPDF_Page_SetRGBFill(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
         _ = c.HPDF_Page_MoveTo(hpage, 0, 0);
-        _ = c.HPDF_Page_LineTo(hpage, 0, height);
-        _ = c.HPDF_Page_LineTo(hpage, width, height);
-        _ = c.HPDF_Page_LineTo(hpage, width, 0);
+        _ = c.HPDF_Page_LineTo(hpage, 0, pageHeight);
+        _ = c.HPDF_Page_LineTo(hpage, pageWidth, pageHeight);
+        _ = c.HPDF_Page_LineTo(hpage, pageWidth, 0);
+        _ = c.HPDF_Page_Fill(hpage);
+    }
+
+    {
+        const rgb = try Rgb.hex("eeeeee");
+        _ = c.HPDF_Page_SetRGBFill(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
+        _ = c.HPDF_Page_MoveTo(hpage, page.bounds.minX, page.bounds.minY);
+        _ = c.HPDF_Page_LineTo(hpage, page.bounds.minX, page.bounds.maxY);
+        _ = c.HPDF_Page_LineTo(hpage, page.bounds.maxX, page.bounds.maxY);
+        _ = c.HPDF_Page_LineTo(hpage, page.bounds.maxX, page.bounds.minY);
         _ = c.HPDF_Page_Fill(hpage);
     }
 }
@@ -154,9 +160,9 @@ test {
     };
 
     var pages = [_]Page{
-        Page.init(Size.init(@as(f32, 100), @as(f32, 100)), Color.init(null)),
-        Page.init(Size.init(@as(f32, 595), @as(f32, 842)), Color.init("CCECCC")),
-        Page.init(Size.init(@as(f32, 842), @as(f32, 595)), Color.init(null)),
+        Page.init(Size.init(@as(f32, 100), @as(f32, 100)), Color.init(null), Padding.init(0, 0, 0, 0)),
+        Page.init(Size.init(@as(f32, 595), @as(f32, 842)), Color.init("CCECCC"), Padding.init(10, 10, 10, 10)),
+        Page.init(Size.init(@as(f32, 842), @as(f32, 595)), Color.init(null), Padding.init(0, 0, 0, 0)),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);

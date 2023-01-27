@@ -67,14 +67,11 @@
         "color": {
           "$ref": "#/definitions/color"
         },
-        "coordinate": {
-          "$ref": "#/definitions/coordinate"
+        "origin": {
+          "$ref": "#/definitions/origin"
         },
         "direction": {
           "$ref": "#/definitions/direction"
-        },
-        "margin": {
-          "$ref": "#/definitions/margin"
         },
         "border": {
           "$ref": "#/definitions/border"
@@ -91,7 +88,7 @@
         }
       }
     },
-    "coordinate": {
+    "origin": {
       "title": "座標",
       "description": "座標を設定",
       "type": "object",
@@ -207,33 +204,6 @@
         "path"
       ]
     },
-    "margin": {
-      "title": "マージン",
-      "description": "マージンを設定",
-      "type": "object",
-      "properties": {
-        "top": {
-          "title": "上",
-          "type": "integer",
-          "minimum": 1
-        },
-        "right": {
-          "title": "右",
-          "type": "integer",
-          "minimum": 1
-        },
-        "bottom": {
-          "title": "下",
-          "type": "integer",
-          "minimum": 1
-        },
-        "left": {
-          "title": "左",
-          "type": "integer",
-          "minimum": 1
-        }
-      }
-    },
     "padding": {
       "title": "padding",
       "description": "パディングを設定",
@@ -271,9 +241,6 @@
         },
         "color": {
           "$ref": "#/definitions/color"
-        },
-        "margin": {
-          "$ref": "#/definitions/margin"
         },
         "border": {
           "$ref": "#/definitions/border"

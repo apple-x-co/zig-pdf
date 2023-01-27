@@ -22,16 +22,10 @@
         "width": 595,
         "height": 842
       },
-      "color": "#FFF0F5",
-      "margin": {
-        "top": 100,
-        "right": 100,
-        "bottom": 100,
-        "left": 100
-      },
+      "color": "FFF0F5",
       "border": {
         "width": 2,
-        "color": "#EEEEEE"
+        "color": "EEEEEE"
       },
       "padding": {
         "top": 50,
@@ -41,7 +35,7 @@
       },
       "containers": [
         {
-          "color": "#CCECCC",
+          "color": "CCECCC",
           "contents": [
             {
               "type": "text",
@@ -50,7 +44,7 @@
             {
               "type": "text",
               "content": "WORLD.",
-              "color": "#FFCC00"
+              "color": "FFCC00"
             }
           ],
           "border": {
