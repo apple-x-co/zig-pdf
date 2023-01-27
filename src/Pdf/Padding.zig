@@ -21,3 +21,7 @@ pub fn isZero(self: Self) bool {
         self.bottom == null and
         self.left == null;
 }
+
+pub fn zero() Self {
+    return init(0, 0, 0, 0);
+}

@@ -39,7 +39,7 @@
   - [ ] Page
     - [x] Size
     - [x] Color
-    - [ ] Border
+    - [x] Border
     - [x] Padding
     - [ ] Containers
   - [ ] Container

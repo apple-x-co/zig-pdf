@@ -13,6 +13,7 @@ const Size = @import("Pdf/Size.zig");
 const Color = @import("Pdf/Color.zig");
 const Rgb = @import("Pdf/Rgb.zig");
 const Padding = @import("Pdf/Padding.zig");
+const Border = @import("Pdf/Border.zig");
 
 pdf: Pdf,
 
@@ -134,14 +135,44 @@ fn render_page(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
         _ = c.HPDF_Page_Fill(hpage);
     }
 
-    {
-        const rgb = try Rgb.hex("eeeeee");
-        _ = c.HPDF_Page_SetRGBFill(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
-        _ = c.HPDF_Page_MoveTo(hpage, page.bounds.minX, page.bounds.minY);
-        _ = c.HPDF_Page_LineTo(hpage, page.bounds.minX, page.bounds.maxY);
-        _ = c.HPDF_Page_LineTo(hpage, page.bounds.maxX, page.bounds.maxY);
-        _ = c.HPDF_Page_LineTo(hpage, page.bounds.maxX, page.bounds.minY);
-        _ = c.HPDF_Page_Fill(hpage);
+    if (page.border) |border| {
+        const rgb = try Rgb.hex(border.color.value.?);
+
+        if (border.top != 0 and border.right != 0 and border.bottom != 0 and border.left != 0) {
+            _ = c.HPDF_Page_SetLineWidth(hpage, border.top);
+            _ = c.HPDF_Page_SetRGBStroke(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
+            _ = c.HPDF_Page_Rectangle(hpage, page.bounds.minX, page.bounds.minY, page.bounds.width, page.bounds.height);
+            _ = c.HPDF_Page_Stroke(hpage);
+        } else {
+            if (border.top != 0) {
+                _ = c.HPDF_Page_SetLineWidth(hpage, border.top);
+                _ = c.HPDF_Page_SetRGBStroke(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
+                _ = c.HPDF_Page_MoveTo(hpage, page.bounds.minX, page.bounds.maxY);
+                _ = c.HPDF_Page_LineTo(hpage, page.bounds.maxX, page.bounds.maxY);
+                _ = c.HPDF_Page_Stroke(hpage);
+            }
+            if (border.right != 0) {
+                _ = c.HPDF_Page_SetLineWidth(hpage, border.right);
+                _ = c.HPDF_Page_SetRGBStroke(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
+                _ = c.HPDF_Page_MoveTo(hpage, page.bounds.maxX, page.bounds.maxY);
+                _ = c.HPDF_Page_LineTo(hpage, page.bounds.maxX, page.bounds.minY);
+                _ = c.HPDF_Page_Stroke(hpage);
+            }
+            if (border.bottom != 0) {
+                _ = c.HPDF_Page_SetLineWidth(hpage, border.bottom);
+                _ = c.HPDF_Page_SetRGBStroke(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
+                _ = c.HPDF_Page_MoveTo(hpage, page.bounds.maxX, page.bounds.minY);
+                _ = c.HPDF_Page_LineTo(hpage, page.bounds.minX, page.bounds.minY);
+                _ = c.HPDF_Page_Stroke(hpage);
+            }
+            if (border.left != 0) {
+                _ = c.HPDF_Page_SetLineWidth(hpage, border.left);
+                _ = c.HPDF_Page_SetRGBStroke(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
+                _ = c.HPDF_Page_MoveTo(hpage, page.bounds.minX, page.bounds.minY);
+                _ = c.HPDF_Page_LineTo(hpage, page.bounds.minX, page.bounds.maxY);
+                _ = c.HPDF_Page_Stroke(hpage);
+            }
+        }
     }
 }
 
@@ -160,9 +191,10 @@ test {
     };
 
     var pages = [_]Page{
-        Page.init(Size.init(@as(f32, 100), @as(f32, 100)), Color.init(null), Padding.init(0, 0, 0, 0)),
-        Page.init(Size.init(@as(f32, 595), @as(f32, 842)), Color.init("CCECCC"), Padding.init(10, 10, 10, 10)),
-        Page.init(Size.init(@as(f32, 842), @as(f32, 595)), Color.init(null), Padding.init(0, 0, 0, 0)),
+        Page.init(Size.init(@as(f32, 100), @as(f32, 100)), Color.init(null), null, Border.init(Color.init("FFCC00"), 10, 0, 10, 0)),
+        Page.init(Size.init(@as(f32, 100), @as(f32, 100)), Color.init(null), null, Border.init(Color.init("FFCC00"), 0, 10, 0, 10)),
+        Page.init(Size.init(@as(f32, 595), @as(f32, 842)), Color.init("CCECCC"), Padding.init(10, 10, 10, 10), Border.init(Color.init("007E66"), 2, 2, 2, 2)),
+        Page.init(Size.init(@as(f32, 842), @as(f32, 595)), Color.init(null), null, null),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);

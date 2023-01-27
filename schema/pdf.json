@@ -9,33 +9,28 @@
       "description": "線を設定",
       "type": "object",
       "properties": {
-        "width": {
-          "title": "線幅",
-          "type": "integer",
-          "default": null
-        },
         "color": {
           "$ref": "#/definitions/color"
         },
         "top": {
-          "title": "上の線",
+          "title": "上の線幅",
           "type": "integer",
-          "default": null
+          "default": 0
         },
         "right": {
-          "title": "右の線",
+          "title": "右の線幅",
           "type": "integer",
-          "default": null
+          "default": 0
         },
         "bottom": {
-          "title": "下の線",
+          "title": "下の線幅",
           "type": "integer",
-          "default": null
+          "default": 0
         },
         "left": {
-          "title": "左の線",
+          "title": "左の線幅",
           "type": "integer",
-          "default": null
+          "default": 0
         }
       }
     },
