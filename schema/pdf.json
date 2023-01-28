@@ -62,8 +62,11 @@
         "color": {
           "$ref": "#/definitions/color"
         },
-        "origin": {
-          "$ref": "#/definitions/origin"
+        "position": {
+          "$ref": "#/definitions/position"
+        },
+        "point": {
+          "$ref": "#/definitions/point"
         },
         "direction": {
           "$ref": "#/definitions/direction"
@@ -81,9 +84,49 @@
           },
           "minItems": 1
         }
-      }
+      },
+      "required": [
+        "position",
+        "contents"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "position": {
+                "const": "relative"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "direction"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "position": {
+                "const": "absolute"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "point"
+            ]
+          }
+        }
+      ]
     },
-    "origin": {
+    "position": {
+      "title": "配置方法",
+      "description": "配置方法を設定",
+      "type": "string",
+      "enum": ["relative", "absolute"]
+    },
+    "point": {
       "title": "座標",
       "description": "座標を設定",
       "type": "object",
@@ -100,7 +143,10 @@
       "title": "方向",
       "description": "方向を設定",
       "type": "string",
-      "enum": ["horizontal", "vertical"]
+      "enum": [
+        "horizontal",
+        "vertical"
+      ]
     },
     "font": {
       "title": "フォント",
@@ -184,7 +230,9 @@
         "type": {
           "title": "ブロックタイプ",
           "type": "string",
-          "enum": ["image"]
+          "enum": [
+            "image"
+          ]
         },
         "path": {
           "title": "画像のファイルパス",
@@ -268,7 +316,9 @@
         "type": {
           "title": "ブロックタイプ",
           "type": "string",
-          "enum": ["text"]
+          "enum": [
+            "text"
+          ]
         },
         "content": {
           "title": "テキスト内容",
@@ -301,7 +351,8 @@
           "title": "高さ",
           "type": "integer",
           "minimum": 1
-        }}
+        }
+      }
     }
   },
   "properties": {
@@ -340,7 +391,9 @@
             "mode": {
               "title": "アルゴリズム",
               "type": "string",
-              "enum": ["Revision2"]
+              "enum": [
+                "Revision2"
+              ]
             },
             "length": {
               "title": "暗号キーの長さ",
@@ -359,7 +412,9 @@
             "mode": {
               "title": "アルゴリズム",
               "type": "string",
-              "enum": ["Revision3"]
+              "enum": [
+                "Revision3"
+              ]
             },
             "length": {
               "title": "暗号キーの長さ",

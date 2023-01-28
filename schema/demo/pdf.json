@@ -38,6 +38,30 @@
       },
       "containers": [
         {
+          "position": "relative",
+          "direction": "horizontal",
+          "color": "CCECCC",
+          "contents": [
+            {
+              "type": "text",
+              "content": "HELLO"
+            },
+            {
+              "type": "text",
+              "content": "WORLD.",
+              "color": "FFCC00"
+            }
+          ],
+          "border": {
+            "bottom": 1
+          }
+        },
+        {
+          "position": "absolute",
+          "point": {
+            "x": 100,
+            "y": 100
+          },
           "color": "CCECCC",
           "contents": [
             {

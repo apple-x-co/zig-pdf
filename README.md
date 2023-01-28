@@ -9,7 +9,7 @@
 
 * [libHaru](http://libharu.org/)
 * [libHaruの部屋](http://www.t-net.ne.jp/~cyfis/libharu/)  
-* [JSON Schema](https://json-schema.org/)
+* [JSON Schema](https://json-schema.org/understanding-json-schema/)
 
 ## TODO
 
@@ -43,9 +43,10 @@
     - [x] Padding
     - [ ] Containers
   - [ ] Container
-    - [ ] Background Color
-    - [ ] Coordinate
+    - [ ] Position
+    - [ ] Point
     - [ ] Direction
+    - [ ] Background Color
     - [ ] Border
     - [ ] Padding
     - [ ] Contents
