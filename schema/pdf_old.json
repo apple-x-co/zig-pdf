@@ -4,22 +4,6 @@
   "title": "zig-pdf schema",
   "type": "object",
   "definitions": {
-    "alignment": {
-      "title": "子要素の配置",
-      "description": "子要素の配置を設定",
-      "type": "string",
-      "enum": [
-        "bottom_center",
-        "bottom_left",
-        "bottom_right",
-        "center",
-        "center_left",
-        "center_right",
-        "top_center",
-        "top_left",
-        "top_right"
-      ]
-    },
     "border": {
       "title": "線",
       "description": "線を設定",
@@ -295,9 +279,6 @@
       "description": "ページを設定",
       "type": "object",
       "properties": {
-        "alignment": {
-          "$ref": "#/definitions/alignment"
-        },
         "contentSize": {
           "$ref": "#/definitions/size"
         },
@@ -309,11 +290,18 @@
         },
         "padding": {
           "$ref": "#/definitions/padding"
+        },
+        "containers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/container"
+          },
+          "minItems": 1
         }
       },
       "required": [
-        "alignment",
-        "contentSize"
+        "contentSize",
+        "containers"
       ]
     },
     "textSize": {
