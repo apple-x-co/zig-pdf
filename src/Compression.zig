@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub const Mode = enum {
+pub const CompressionMode = enum {
     none,
     text,
     image,

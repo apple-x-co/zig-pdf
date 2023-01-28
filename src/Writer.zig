@@ -5,9 +5,9 @@ const c = @cImport({
 });
 const Pdf = @import("Pdf.zig");
 const Date = @import("Date.zig");
-const CompressionMode = @import("compression.zig").Mode;
-const EncryptionMode = @import("encryption.zig").Mode;
-const PermissionName = @import("permission.zig").Name;
+const CompressionMode = @import("Compression.zig").CompressionMode;
+const EncryptionMode = @import("Encryption.zig").EncryptionMode;
+const PermissionName = @import("Permission.zig").PermissionName;
 const Page = @import("Pdf/Page.zig");
 const Size = @import("Pdf/Size.zig");
 const Color = @import("Pdf/Color.zig");

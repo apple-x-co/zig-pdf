@@ -4,9 +4,9 @@ pub const Page = @import("Pdf/Page.zig");
 pub const Writer = @import("Writer.zig");
 pub const JsonParser = @import("JsonParser.zig");
 pub const Date = @import("Date.zig");
-pub const Compression = @import("compression.zig");
-pub const Enctyption = @import("encryption.zig");
-pub const Permission = @import("permission.zig");
+pub const Compression = @import("Compression.zig");
+pub const Enctyption = @import("Encryption.zig");
+pub const Permission = @import("Permission.zig");
 
 test {
     std.testing.refAllDecls(@This());

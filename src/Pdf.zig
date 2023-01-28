@@ -1,8 +1,8 @@
 const Self = @This();
 const std = @import("std");
-const CompressionMode = @import("compression.zig").Mode;
-const EncryptionMode = @import("encryption.zig").Mode;
-const PermissionName = @import("permission.zig").Name;
+const CompressionMode = @import("Compression.zig").CompressionMode;
+const EncryptionMode = @import("Encryption.zig").EncryptionMode;
+const PermissionName = @import("Permission.zig").PermissionName;
 const Page = @import("Pdf/Page.zig");
 const Size = @import("Pdf/Size.zig");
 

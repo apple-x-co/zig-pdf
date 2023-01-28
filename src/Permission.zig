@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub const Name = enum {
+pub const PermissionName = enum {
     read,
     print,
     edit_all,

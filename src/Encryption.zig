@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub const Mode = enum {
+pub const EncryptionMode = enum {
     Revision2,
     Revision3,
 };
