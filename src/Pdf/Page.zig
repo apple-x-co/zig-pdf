@@ -8,17 +8,17 @@ const Border = @import("Border.zig");
 
 frame: Rect,
 bounds: Rect,
-backgroundColor: Color,
+background_color: Color,
 border: ?Border,
 
-pub fn init(size: Size, backgroundColor: Color, padding: ?Padding, border: ?Border) Self {
-    const width = size.width.?;
-    const height = size.height.?;
+pub fn init(content_size: Size, background_color: Color, padding: ?Padding, border: ?Border) Self {
+    const width = content_size.width.?;
+    const height = content_size.height.?;
 
     const pad = if (padding == null) Padding.zero() else padding.?;
 
     return .{
-        .backgroundColor = backgroundColor,
+        .background_color = background_color,
         .frame = Rect.init(0, 0, width, height),
         .bounds = Rect.init(pad.left, pad.top, width - pad.left - pad.right, height - pad.top - pad.bottom),
         .border = border,

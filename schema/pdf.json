@@ -279,10 +279,10 @@
       "description": "ページを設定",
       "type": "object",
       "properties": {
-        "size": {
+        "contentSize": {
           "$ref": "#/definitions/size"
         },
-        "color": {
+        "backgourndColor": {
           "$ref": "#/definitions/color"
         },
         "border": {
@@ -300,7 +300,7 @@
         }
       },
       "required": [
-        "size",
+        "contentSize",
         "containers"
       ]
     },

@@ -125,7 +125,7 @@ fn render_page(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
     const pageWidth = c.HPDF_Page_GetWidth(hpage);
     const pageHeight = c.HPDF_Page_GetHeight(hpage);
 
-    if (page.backgroundColor.value) |hex| {
+    if (page.background_color.value) |hex| {
         const rgb = try Rgb.hex(hex);
         _ = c.HPDF_Page_SetRGBFill(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
         _ = c.HPDF_Page_MoveTo(hpage, 0, 0);

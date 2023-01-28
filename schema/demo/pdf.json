@@ -18,11 +18,11 @@
   ],
   "pages": [
     {
-      "size": {
+      "contentSize": {
         "width": 595,
         "height": 842
       },
-      "color": "FFF0F5",
+      "backgourndColor": "FFF0F5",
       "border": {
         "color": "EEEEEE",
         "top": 2,
