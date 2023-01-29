@@ -7,9 +7,9 @@ const Rect = @import("Rect.zig");
 const Border = @import("Border.zig");
 
 frame: Rect,
-bounds: Rect,
 background_color: Color,
 border: ?Border,
+bounds: Rect,
 
 pub fn init(content_size: Size, background_color: Color, padding: ?Padding, border: ?Border) Self {
     const width = content_size.width.?;
@@ -18,9 +18,9 @@ pub fn init(content_size: Size, background_color: Color, padding: ?Padding, bord
     const pad = if (padding == null) Padding.zero() else padding.?;
 
     return .{
-        .background_color = background_color,
         .frame = Rect.init(0, 0, width, height),
-        .bounds = Rect.init(pad.left, pad.top, width - pad.left - pad.right, height - pad.top - pad.bottom),
+        .background_color = background_color,
         .border = border,
+        .bounds = Rect.init(pad.left, pad.top, width - pad.left - pad.right, height - pad.top - pad.bottom),
     };
 }
