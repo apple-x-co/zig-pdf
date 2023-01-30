@@ -43,6 +43,7 @@
     - [x] Padding
     - [ ] Container
       - [ ] Layout:Box
+        - [ ] Alignment
         - [ ] Border
         - [ ] Color
         - [ ] Expanded
@@ -50,6 +51,7 @@
         - [ ] Size
         - [ ] Child
       - [ ] Layout:Positioned Box
+        - [ ] Alignment
         - [ ] Top
         - [ ] Right
         - [ ] Bottom

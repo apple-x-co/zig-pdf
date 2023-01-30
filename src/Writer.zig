@@ -3,17 +3,18 @@ const std = @import("std");
 const c = @cImport({
     @cInclude("hpdf.h");
 });
-const Pdf = @import("Pdf.zig");
-const Date = @import("Date.zig");
-const CompressionMode = @import("Compression.zig").CompressionMode;
-const EncryptionMode = @import("Encryption.zig").EncryptionMode;
-const PermissionName = @import("Permission.zig").PermissionName;
-const Page = @import("Pdf/Page.zig");
-const Size = @import("Pdf/Size.zig");
-const Color = @import("Pdf/Color.zig");
-const Rgb = @import("Pdf/Rgb.zig");
-const Padding = @import("Pdf/Padding.zig");
 const Border = @import("Pdf/Border.zig");
+const Box = @import("Pdf/Box.zig");
+const Color = @import("Pdf/Color.zig");
+const CompressionMode = @import("Compression.zig").CompressionMode;
+const Date = @import("Date.zig");
+const EncryptionMode = @import("Encryption.zig").EncryptionMode;
+const Padding = @import("Pdf/Padding.zig");
+const Page = @import("Pdf/Page.zig");
+const Pdf = @import("Pdf.zig");
+const PermissionName = @import("Permission.zig").PermissionName;
+const Rgb = @import("Pdf/Rgb.zig");
+const Size = @import("Pdf/Size.zig");
 
 pdf: Pdf,
 
@@ -125,14 +126,16 @@ fn render_page(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
     const pageWidth = c.HPDF_Page_GetWidth(hpage);
     const pageHeight = c.HPDF_Page_GetHeight(hpage);
 
-    if (page.background_color.value) |hex| {
-        const rgb = try Rgb.hex(hex);
-        _ = c.HPDF_Page_SetRGBFill(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
-        _ = c.HPDF_Page_MoveTo(hpage, 0, 0);
-        _ = c.HPDF_Page_LineTo(hpage, 0, pageHeight);
-        _ = c.HPDF_Page_LineTo(hpage, pageWidth, pageHeight);
-        _ = c.HPDF_Page_LineTo(hpage, pageWidth, 0);
-        _ = c.HPDF_Page_Fill(hpage);
+    if (page.background_color) |background_color| {
+        if (background_color.value) |hex| {
+            const rgb = try Rgb.hex(hex);
+            _ = c.HPDF_Page_SetRGBFill(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
+            _ = c.HPDF_Page_MoveTo(hpage, 0, 0);
+            _ = c.HPDF_Page_LineTo(hpage, 0, pageHeight);
+            _ = c.HPDF_Page_LineTo(hpage, pageWidth, pageHeight);
+            _ = c.HPDF_Page_LineTo(hpage, pageWidth, 0);
+            _ = c.HPDF_Page_Fill(hpage);
+        }
     }
 
     if (page.border) |border| {
@@ -174,6 +177,21 @@ fn render_page(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
             }
         }
     }
+
+    // Layout behavior
+    // https://api.flutter.dev/flutter/widgets/Container-class.html
+    // ボックス レイアウト モデルの概要については、BoxConstraints を参照してください。
+    // Container は多数の他のウィジェットをそれぞれ独自のレイアウト動作と組み合わせているため、Container のレイアウト動作はいくぶん複雑です。
+    //
+    // 概要: コンテナーは、配置を尊重し、子に合わせてサイズを変更し、幅、高さ、および制約を尊重し、親に合わせて拡張し、できるだけ小さくしようとします。
+    // すなわち：
+    // ・ウィジェットに子、高さ、幅、制約がなく、親が無制限の制約を提供する場合、Container はサイズをできるだけ小さくしようとします。
+    // ・ウィジェットに子と配置がなく、高さ、幅、または制約が指定されている場合、コンテナーは、これらの制約と親の制約の組み合わせを考慮して、できるだけ小さくしようとします。
+    // ・ウィジェットに子、高さ、幅、制約、配置がなく、親が制限付き制約を提供している場合、Container は親によって提供された制約に適合するように拡張されます。
+    // ・ウィジェットに位置合わせがあり、親が無制限の制約を提供している場合、コンテナは子に合わせてサイズを変更しようとします。
+    // ・ウィジェットに位置合わせがあり、親が制限付きの制約を提供している場合、コンテナは親に合わせて拡張しようとし、位置合わせに従って自身の中に子を配置します。
+    // ・それ以外の場合、ウィジェットには子がありますが、高さ、幅、制約、および配置はなく、コンテナは親から子に制約を渡し、子に合わせてサイズを変更します。
+    // ・これらのプロパティのドキュメントで説明されているように、margin および padding プロパティもレイアウトに影響します。 (これらの効果は、上記のルールを単に拡張するだけです。) 装飾は、暗黙的にパディングを増やすことができます (たとえば、BoxDecoration の境界線がパディングに貢献します)。 装飾.パディングを参照してください。
 }
 
 fn error_handler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?*anyopaque) callconv(.C) void {
@@ -191,10 +209,13 @@ test {
     };
 
     var pages = [_]Page{
-        Page.init(Size.init(@as(f32, 100), @as(f32, 100)), Color.init(null), null, Border.init(Color.init("FFCC00"), 10, 0, 10, 0)),
-        Page.init(Size.init(@as(f32, 100), @as(f32, 100)), Color.init(null), null, Border.init(Color.init("FFCC00"), 0, 10, 0, 10)),
-        Page.init(Size.init(@as(f32, 595), @as(f32, 842)), Color.init("CCECCC"), Padding.init(10, 10, 10, 10), Border.init(Color.init("007E66"), 2, 2, 2, 2)),
-        Page.init(Size.init(@as(f32, 842), @as(f32, 595)), Color.init(null), null, null),
+        Page.init(Box.init(false, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null),
+        Page.init(Box.init(false, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EFEFEF"), Padding.init(10, 10, 10, 10), Border.init(Color.init("000000"), 1, 1, 1, 1)),
+
+        // Page.init(Box.init(), Size.init(@as(f32, 100), @as(f32, 100)), Color.init(null), null, Border.init(Color.init("FFCC00"), 10, 0, 10, 0)),
+        // Page.init(Box.init(), Size.init(@as(f32, 100), @as(f32, 100)), Color.init(null), null, Border.init(Color.init("FFCC00"), 0, 10, 0, 10)),
+        // Page.init(Box.init(), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("CCECCC"), Padding.init(10, 10, 10, 10), Border.init(Color.init("007E66"), 2, 2, 2, 2)),
+        // Page.init(Box.init(), Size.init(@as(f32, 842), @as(f32, 595)), Color.init(null), null, null),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);

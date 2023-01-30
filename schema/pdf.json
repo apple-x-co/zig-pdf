@@ -76,9 +76,12 @@
     },
     "box": {
       "title": "単一レイアウトコンテナ",
-      "description": "コンテナまたはコンテントを1つ保持",
+      "description": "レイアウトコンテナまたはコンテントコンテナを0個または1個保持",
       "type": "object",
       "properties": {
+        "alignment": {
+          "$ref": "#/definitions/alignment"
+        },
         "border": {
           "$ref": "#/definitions/border"
         },
@@ -103,13 +106,12 @@
         }
       },
       "required": [
-        "child",
         "type"
       ]
     },
     "col": {
       "title": "列レイアウトコンテナ",
-      "description": "複数のコンテナを保持",
+      "description": "複数のコンテントコンテナを1つ以上保持",
       "properties": {
         "alignment": {
           "$ref": "#/definitions/alignment"
@@ -261,7 +263,7 @@
         "container": {
           "$ref": "#/definitions/box"
         },
-        "contentSize": {
+        "size": {
           "$ref": "#/definitions/size"
         },
         "backgroundColor": {
@@ -276,7 +278,7 @@
       },
       "required": [
         "container",
-        "contentSize"
+        "size"
       ]
     },
     "padding": {
@@ -323,9 +325,12 @@
     },
     "positioned_box": {
       "title": "単一レイアウトコンテナ",
-      "description": "コンテナまたはコンテントを1つ保持し任意の場所に配置",
+      "description": "レイアウトコンテナまたはコンテントコンテナを1つ保持し任意の場所に配置",
       "type": "object",
       "properties": {
+        "alignment": {
+          "$ref": "#/definitions/alignment"
+        },
         "type": {
           "$ref": "#/definitions/container_type",
           "enum": ["positioned_box"]
@@ -364,7 +369,7 @@
     },
     "row": {
       "title": "行レイアウトコンテナ",
-      "description": "複数のコンテナを保持",
+      "description": "複数のコンテントコンテナを1つ以上保持",
       "properties": {
         "alignment": {
           "$ref": "#/definitions/alignment"

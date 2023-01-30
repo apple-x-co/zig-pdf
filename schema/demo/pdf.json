@@ -19,19 +19,45 @@
   "pages": [
     {
       "container": {
+        "type": "box"
+      },
+      "size": {
+        "width": 595,
+        "height": 842
+      }
+    },
+    {
+      "container": {
         "type": "box",
         "child": {
           "type": "text",
           "content": "HELLO WORLD."
         }
       },
-      "contentSize": {
+      "size": {
         "width": 595,
         "height": 842
       }
     },
     {
-      "backgroundColor": "FFFFFF",
+      "container": {
+        "type": "box",
+        "child": {
+          "type": "text",
+          "content": "HELLO WORLD."
+        },
+        "size": {
+          "width": 100,
+          "height": 100
+        }
+      },
+      "size": {
+        "width": 595,
+        "height": 842
+      }
+    },
+    {
+      "backgroundColor": "EFEFEF",
       "border": {
         "color": "000000",
         "top": 1,
@@ -41,7 +67,7 @@
       },
       "container": {
         "type": "box",
-        "color": "EFEFEF",
+        "color": "DDDDDD",
         "child": {
           "type": "positioned_box",
           "child": {
@@ -56,7 +82,7 @@
           }
         }
       },
-      "contentSize": {
+      "size": {
         "width": 595,
         "height": 842
       },
