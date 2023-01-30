@@ -15,7 +15,7 @@
 
 ### Priority: High
 
-- [ ] JSON Schema
+- [x] JSON Schema
   - [x] Author
   - [x] Creator
   - [x] Title
@@ -37,32 +37,43 @@
   - [x] Meta:Password
   - [x] Meta:Permission
   - [ ] Page
-    - [x] Size
     - [x] Background Color
     - [x] Border
+    - [x] Content Size
     - [x] Padding
-    - [ ] Containers
-  - [ ] Container
-    - [ ] Position
-    - [ ] Point
-    - [ ] Direction
-    - [ ] Background Color
-    - [ ] Border
-    - [ ] Padding
-    - [ ] Contents
-  - [ ] Content
-    - [ ] Text
-      - [ ] Content
-      - [ ] Text Color
-      - [ ] Font
-        - [ ] Name, EncodingName
-        - [ ] TTC
-        - [ ] TTF
-        - [ ] Type1
-      - [ ] TextSize
-    - [ ] Image
-      - [ ] Path
-      - [ ] Size
+    - [ ] Container
+      - [ ] Layout:Box
+        - [ ] Border
+        - [ ] Color
+        - [ ] Expanded
+        - [ ] Padding
+        - [ ] Size
+        - [ ] Child
+      - [ ] Layout:Positioned Box
+        - [ ] Top
+        - [ ] Right
+        - [ ] Bottom
+        - [ ] Left
+        - [ ] Size
+        - [ ] Child
+      - [ ] Layout:Row
+        - [ ] Alignment
+        - [ ] Children
+      - [ ] Layout:Col
+        - [ ] Alignment
+        - [ ] Children
+      - [ ] Content:Text
+        - [ ] Content
+        - [ ] Color
+        - [ ] Font
+          - [ ] Name, EncodingName
+          - [ ] TTC
+          - [ ] TTF
+          - [ ] Type1
+        - [ ] TextSize
+      - [ ] Content:Image
+        - [ ] Path
+        - [ ] Size
 
 ### Priority: Low
 

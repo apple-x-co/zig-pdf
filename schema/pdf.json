@@ -20,6 +20,30 @@
         "top_right"
       ]
     },
+    "any_container": {
+      "title": "コンテナ",
+      "description": "レイアウトコンテナやコンテントコンテナ",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/box"
+        },
+        {
+          "$ref": "#/definitions/col"
+        },
+        {
+          "$ref": "#/definitions/image"
+        },
+        {
+          "$ref": "#/definitions/positioned_box"
+        },
+        {
+          "$ref": "#/definitions/row"
+        },
+        {
+          "$ref": "#/definitions/text"
+        }
+      ]
+    },
     "border": {
       "title": "線",
       "description": "線を設定",
@@ -50,15 +74,61 @@
         }
       }
     },
-    "block": {
-      "title": "ブロック（描画対象要素）",
-      "oneOf": [
-        {
-          "$ref": "#/definitions/text"
+    "box": {
+      "title": "単一レイアウトコンテナ",
+      "description": "コンテナまたはコンテントを1つ保持",
+      "type": "object",
+      "properties": {
+        "border": {
+          "$ref": "#/definitions/border"
         },
-        {
-          "$ref": "#/definitions/image"
+        "child": {
+          "$ref": "#/definitions/any_container"
+        },
+        "type": {
+          "$ref": "#/definitions/container_type",
+          "enum": ["box"]
+        },
+        "color": {
+          "$ref": "#/definitions/color"
+        },
+        "expanded": {
+          "$ref": "#/definitions/expanded"
+        },
+        "padding": {
+          "$ref": "#/definitions/padding"
+        },
+        "size": {
+          "$ref": "#/definitions/size"
         }
+      },
+      "required": [
+        "child",
+        "type"
+      ]
+    },
+    "col": {
+      "title": "列レイアウトコンテナ",
+      "description": "複数のコンテナを保持",
+      "properties": {
+        "alignment": {
+          "$ref": "#/definitions/alignment"
+        },
+        "type": {
+          "$ref": "#/definitions/container_type",
+          "enum": ["col"]
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/any_container"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "children"
       ]
     },
     "color": {
@@ -70,99 +140,16 @@
       "maxLength": 6,
       "pattern": "[a-zA-Z0-9]{6}"
     },
-    "container": {
-      "title": "コンテナー",
-      "description": "ブロックを保持する",
-      "type": "object",
-      "properties": {
-        "color": {
-          "$ref": "#/definitions/color"
-        },
-        "position": {
-          "$ref": "#/definitions/position"
-        },
-        "point": {
-          "$ref": "#/definitions/point"
-        },
-        "direction": {
-          "$ref": "#/definitions/direction"
-        },
-        "border": {
-          "$ref": "#/definitions/border"
-        },
-        "padding": {
-          "$ref": "#/definitions/padding"
-        },
-        "contents": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/block"
-          },
-          "minItems": 1
-        }
-      },
-      "required": [
-        "position",
-        "contents"
-      ],
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "position": {
-                "const": "relative"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "direction"
-            ]
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "position": {
-                "const": "absolute"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "point"
-            ]
-          }
-        }
-      ]
-    },
-    "position": {
-      "title": "配置方法",
-      "description": "配置方法を設定",
+    "container_type": {
+      "description": "コンテナータイプ",
       "type": "string",
-      "enum": ["relative", "absolute"]
+      "minLength": 1,
+      "maxLength": 20
     },
-    "point": {
-      "title": "座標",
-      "description": "座標を設定",
-      "type": "object",
-      "properties": {
-        "x": {
-          "type": "integer"
-        },
-        "y": {
-          "type": "integer"
-        }
-      }
-    },
-    "direction": {
-      "title": "方向",
-      "description": "方向を設定",
-      "type": "string",
-      "enum": [
-        "horizontal",
-        "vertical"
-      ]
+    "expanded": {
+      "title": "拡大",
+      "description": "幅または高さを可変にするか否か",
+      "type": "boolean"
     },
     "font": {
       "title": "フォント",
@@ -171,11 +158,13 @@
       "properties": {
         "name": {
           "title": "フォント名",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "encodingName": {
           "title": "エンコーディング名",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "ttc": {
           "title": "TTCフォト",
@@ -183,15 +172,18 @@
           "properties": {
             "filePath": {
               "title": "フォントファイルパス",
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             },
             "index": {
               "title": "インデックス",
-              "type": "integer"
+              "type": "integer",
+              "minimum": 0
             },
             "embedding": {
               "title": "埋め込み",
-              "type": "boolean"
+              "type": "boolean",
+              "default": false
             }
           },
           "required": [
@@ -244,15 +236,13 @@
       "type": "object",
       "properties": {
         "type": {
-          "title": "ブロックタイプ",
-          "type": "string",
-          "enum": [
-            "image"
-          ]
+          "$ref": "#/definitions/container_type",
+          "enum": ["image"]
         },
         "path": {
           "title": "画像のファイルパス",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "size": {
           "$ref": "#/definitions/size"
@@ -263,45 +253,18 @@
         "path"
       ]
     },
-    "padding": {
-      "title": "padding",
-      "description": "パディングを設定",
-      "type": "object",
-      "properties": {
-        "top": {
-          "title": "上",
-          "type": "integer",
-          "minimum": 1
-        },
-        "right": {
-          "title": "右",
-          "type": "integer",
-          "minimum": 1
-        },
-        "bottom": {
-          "title": "下",
-          "type": "integer",
-          "minimum": 1
-        },
-        "left": {
-          "title": "左",
-          "type": "integer",
-          "minimum": 1
-        }
-      }
-    },
     "page": {
       "title": "ページ",
       "description": "ページを設定",
       "type": "object",
       "properties": {
-        "alignment": {
-          "$ref": "#/definitions/alignment"
+        "container": {
+          "$ref": "#/definitions/box"
         },
         "contentSize": {
           "$ref": "#/definitions/size"
         },
-        "backgourndColor": {
+        "backgroundColor": {
           "$ref": "#/definitions/color"
         },
         "border": {
@@ -312,43 +275,115 @@
         }
       },
       "required": [
-        "alignment",
+        "container",
         "contentSize"
       ]
     },
-    "textSize": {
-      "title": "テキストサイズ",
-      "description": "テキストサイズを設定",
-      "type": "integer",
-      "minimum": 1
+    "padding": {
+      "title": "padding",
+      "description": "パディングを設定",
+      "type": "object",
+      "properties": {
+        "top": {
+          "title": "上",
+          "type": "number",
+          "minimum": 1
+        },
+        "right": {
+          "title": "右",
+          "type": "number",
+          "minimum": 1
+        },
+        "bottom": {
+          "title": "下",
+          "type": "number",
+          "minimum": 1
+        },
+        "left": {
+          "title": "左",
+          "type": "number",
+          "minimum": 1
+        }
+      }
     },
-    "text": {
+    "point": {
+      "title": "座標",
+      "description": "座標を設定",
+      "type": "object",
+      "properties": {
+        "x": {
+          "title": "X座標",
+          "type": "integer"
+        },
+        "y": {
+          "title": "Y座標",
+          "type": "integer"
+        }
+      }
+    },
+    "positioned_box": {
+      "title": "単一レイアウトコンテナ",
+      "description": "コンテナまたはコンテントを1つ保持し任意の場所に配置",
       "type": "object",
       "properties": {
         "type": {
-          "title": "ブロックタイプ",
-          "type": "string",
-          "enum": [
-            "text"
-          ]
+          "$ref": "#/definitions/container_type",
+          "enum": ["positioned_box"]
         },
-        "content": {
-          "title": "テキスト内容",
-          "type": "string"
+        "top": {
+          "title": "上",
+          "type": "number",
+          "minimum": 1
         },
-        "color": {
-          "$ref": "#/definitions/color"
+        "right": {
+          "title": "右",
+          "type": "number",
+          "minimum": 1
         },
-        "font": {
-          "$ref": "#/definitions/font"
+        "bottom": {
+          "title": "下",
+          "type": "number",
+          "minimum": 1
         },
-        "textSize": {
-          "$ref": "#/definitions/textSize"
+        "left": {
+          "title": "左",
+          "type": "number",
+          "minimum": 1
+        },
+        "size": {
+          "$ref": "#/definitions/size"
+        },
+        "child": {
+          "$ref": "#/definitions/any_container"
         }
       },
       "required": [
         "type",
-        "content"
+        "child"
+      ]
+    },
+    "row": {
+      "title": "行レイアウトコンテナ",
+      "description": "複数のコンテナを保持",
+      "properties": {
+        "alignment": {
+          "$ref": "#/definitions/alignment"
+        },
+        "type": {
+          "$ref": "#/definitions/container_type",
+          "enum": ["row"]
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/any_container"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "children"
       ]
     },
     "size": {
@@ -365,6 +400,39 @@
           "minimum": 1
         }
       }
+    },
+    "textSize": {
+      "title": "テキストサイズ",
+      "description": "テキストサイズを設定",
+      "type": "integer",
+      "minimum": 1
+    },
+    "text": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/container_type",
+          "enum": ["text"]
+        },
+        "content": {
+          "title": "テキスト内容",
+          "type": "string",
+          "minLength": 1
+        },
+        "color": {
+          "$ref": "#/definitions/color"
+        },
+        "font": {
+          "$ref": "#/definitions/font"
+        },
+        "textSize": {
+          "$ref": "#/definitions/textSize"
+        }
+      },
+      "required": [
+        "type",
+        "content"
+      ]
     }
   },
   "properties": {
