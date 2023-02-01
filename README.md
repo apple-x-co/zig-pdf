@@ -44,11 +44,12 @@
     - [ ] Container
       - [ ] Layout:Box
         - [ ] Alignment
-        - [ ] Border
+        - [ ] Background Color
+        - [x] Border
         - [ ] Color
         - [ ] Expanded
         - [ ] Padding
-        - [ ] Size
+        - [x] Size
         - [ ] Child
       - [ ] Layout:Positioned Box
         - [ ] Alignment

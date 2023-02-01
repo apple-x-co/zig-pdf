@@ -14,8 +14,8 @@ container: Box,
 frame: Rect,
 
 pub fn init(container: Box, page_size: Size, background_color: ?Color, padding: ?Padding, border: ?Border) Self {
-    const width: f32 = page_size.width.?;
-    const height: f32 = page_size.height.?;
+    const width: f32 = page_size.width;
+    const height: f32 = page_size.height;
 
     const pad = if (padding == null) Padding.zero() else padding.?;
 

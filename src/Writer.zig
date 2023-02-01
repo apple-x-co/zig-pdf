@@ -7,12 +7,14 @@ const Border = @import("Pdf/Border.zig");
 const Box = @import("Pdf/Box.zig");
 const Color = @import("Pdf/Color.zig");
 const CompressionMode = @import("Compression.zig").CompressionMode;
+const Container = @import("Pdf/Container.zig").Container;
 const Date = @import("Date.zig");
 const EncryptionMode = @import("Encryption.zig").EncryptionMode;
 const Padding = @import("Pdf/Padding.zig");
 const Page = @import("Pdf/Page.zig");
 const Pdf = @import("Pdf.zig");
 const PermissionName = @import("Permission.zig").PermissionName;
+const Rect = @import("Pdf/Rect.zig");
 const Rgb = @import("Pdf/Rgb.zig");
 const Size = @import("Pdf/Size.zig");
 
@@ -117,66 +119,22 @@ fn set_attributes(self: Self, hpdf: c.HPDF_Doc) void {
 }
 
 fn render_page(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !void {
-    _ = self;
-    _ = hpdf;
-
     _ = c.HPDF_Page_SetWidth(hpage, page.frame.width);
     _ = c.HPDF_Page_SetHeight(hpage, page.frame.height);
 
-    const pageWidth = c.HPDF_Page_GetWidth(hpage);
-    const pageHeight = c.HPDF_Page_GetHeight(hpage);
-
     if (page.background_color) |background_color| {
-        if (background_color.value) |hex| {
-            const rgb = try Rgb.hex(hex);
-            _ = c.HPDF_Page_SetRGBFill(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
-            _ = c.HPDF_Page_MoveTo(hpage, 0, 0);
-            _ = c.HPDF_Page_LineTo(hpage, 0, pageHeight);
-            _ = c.HPDF_Page_LineTo(hpage, pageWidth, pageHeight);
-            _ = c.HPDF_Page_LineTo(hpage, pageWidth, 0);
-            _ = c.HPDF_Page_Fill(hpage);
-        }
+        try self.draw_background(hpage, background_color, page.frame);
     }
 
     if (page.border) |border| {
-        const rgb = try Rgb.hex(border.color.value.?);
-
-        if (border.top != 0 and border.right != 0 and border.bottom != 0 and border.left != 0) {
-            _ = c.HPDF_Page_SetLineWidth(hpage, border.top);
-            _ = c.HPDF_Page_SetRGBStroke(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
-            _ = c.HPDF_Page_Rectangle(hpage, page.bounds.minX, page.bounds.minY, page.bounds.width, page.bounds.height);
-            _ = c.HPDF_Page_Stroke(hpage);
-        } else {
-            if (border.top != 0) {
-                _ = c.HPDF_Page_SetLineWidth(hpage, border.top);
-                _ = c.HPDF_Page_SetRGBStroke(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
-                _ = c.HPDF_Page_MoveTo(hpage, page.bounds.minX, page.bounds.maxY);
-                _ = c.HPDF_Page_LineTo(hpage, page.bounds.maxX, page.bounds.maxY);
-                _ = c.HPDF_Page_Stroke(hpage);
-            }
-            if (border.right != 0) {
-                _ = c.HPDF_Page_SetLineWidth(hpage, border.right);
-                _ = c.HPDF_Page_SetRGBStroke(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
-                _ = c.HPDF_Page_MoveTo(hpage, page.bounds.maxX, page.bounds.maxY);
-                _ = c.HPDF_Page_LineTo(hpage, page.bounds.maxX, page.bounds.minY);
-                _ = c.HPDF_Page_Stroke(hpage);
-            }
-            if (border.bottom != 0) {
-                _ = c.HPDF_Page_SetLineWidth(hpage, border.bottom);
-                _ = c.HPDF_Page_SetRGBStroke(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
-                _ = c.HPDF_Page_MoveTo(hpage, page.bounds.maxX, page.bounds.minY);
-                _ = c.HPDF_Page_LineTo(hpage, page.bounds.minX, page.bounds.minY);
-                _ = c.HPDF_Page_Stroke(hpage);
-            }
-            if (border.left != 0) {
-                _ = c.HPDF_Page_SetLineWidth(hpage, border.left);
-                _ = c.HPDF_Page_SetRGBStroke(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
-                _ = c.HPDF_Page_MoveTo(hpage, page.bounds.minX, page.bounds.minY);
-                _ = c.HPDF_Page_LineTo(hpage, page.bounds.minX, page.bounds.maxY);
-                _ = c.HPDF_Page_Stroke(hpage);
-            }
-        }
+        try self.draw_border(hpage, border, page.bounds);
     }
+
+    try self.render_box(hpdf, hpage, page.bounds, page.container);
+}
+
+fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect, box: Box) !void {
+    _ = hpdf;
 
     // Layout behavior
     // https://api.flutter.dev/flutter/widgets/Container-class.html
@@ -188,10 +146,88 @@ fn render_page(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
     // ・ウィジェットに子、高さ、幅、制約がなく、親が無制限の制約を提供する場合、Container はサイズをできるだけ小さくしようとします。
     // ・ウィジェットに子と配置がなく、高さ、幅、または制約が指定されている場合、コンテナーは、これらの制約と親の制約の組み合わせを考慮して、できるだけ小さくしようとします。
     // ・ウィジェットに子、高さ、幅、制約、配置がなく、親が制限付き制約を提供している場合、Container は親によって提供された制約に適合するように拡張されます。
+    //
     // ・ウィジェットに位置合わせがあり、親が無制限の制約を提供している場合、コンテナは子に合わせてサイズを変更しようとします。
     // ・ウィジェットに位置合わせがあり、親が制限付きの制約を提供している場合、コンテナは親に合わせて拡張しようとし、位置合わせに従って自身の中に子を配置します。
+    //
     // ・それ以外の場合、ウィジェットには子がありますが、高さ、幅、制約、および配置はなく、コンテナは親から子に制約を渡し、子に合わせてサイズを変更します。
     // ・これらのプロパティのドキュメントで説明されているように、margin および padding プロパティもレイアウトに影響します。 (これらの効果は、上記のルールを単に拡張するだけです。) 装飾は、暗黙的にパディングを増やすことができます (たとえば、BoxDecoration の境界線がパディングに貢献します)。 装飾.パディングを参照してください。
+
+    const point = parentRect.origin;
+    const size = box.size orelse parentRect.size;
+    const rect = Rect.init(point.x, point.y, size.width, size.height);
+
+    if (box.border) |border| {
+        try self.draw_border(hpage, border, rect);
+    }
+
+    // TODO
+    // if (box.background_color) |background_color| {
+    //     try self.draw_background(hpage, background_color, rect);
+    // }
+}
+
+fn draw_background(self: Self, hpage: c.HPDF_Page, color: Color, rect: Rect) !void {
+    _ = self;
+
+    if (color.value) |hex| {
+        const rgb = try Rgb.hex(hex);
+        _ = c.HPDF_Page_SetRGBFill(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
+        _ = c.HPDF_Page_MoveTo(hpage, rect.minX, rect.minY);
+        _ = c.HPDF_Page_LineTo(hpage, rect.minX, rect.maxY);
+        _ = c.HPDF_Page_LineTo(hpage, rect.maxX, rect.maxY);
+        _ = c.HPDF_Page_LineTo(hpage, rect.maxX, rect.minY);
+        _ = c.HPDF_Page_Fill(hpage);
+    }
+}
+
+fn draw_border(self: Self, hpage: c.HPDF_Page, border: Border, rect: Rect) !void {
+    _ = self;
+
+    const rgb = try Rgb.hex(border.color.value.?);
+    const red = @intToFloat(f32, rgb.red) / 255;
+    const green = @intToFloat(f32, rgb.green) / 255;
+    const blue = @intToFloat(f32, rgb.blue) / 255;
+
+    if (border.top != 0 and border.right != 0 and border.bottom != 0 and border.left != 0) {
+        _ = c.HPDF_Page_SetLineWidth(hpage, (border.top + border.right + border.bottom + border.left) / 4);
+        _ = c.HPDF_Page_SetRGBStroke(hpage, red, green, blue);
+        _ = c.HPDF_Page_Rectangle(hpage, rect.minX, rect.minY, rect.width, rect.height);
+        _ = c.HPDF_Page_Stroke(hpage);
+        return;
+    }
+
+    if (border.top != 0) {
+        _ = c.HPDF_Page_SetLineWidth(hpage, border.top);
+        _ = c.HPDF_Page_SetRGBStroke(hpage, red, green, blue);
+        _ = c.HPDF_Page_MoveTo(hpage, rect.minX, rect.maxY);
+        _ = c.HPDF_Page_LineTo(hpage, rect.maxX, rect.maxY);
+        _ = c.HPDF_Page_Stroke(hpage);
+    }
+
+    if (border.right != 0) {
+        _ = c.HPDF_Page_SetLineWidth(hpage, border.right);
+        _ = c.HPDF_Page_SetRGBStroke(hpage, red, green, blue);
+        _ = c.HPDF_Page_MoveTo(hpage, rect.maxX, rect.maxY);
+        _ = c.HPDF_Page_LineTo(hpage, rect.maxX, rect.minY);
+        _ = c.HPDF_Page_Stroke(hpage);
+    }
+
+    if (border.bottom != 0) {
+        _ = c.HPDF_Page_SetLineWidth(hpage, border.bottom);
+        _ = c.HPDF_Page_SetRGBStroke(hpage, red, green, blue);
+        _ = c.HPDF_Page_MoveTo(hpage, rect.maxX, rect.minY);
+        _ = c.HPDF_Page_LineTo(hpage, rect.minX, rect.minY);
+        _ = c.HPDF_Page_Stroke(hpage);
+    }
+
+    if (border.left != 0) {
+        _ = c.HPDF_Page_SetLineWidth(hpage, border.left);
+        _ = c.HPDF_Page_SetRGBStroke(hpage, red, green, blue);
+        _ = c.HPDF_Page_MoveTo(hpage, rect.minX, rect.minY);
+        _ = c.HPDF_Page_LineTo(hpage, rect.minX, rect.maxY);
+        _ = c.HPDF_Page_Stroke(hpage);
+    }
 }
 
 fn error_handler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?*anyopaque) callconv(.C) void {
@@ -209,13 +245,9 @@ test {
     };
 
     var pages = [_]Page{
-        Page.init(Box.init(false, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null),
-        Page.init(Box.init(false, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EFEFEF"), Padding.init(10, 10, 10, 10), Border.init(Color.init("000000"), 1, 1, 1, 1)),
-
-        // Page.init(Box.init(), Size.init(@as(f32, 100), @as(f32, 100)), Color.init(null), null, Border.init(Color.init("FFCC00"), 10, 0, 10, 0)),
-        // Page.init(Box.init(), Size.init(@as(f32, 100), @as(f32, 100)), Color.init(null), null, Border.init(Color.init("FFCC00"), 0, 10, 0, 10)),
-        // Page.init(Box.init(), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("CCECCC"), Padding.init(10, 10, 10, 10), Border.init(Color.init("007E66"), 2, 2, 2, 2)),
-        // Page.init(Box.init(), Size.init(@as(f32, 842), @as(f32, 595)), Color.init(null), null, null),
+        Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null),
+        Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EEEEEE"), Padding.init(10, 10, 10, 10), Border.init(Color.init("009000"), 1, 1, 1, 1)),
+        Page.init(Box.init(false, null, Border.init(Color.init("f9aa8f"), 10, 10, 10, 10), null, null, null, Size.init(500, 500)), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EFEFEF"), Padding.init(10, 10, 10, 10), Border.init(Color.init("009000"), 1, 1, 1, 1)),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
