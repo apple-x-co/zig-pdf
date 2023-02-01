@@ -82,6 +82,9 @@
         "alignment": {
           "$ref": "#/definitions/alignment"
         },
+        "backgroundColor": {
+          "$ref": "#/definitions/color"
+        },
         "border": {
           "$ref": "#/definitions/border"
         },
@@ -91,9 +94,6 @@
         "type": {
           "$ref": "#/definitions/container_type",
           "enum": ["box"]
-        },
-        "color": {
-          "$ref": "#/definitions/color"
         },
         "expanded": {
           "$ref": "#/definitions/expanded"
