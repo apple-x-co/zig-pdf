@@ -18,15 +18,23 @@ const Rect = @import("Pdf/Rect.zig");
 const Rgb = @import("Pdf/Rgb.zig");
 const Size = @import("Pdf/Size.zig");
 
+allocator: std.mem.Allocator,
+computed_size_map: std.AutoHashMap(u32, Size),
 pdf: Pdf,
 
-pub fn init(pdf: Pdf) Self {
+pub fn init(allocator: std.mem.Allocator, pdf: Pdf) Self {
     return .{
+        .allocator = allocator,
+        .computed_size_map = std.AutoHashMap(u32, Size).init(allocator),
         .pdf = pdf,
     };
 }
 
-pub fn save(self: Self, file_name: []const u8) !void {
+pub fn deinit(self: *Self) void {
+    self.computed_size_map.deinit();
+}
+
+pub fn save(self: *Self, file_name: []const u8) !void {
     const hpdf = c.HPDF_New(null, null); // FIXME: self.error_handler を指定するとエラーになる
     defer c.HPDF_Free(hpdf);
 
@@ -118,7 +126,7 @@ fn set_attributes(self: Self, hpdf: c.HPDF_Doc) void {
     }
 }
 
-fn render_page(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !void {
+fn render_page(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !void {
     _ = c.HPDF_Page_SetWidth(hpage, page.frame.width);
     _ = c.HPDF_Page_SetHeight(hpage, page.frame.height);
 
@@ -130,10 +138,11 @@ fn render_page(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
         try self.draw_border(hpage, border, page.bounds);
     }
 
-    try self.render_box(hpdf, hpage, page.bounds, page.container);
+    const computed_size = try self.render_box(hpdf, hpage, page.bounds, page.container);
+    try self.computed_size_map.put(page.container.id, computed_size);
 }
 
-fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect, box: Box) !void {
+fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect, box: Box) !Size {
     _ = hpdf;
 
     // Layout behavior
@@ -164,6 +173,8 @@ fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect
     if (box.background_color) |background_color| {
         try self.draw_background(hpage, background_color, rect);
     }
+
+    return size;
 }
 
 fn draw_background(self: Self, hpage: c.HPDF_Page, color: Color, rect: Rect) !void {
@@ -251,7 +262,8 @@ test {
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
-    const pdfWriter = init(pdf);
+    var pdfWriter = init(std.testing.allocator, pdf);
+    defer pdfWriter.deinit();
     try pdfWriter.save("demo/demo.pdf");
 
     // TODO: Cleanup file
