@@ -3,6 +3,7 @@ const std = @import("std");
 const c = @cImport({
     @cInclude("hpdf.h");
 });
+const grid = @import("grid.zig");
 const Border = @import("Pdf/Border.zig");
 const Box = @import("Pdf/Box.zig");
 const Color = @import("Pdf/Color.zig");
@@ -19,19 +20,19 @@ const Rgb = @import("Pdf/Rgb.zig");
 const Size = @import("Pdf/Size.zig");
 
 allocator: std.mem.Allocator,
-computed_size_map: std.AutoHashMap(u32, Size),
+drawing_rect_map: std.AutoHashMap(u32, Rect),
 pdf: Pdf,
 
 pub fn init(allocator: std.mem.Allocator, pdf: Pdf) Self {
     return .{
         .allocator = allocator,
-        .computed_size_map = std.AutoHashMap(u32, Size).init(allocator),
+        .drawing_rect_map = std.AutoHashMap(u32, Rect).init(allocator),
         .pdf = pdf,
     };
 }
 
 pub fn deinit(self: *Self) void {
-    self.computed_size_map.deinit();
+    self.drawing_rect_map.deinit();
 }
 
 pub fn save(self: *Self, file_name: []const u8) !void {
@@ -130,6 +131,8 @@ fn render_page(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !v
     _ = c.HPDF_Page_SetWidth(hpage, page.frame.width);
     _ = c.HPDF_Page_SetHeight(hpage, page.frame.height);
 
+    grid.print_grid(hpdf, hpage); // for debug
+
     if (page.background_color) |background_color| {
         try self.draw_background(hpage, background_color, page.frame);
     }
@@ -138,11 +141,22 @@ fn render_page(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !v
         try self.draw_border(hpage, border, page.bounds);
     }
 
-    const computed_size = try self.render_box(hpdf, hpage, page.bounds, page.container);
-    try self.computed_size_map.put(page.container.id, computed_size);
+    const drawing_rect = try self.render_box(hpdf, hpage, page.bounds, page.container);
+    try self.drawing_rect_map.put(page.container.id, drawing_rect);
+
+    // debug
+    try self.draw_border(hpage, Border.init(Color.init("FF0000"), Border.Style.dash, 0.5, 0.5, 0.5, 0.5), drawing_rect);
+    _ = c.HPDF_Page_BeginText(hpage);
+    _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
+    _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
+    // _ = c.HPDF_Page_MoveTextPos(hpage, drawing_rect.minX, drawing_rect.minY);
+    // _ = c.HPDF_Page_ShowText(hpage, "HELLO!!");
+    _ = c.HPDF_Page_TextOut(hpage, drawing_rect.minX, drawing_rect.minY, "Page container's drawable rect.");
+    _ = c.HPDF_Page_EndText(hpage);
+    // debug
 }
 
-fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect, box: Box) !Size {
+fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect, box: Box) !Rect {
     _ = hpdf;
 
     // Layout behavior
@@ -164,17 +178,19 @@ fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect
 
     const point = parentRect.origin;
     const size = box.size orelse parentRect.size;
-    const rect = Rect.init(point.x, point.y, size.width, size.height);
+    const pad = box.padding orelse Padding.zeroPadding;
+    const frame = Rect.init(point.x, point.y, size.width, size.height);
+    const bounds = Rect.init(0, 0, size.width - pad.left - pad.right, size.height - pad.top - pad.bottom);
 
     if (box.border) |border| {
-        try self.draw_border(hpage, border, rect);
+        try self.draw_border(hpage, border, frame);
     }
 
     if (box.background_color) |background_color| {
-        try self.draw_background(hpage, background_color, rect);
+        try self.draw_background(hpage, background_color, frame);
     }
 
-    return size;
+    return Rect.init(frame.minX + pad.left, frame.minY + pad.top, bounds.width, bounds.height);
 }
 
 fn draw_background(self: Self, hpage: c.HPDF_Page, color: Color, rect: Rect) !void {
@@ -198,6 +214,16 @@ fn draw_border(self: Self, hpage: c.HPDF_Page, border: Border, rect: Rect) !void
     const red = @intToFloat(f32, rgb.red) / 255;
     const green = @intToFloat(f32, rgb.green) / 255;
     const blue = @intToFloat(f32, rgb.blue) / 255;
+
+    const DASH_STYLE1: []const c.HPDF_REAL = &.{
+        3,
+    };
+
+    if (border.style == Border.Style.dash) {
+        _ = c.HPDF_Page_SetDash(hpage, DASH_STYLE1.ptr, 1, 1);
+    } else {
+        _ = c.HPDF_Page_SetDash(hpage, null, 0, 0);
+    }
 
     if (border.top != 0 and border.right != 0 and border.bottom != 0 and border.left != 0) {
         const width = (border.top + border.right + border.bottom + border.left) / 4;
@@ -257,8 +283,8 @@ test {
 
     var pages = [_]Page{
         Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null),
-        Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EEEEEE"), Padding.init(10, 10, 10, 10), Border.init(Color.init("009000"), 1, 1, 1, 1)),
-        Page.init(Box.init(false, null, Color.init("f57245"), Border.init(Color.init("f9aa8f"), 10, 10, 10, 10), null, null, Size.init(500, 500)), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EFEFEF"), Padding.init(10, 10, 10, 10), Border.init(Color.init("009000"), 1, 1, 1, 1)),
+        Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EEEEEE"), Padding.init(10, 10, 10, 10), Border.init(Color.init("000090"), Border.Style.solid, 1, 1, 1, 1)),
+        Page.init(Box.init(false, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(10, 10, 10, 10), Size.init(500, 500)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);

@@ -1,6 +1,8 @@
 const Self = @This();
 const std = @import("std");
 
+pub const zeroPadding = init(0, 0, 0, 0);
+
 top: f32,
 right: f32,
 bottom: f32,

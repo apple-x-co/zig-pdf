@@ -3,6 +3,8 @@ const std = @import("std");
 const Point = @import("Point.zig");
 const Size = @import("Size.zig");
 
+pub const zeroRect = init(0, 0, 0, 0);
+
 origin: Point,
 size: Size,
 width: f32,

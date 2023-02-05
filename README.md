@@ -44,11 +44,10 @@
     - [ ] Container
       - [ ] Layout:Box
         - [ ] Alignment
-        - [ ] Background Color
+        - [x] Background Color
         - [x] Border
-        - [ ] Color
         - [ ] Expanded
-        - [ ] Padding
+        - [x] Padding
         - [x] Size
         - [ ] Child
       - [ ] Layout:Positioned Box
@@ -81,3 +80,4 @@
 ### Priority: Low
 
 - [ ] JSON Validation
+- [ ] libharu's demo
