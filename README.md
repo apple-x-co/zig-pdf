@@ -46,7 +46,7 @@
         - [ ] Alignment
         - [x] Background Color
         - [x] Border
-        - [ ] Expanded
+        - [x] Expanded(width)
         - [x] Padding
         - [x] Size
         - [ ] Child

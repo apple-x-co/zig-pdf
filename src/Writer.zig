@@ -179,8 +179,8 @@ fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect
     const point = parentRect.origin;
     const size = box.size orelse parentRect.size;
     const pad = box.padding orelse Padding.zeroPadding;
-    const frame = Rect.init(point.x, parentRect.maxY - size.height, size.width, size.height); // 座標原点を左上にして計算
-    const bounds = Rect.init(0, 0, size.width - pad.left - pad.right, size.height - pad.top - pad.bottom);
+    const frame = Rect.init(point.x, parentRect.maxY - size.height, if (box.expanded) (parentRect.size.width / size.width) * size.width else size.width, size.height); // 座標原点を左上にして計算
+    const bounds = Rect.init(0, 0, frame.width - pad.left - pad.right, frame.height - pad.top - pad.bottom);
 
     if (box.border) |border| {
         try self.draw_border(hpage, border, frame);
@@ -284,7 +284,8 @@ test {
     var pages = [_]Page{
         Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null),
         Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EEEEEE"), Padding.init(10, 10, 10, 10), Border.init(Color.init("000090"), Border.Style.solid, 1, 1, 1, 1)),
-        Page.init(Box.init(false, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(500, 500)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
+        Page.init(Box.init(false, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
+        Page.init(Box.init(true, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
