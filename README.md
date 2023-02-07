@@ -37,6 +37,7 @@
   - [x] Meta:Password
   - [x] Meta:Permission
   - [ ] Page
+    - [x] Alignment
     - [x] Background Color
     - [x] Border
     - [x] Content Size

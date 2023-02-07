@@ -4,6 +4,7 @@ const c = @cImport({
     @cInclude("hpdf.h");
 });
 const grid = @import("grid.zig");
+const Alignment = @import("Pdf/Alignment.zig");
 const Border = @import("Pdf/Border.zig");
 const Box = @import("Pdf/Box.zig");
 const Color = @import("Pdf/Color.zig");
@@ -141,7 +142,7 @@ fn render_page(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !v
         try self.draw_border(hpage, border, page.bounds);
     }
 
-    const drawing_rect = try self.render_box(hpdf, hpage, page.bounds, page.container);
+    const drawing_rect = try self.render_box(hpdf, hpage, page.bounds, page.alignment, page.container);
     try self.drawing_rect_map.put(page.container.id, drawing_rect);
 
     // debug
@@ -156,30 +157,21 @@ fn render_page(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !v
     // debug
 }
 
-fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect, box: Box) !Rect {
+fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect, alignment: ?Alignment, box: Box) !Rect {
     _ = hpdf;
-
-    // Layout behavior
-    // https://api.flutter.dev/flutter/widgets/Container-class.html
-    // ボックス レイアウト モデルの概要については、BoxConstraints を参照してください。
-    // Container は多数の他のウィジェットをそれぞれ独自のレイアウト動作と組み合わせているため、Container のレイアウト動作はいくぶん複雑です。
-    //
-    // 概要: コンテナーは、配置を尊重し、子に合わせてサイズを変更し、幅、高さ、および制約を尊重し、親に合わせて拡張し、できるだけ小さくしようとします。
-    // すなわち：
-    // ・ウィジェットに子、高さ、幅、制約がなく、親が無制限の制約を提供する場合、Container はサイズをできるだけ小さくしようとします。
-    // ・ウィジェットに子と配置がなく、高さ、幅、または制約が指定されている場合、コンテナーは、これらの制約と親の制約の組み合わせを考慮して、できるだけ小さくしようとします。
-    // ・ウィジェットに子、高さ、幅、制約、配置がなく、親が制限付き制約を提供している場合、Container は親によって提供された制約に適合するように拡張されます。
-    //
-    // ・ウィジェットに位置合わせがあり、親が無制限の制約を提供している場合、コンテナは子に合わせてサイズを変更しようとします。
-    // ・ウィジェットに位置合わせがあり、親が制限付きの制約を提供している場合、コンテナは親に合わせて拡張しようとし、位置合わせに従って自身の中に子を配置します。
-    //
-    // ・それ以外の場合、ウィジェットには子がありますが、高さ、幅、制約、および配置はなく、コンテナは親から子に制約を渡し、子に合わせてサイズを変更します。
-    // ・これらのプロパティのドキュメントで説明されているように、margin および padding プロパティもレイアウトに影響します。 (これらの効果は、上記のルールを単に拡張するだけです。) 装飾は、暗黙的にパディングを増やすことができます (たとえば、BoxDecoration の境界線がパディングに貢献します)。 装飾.パディングを参照してください。
 
     const point = parentRect.origin;
     const size = box.size orelse parentRect.size;
     const pad = box.padding orelse Padding.zeroPadding;
-    const frame = Rect.init(point.x, parentRect.maxY - size.height, if (box.expanded) (parentRect.size.width / size.width) * size.width else size.width, size.height); // 座標原点を左上にして計算
+
+    var frame = Rect.init(point.x, parentRect.maxY - size.height, if (box.expanded) (parentRect.size.width / size.width) * size.width else size.width, size.height); // 座標原点を左上にして計算
+
+    if (box.size != null and alignment != null) {
+        const x = parentRect.midX - (alignment.?.x * (box.size.?.width / 2) + (box.size.?.width / 2));
+        const y = parentRect.midY - (alignment.?.y * (box.size.?.height / 2) + (box.size.?.height / 2));
+        frame = Rect.init(x, y, box.size.?.width, box.size.?.height);
+    }
+
     const bounds = Rect.init(0, 0, frame.width - pad.left - pad.right, frame.height - pad.top - pad.bottom);
 
     if (box.border) |border| {
@@ -282,10 +274,13 @@ test {
     };
 
     var pages = [_]Page{
-        Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null),
-        Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EEEEEE"), Padding.init(10, 10, 10, 10), Border.init(Color.init("000090"), Border.Style.solid, 1, 1, 1, 1)),
-        Page.init(Box.init(false, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
-        Page.init(Box.init(true, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
+        Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EEEEEE"), Padding.init(10, 10, 10, 10), null, Border.init(Color.init("000090"), Border.Style.solid, 1, 1, 1, 1)),
+        Page.init(Box.init(false, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), null, Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
+        Page.init(Box.init(true, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), null, Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
+        Page.init(Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
+        Page.init(Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(300, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
+        Page.init(Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(500, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
