@@ -1,10 +1,10 @@
 const Self = @This();
-const Box = @import("Box.zig");
-const Col = @import("Col.zig");
-const Image = @import("Image.zig");
-const PositionedBox = @import("PositionedBox.zig");
-const Row = @import("Row.zig");
-const Text = @import("Text.zig");
+pub const Box = @import("Box.zig");
+pub const Col = @import("Col.zig");
+pub const Image = @import("Image.zig");
+pub const PositionedBox = @import("PositionedBox.zig");
+pub const Row = @import("Row.zig");
+pub const Text = @import("Text.zig");
 
 pub const Container = union(enum) {
     box: Box,
@@ -14,3 +14,15 @@ pub const Container = union(enum) {
     row: Row,
     text: Text,
 };
+
+pub fn make(container: anytype) Container {
+    return switch (@TypeOf(container)) {
+        Box => Container{ .box = container },
+        Col => Container{ .col = container },
+        Image => Container{ .image = container },
+        PositionedBox => Container{ .positioned_box = container },
+        Row => Container{ .row = container },
+        Text => Container{ .text = container },
+        else => @panic("unexpected"),
+    };
+}

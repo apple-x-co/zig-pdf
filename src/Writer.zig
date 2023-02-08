@@ -6,10 +6,9 @@ const c = @cImport({
 const grid = @import("grid.zig");
 const Alignment = @import("Pdf/Alignment.zig");
 const Border = @import("Pdf/Border.zig");
-const Box = @import("Pdf/Box.zig");
 const Color = @import("Pdf/Color.zig");
 const CompressionMode = @import("Compression.zig").CompressionMode;
-const Container = @import("Pdf/Container.zig").Container;
+const Container = @import("Pdf/Container.zig");
 const Date = @import("Date.zig");
 const EncryptionMode = @import("Encryption.zig").EncryptionMode;
 const Padding = @import("Pdf/Padding.zig");
@@ -142,7 +141,7 @@ fn render_page(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !v
         try self.draw_border(hpage, border, page.bounds);
     }
 
-    try self.render_container(hpdf, hpage, page.bounds, page.alignment, .{ .box = page.container });
+    try self.render_container(hpdf, hpage, page.bounds, page.alignment, Container.make(page.container));
 
     // const drawing_rect = try self.render_box(hpdf, hpage, page.bounds, page.alignment, page.container);
     // try self.drawing_rect_map.put(page.container.id, drawing_rect);
@@ -159,7 +158,7 @@ fn render_page(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !v
     // // debug
 }
 
-fn render_container(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect, alignment: ?Alignment, container: Container) !void {
+fn render_container(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect, alignment: ?Alignment, container: Container.Container) !void {
     switch (container) {
         .box => {
             const box = container.box;
@@ -176,6 +175,10 @@ fn render_container(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rec
             _ = c.HPDF_Page_TextOut(hpage, drawing_rect.minX, drawing_rect.minY, "Page container's drawable rect.");
             _ = c.HPDF_Page_EndText(hpage);
             // debug
+
+            if (box.child) |child_container| {
+                try self.render_container(hpdf, hpage, drawing_rect, box.alignment, Container.make(child_container));
+            }
         },
         .positioned_box => {},
         .col => {},
@@ -185,7 +188,7 @@ fn render_container(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rec
     }
 }
 
-fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect, alignment: ?Alignment, box: Box) !Rect {
+fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect, alignment: ?Alignment, box: Container.Box) !Rect {
     _ = hpdf;
 
     const point = parentRect.origin;
@@ -302,13 +305,13 @@ test {
     };
 
     var pages = [_]Page{
-        Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
-        Page.init(Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EEEEEE"), Padding.init(10, 10, 10, 10), null, Border.init(Color.init("000090"), Border.Style.solid, 1, 1, 1, 1)),
-        Page.init(Box.init(false, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), null, Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
-        Page.init(Box.init(true, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), null, Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
-        Page.init(Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
-        Page.init(Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(300, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
-        Page.init(Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(500, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
+        Page.init(Container.Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EEEEEE"), Padding.init(10, 10, 10, 10), null, Border.init(Color.init("000090"), Border.Style.solid, 1, 1, 1, 1)),
+        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), null, Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
+        Page.init(Container.Box.init(true, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), null, Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
+        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
+        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(300, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
+        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(500, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
