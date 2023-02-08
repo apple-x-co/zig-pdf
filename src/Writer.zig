@@ -142,19 +142,47 @@ fn render_page(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !v
         try self.draw_border(hpage, border, page.bounds);
     }
 
-    const drawing_rect = try self.render_box(hpdf, hpage, page.bounds, page.alignment, page.container);
-    try self.drawing_rect_map.put(page.container.id, drawing_rect);
+    try self.render_container(hpdf, hpage, page.bounds, page.alignment, .{ .box = page.container });
 
-    // debug
-    try self.draw_border(hpage, Border.init(Color.init("FF0000"), Border.Style.dash, 0.5, 0.5, 0.5, 0.5), drawing_rect);
-    _ = c.HPDF_Page_BeginText(hpage);
-    _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
-    _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
-    // _ = c.HPDF_Page_MoveTextPos(hpage, drawing_rect.minX, drawing_rect.minY);
-    // _ = c.HPDF_Page_ShowText(hpage, "HELLO!!");
-    _ = c.HPDF_Page_TextOut(hpage, drawing_rect.minX, drawing_rect.minY, "Page container's drawable rect.");
-    _ = c.HPDF_Page_EndText(hpage);
-    // debug
+    // const drawing_rect = try self.render_box(hpdf, hpage, page.bounds, page.alignment, page.container);
+    // try self.drawing_rect_map.put(page.container.id, drawing_rect);
+
+    // // debug
+    // try self.draw_border(hpage, Border.init(Color.init("FF0000"), Border.Style.dash, 0.5, 0.5, 0.5, 0.5), drawing_rect);
+    // _ = c.HPDF_Page_BeginText(hpage);
+    // _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
+    // _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
+    // // _ = c.HPDF_Page_MoveTextPos(hpage, drawing_rect.minX, drawing_rect.minY);
+    // // _ = c.HPDF_Page_ShowText(hpage, "HELLO!!");
+    // _ = c.HPDF_Page_TextOut(hpage, drawing_rect.minX, drawing_rect.minY, "Page container's drawable rect.");
+    // _ = c.HPDF_Page_EndText(hpage);
+    // // debug
+}
+
+fn render_container(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect, alignment: ?Alignment, container: Container) !void {
+    switch (container) {
+        .box => {
+            const box = container.box;
+            const drawing_rect = try self.render_box(hpdf, hpage, rect, alignment, box);
+            try self.drawing_rect_map.put(box.id, drawing_rect);
+
+            // debug
+            try self.draw_border(hpage, Border.init(Color.init("FF0000"), Border.Style.dash, 0.5, 0.5, 0.5, 0.5), drawing_rect);
+            _ = c.HPDF_Page_BeginText(hpage);
+            _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
+            _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
+            // _ = c.HPDF_Page_MoveTextPos(hpage, drawing_rect.minX, drawing_rect.minY);
+            // _ = c.HPDF_Page_ShowText(hpage, "HELLO!!");
+            _ = c.HPDF_Page_TextOut(hpage, drawing_rect.minX, drawing_rect.minY, "Page container's drawable rect.");
+            _ = c.HPDF_Page_EndText(hpage);
+            // debug
+        },
+        .positioned_box => {},
+        .col => {},
+        .row => {},
+        .image => {},
+        .text => {},
+    }
 }
 
 fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect, alignment: ?Alignment, box: Box) !Rect {

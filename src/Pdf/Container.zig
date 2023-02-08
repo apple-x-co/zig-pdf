@@ -1,5 +1,4 @@
 const Self = @This();
-const std = @import("std");
 const Box = @import("Box.zig");
 const Col = @import("Col.zig");
 const Image = @import("Image.zig");
