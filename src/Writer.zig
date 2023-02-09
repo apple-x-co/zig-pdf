@@ -175,10 +175,6 @@ fn render_container(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rec
             _ = c.HPDF_Page_TextOut(hpage, drawing_rect.minX, drawing_rect.minY, "Page container's drawable rect.");
             _ = c.HPDF_Page_EndText(hpage);
             // debug
-
-            if (box.child) |child_container| {
-                try self.render_container(hpdf, hpage, drawing_rect, box.alignment, Container.make(child_container));
-            }
         },
         .positioned_box => {},
         .col => {},

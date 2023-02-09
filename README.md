@@ -51,6 +51,9 @@
         - [x] Padding
         - [x] Size
         - [ ] Child
+          - "depends on itself" エラーが起きる
+          - "anyopaque" を使えないか?
+          - 後で実装する
       - [ ] Layout:Positioned Box
         - [ ] Alignment
         - [ ] Top

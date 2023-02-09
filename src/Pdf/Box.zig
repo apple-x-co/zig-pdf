@@ -10,13 +10,13 @@ const Size = @import("Size.zig");
 alignment: ?Alignment,
 background_color: ?Color,
 border: ?Border,
-child: ?*const anyopaque, // expect "Container"
+child: ?*anyopaque, // expect "Container"
 expanded: bool,
 id: u32,
 padding: ?Padding,
 size: ?Size,
 
-pub fn init(expanded: bool, alignment: ?Alignment, background_color: ?Color, border: ?Border, child: ?*const anyopaque, padding: ?Padding, size: ?Size) Self {
+pub fn init(expanded: bool, alignment: ?Alignment, background_color: ?Color, border: ?Border, child: ?*anyopaque, padding: ?Padding, size: ?Size) Self {
     return .{
         .alignment = alignment,
         .background_color = background_color,
