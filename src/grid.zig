@@ -3,7 +3,7 @@ const c = @cImport({
     @cInclude("hpdf.h");
 });
 
-pub fn print_grid(pdf: c.HPDF_Doc, page: c.HPDF_Page) void {
+pub fn printGrid(pdf: c.HPDF_Doc, page: c.HPDF_Page) void {
     const height: f32 = c.HPDF_Page_GetHeight(page);
     const width: f32 = c.HPDF_Page_GetWidth(page);
     const font = c.HPDF_GetFont(pdf, "Helvetica", null);

@@ -36,21 +36,21 @@ pub fn deinit(self: *Self) void {
 }
 
 pub fn save(self: *Self, file_name: []const u8) !void {
-    const hpdf = c.HPDF_New(null, null); // FIXME: self.error_handler を指定するとエラーになる
+    const hpdf = c.HPDF_New(null, null); // FIXME: self.errorEandler を指定するとエラーになる
     defer c.HPDF_Free(hpdf);
 
-    self.set_attributes(hpdf);
+    self.setPdfAttributes(hpdf);
 
     for (self.pdf.pages) |page| {
         const hpage = c.HPDF_AddPage(hpdf);
 
-        try self.render_page(hpdf, hpage, page);
+        try self.renderPage(hpdf, hpage, page);
     }
 
     _ = c.HPDF_SaveToFile(hpdf, file_name.ptr);
 }
 
-fn set_attributes(self: Self, hpdf: c.HPDF_Doc) void {
+fn setPdfAttributes(self: Self, hpdf: c.HPDF_Doc) void {
     const date = Date.now();
     const hdate = c.HPDF_Date{ .year = date.year, .month = date.month, .day = date.day, .hour = date.hours, .minutes = date.minutes, .seconds = date.seconds, .ind = ' ', .off_hour = 0, .off_minutes = 0 };
 
@@ -127,46 +127,32 @@ fn set_attributes(self: Self, hpdf: c.HPDF_Doc) void {
     }
 }
 
-fn render_page(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !void {
+fn renderPage(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !void {
     _ = c.HPDF_Page_SetWidth(hpage, page.frame.width);
     _ = c.HPDF_Page_SetHeight(hpage, page.frame.height);
 
-    grid.print_grid(hpdf, hpage); // for debug
+    grid.printGrid(hpdf, hpage); // for debug
 
     if (page.background_color) |background_color| {
-        try self.draw_background(hpage, background_color, page.frame);
+        try self.drawBackground(hpage, background_color, page.frame);
     }
 
     if (page.border) |border| {
-        try self.draw_border(hpage, border, page.bounds);
+        try self.drawBorder(hpage, border, page.bounds);
     }
 
-    try self.render_container(hpdf, hpage, page.bounds, page.alignment, Container.make(page.container));
-
-    // const drawing_rect = try self.render_box(hpdf, hpage, page.bounds, page.alignment, page.container);
-    // try self.drawing_rect_map.put(page.container.id, drawing_rect);
-
-    // // debug
-    // try self.draw_border(hpage, Border.init(Color.init("FF0000"), Border.Style.dash, 0.5, 0.5, 0.5, 0.5), drawing_rect);
-    // _ = c.HPDF_Page_BeginText(hpage);
-    // _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
-    // _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
-    // // _ = c.HPDF_Page_MoveTextPos(hpage, drawing_rect.minX, drawing_rect.minY);
-    // // _ = c.HPDF_Page_ShowText(hpage, "HELLO!!");
-    // _ = c.HPDF_Page_TextOut(hpage, drawing_rect.minX, drawing_rect.minY, "Page container's drawable rect.");
-    // _ = c.HPDF_Page_EndText(hpage);
-    // // debug
+    try self.renderContainer(hpdf, hpage, page.bounds, page.alignment, Container.make(page.container));
 }
 
-fn render_container(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect, alignment: ?Alignment, container: Container.Container) !void {
+fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect, alignment: ?Alignment, container: Container.Container) !void {
     switch (container) {
         .box => {
             const box = container.box;
-            const drawing_rect = try self.render_box(hpdf, hpage, rect, alignment, box);
+            const drawing_rect = try self.renderBox(hpdf, hpage, rect, alignment, box);
             try self.drawing_rect_map.put(box.id, drawing_rect);
 
             // debug
-            try self.draw_border(hpage, Border.init(Color.init("FF0000"), Border.Style.dash, 0.5, 0.5, 0.5, 0.5), drawing_rect);
+            try self.drawBorder(hpage, Border.init(Color.init("FF0000"), Border.Style.dash, 0.5, 0.5, 0.5, 0.5), drawing_rect);
             _ = c.HPDF_Page_BeginText(hpage);
             _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
             _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
@@ -184,7 +170,7 @@ fn render_container(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rec
     }
 }
 
-fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect, alignment: ?Alignment, box: Container.Box) !Rect {
+fn renderBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect, alignment: ?Alignment, box: Container.Box) !Rect {
     _ = hpdf;
 
     const point = parentRect.origin;
@@ -202,17 +188,17 @@ fn render_box(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parentRect: Rect
     const bounds = Rect.init(0, 0, frame.width - pad.left - pad.right, frame.height - pad.top - pad.bottom);
 
     if (box.border) |border| {
-        try self.draw_border(hpage, border, frame);
+        try self.drawBorder(hpage, border, frame);
     }
 
     if (box.background_color) |background_color| {
-        try self.draw_background(hpage, background_color, frame);
+        try self.drawBackground(hpage, background_color, frame);
     }
 
     return Rect.init(frame.minX + pad.left, frame.minY + pad.top, bounds.width, bounds.height);
 }
 
-fn draw_background(self: Self, hpage: c.HPDF_Page, color: Color, rect: Rect) !void {
+fn drawBackground(self: Self, hpage: c.HPDF_Page, color: Color, rect: Rect) !void {
     _ = self;
 
     if (color.value) |hex| {
@@ -226,7 +212,7 @@ fn draw_background(self: Self, hpage: c.HPDF_Page, color: Color, rect: Rect) !vo
     }
 }
 
-fn draw_border(self: Self, hpage: c.HPDF_Page, border: Border, rect: Rect) !void {
+fn drawBorder(self: Self, hpage: c.HPDF_Page, border: Border, rect: Rect) !void {
     _ = self;
 
     const rgb = try Rgb.hex(border.color.value.?);
@@ -286,7 +272,7 @@ fn draw_border(self: Self, hpage: c.HPDF_Page, border: Border, rect: Rect) !void
     }
 }
 
-fn error_handler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?*anyopaque) callconv(.C) void {
+fn errorEandler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?*anyopaque) callconv(.C) void {
     _ = user_data;
 
     const stdErr = std.io.getStdErr();
