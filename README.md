@@ -56,11 +56,11 @@
           - 後で実装する
       - [ ] Layout:Positioned Box
         - [ ] Alignment
-        - [ ] Top
-        - [ ] Right
-        - [ ] Bottom
-        - [ ] Left
-        - [ ] Size
+        - [x] Top
+        - [x] Right
+        - [x] Bottom
+        - [x] Left
+        - [x] Size
         - [ ] Child
       - [ ] Layout:Row
         - [ ] Alignment

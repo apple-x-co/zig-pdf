@@ -2,7 +2,7 @@ const Self = @This();
 const std = @import("std");
 const Color = @import("Color.zig");
 
-pub const Style = enum { dash, solid };
+pub const Style = enum { dash, dot, solid };
 
 color: Color,
 style: Style,
