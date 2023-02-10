@@ -163,16 +163,19 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             // debug
 
             // debug
-            // try self.renderContainer(hpdf, hpage, drawing_rect, box.alignment, Container.make(Container.PositionedBox.init(10, null, null, 10, null)));
             try self.renderContainer(hpdf, hpage, drawing_rect, box.alignment, Container.make(Container.PositionedBox.init(10, null, null, 10, Size.init(20, 20))));
             try self.renderContainer(hpdf, hpage, drawing_rect, box.alignment, Container.make(Container.PositionedBox.init(10, 10, null, null, Size.init(20, 20))));
             try self.renderContainer(hpdf, hpage, drawing_rect, box.alignment, Container.make(Container.PositionedBox.init(null, 10, 10, null, Size.init(20, 20))));
             try self.renderContainer(hpdf, hpage, drawing_rect, box.alignment, Container.make(Container.PositionedBox.init(null, null, 10, 10, Size.init(20, 20))));
             // debug
+
+            // debug
+            try self.renderContainer(hpdf, hpage, drawing_rect, box.alignment, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
+            // debug
         },
         .positioned_box => {
             const positioned_box = container.positioned_box;
-            const drawing_rect = try self.renderPositionedBox(hpdf, hpage, rect, alignment, positioned_box);
+            const drawing_rect = try self.renderPositionedBox(hpdf, hpage, rect, positioned_box);
             try self.drawing_rect_map.put(positioned_box.id, drawing_rect);
 
             // debug
@@ -188,7 +191,22 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
         },
         .col => {},
         .row => {},
-        .image => {},
+        .image => {
+            const image = container.image;
+            const drawing_rect = try self.renderImage(hpdf, hpage, rect, alignment, image);
+            try self.drawing_rect_map.put(image.id, drawing_rect);
+
+            // debug
+            try self.drawBorder(hpage, Border.init(Color.init("00FFFF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), drawing_rect);
+            _ = c.HPDF_Page_BeginText(hpage);
+            _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
+            _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
+            // _ = c.HPDF_Page_MoveTextPos(hpage, drawing_rect.minX, drawing_rect.minY);
+            // _ = c.HPDF_Page_ShowText(hpage, "HELLO!!");
+            _ = c.HPDF_Page_TextOut(hpage, drawing_rect.minX, drawing_rect.minY, "Image's rect.");
+            _ = c.HPDF_Page_EndText(hpage);
+            // debug
+        },
         .text => {},
     }
 }
@@ -222,11 +240,10 @@ fn renderBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect
     return Rect.init(frame.minX + pad.left, frame.minY + pad.top, bounds.width, bounds.height);
 }
 
-fn renderPositionedBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, alignment: ?Alignment, positioned_box: Container.PositionedBox) !Rect {
+fn renderPositionedBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, positioned_box: Container.PositionedBox) !Rect {
     _ = self;
     _ = hpdf;
     _ = hpage;
-    _ = alignment;
 
     const point = parent_rect.origin;
     const size = positioned_box.size orelse parent_rect.size;
@@ -249,6 +266,32 @@ fn renderPositionedBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_
     // 描画は左下が原点のためY座標から高さを引く
     const frame = Rect.init(point.x + x, parent_rect.maxY - y - size.height, size.width, size.height);
     const bounds = Rect.init(0, 0, frame.width, frame.height);
+
+    return Rect.init(frame.minX, frame.minY, bounds.width, bounds.height);
+}
+
+fn renderImage(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, alignment: ?Alignment, image: Container.Image) !Rect {
+    _ = self;
+    
+    const himage = c.HPDF_LoadJpegImageFromFile(hpdf, image.path.ptr);
+    const imageWidth: f32 = @intToFloat(f32, c.HPDF_Image_GetWidth(himage));
+    const imageHeight: f32 = @intToFloat(f32, c.HPDF_Image_GetHeight(himage));
+
+    const point = parent_rect.origin;
+    const size = image.size orelse Size.init(imageWidth, imageHeight);
+
+    // 描画は左下が原点のためY座標から高さを引く
+    var frame = Rect.init(point.x, parent_rect.maxY - parent_rect.height, size.width, size.height);
+
+    if (image.size != null and alignment != null) {
+        const x = parent_rect.midX - (alignment.?.x * (image.size.?.width / 2) + (image.size.?.width / 2));
+        const y = parent_rect.midY - (alignment.?.y * (image.size.?.height / 2) + (image.size.?.height / 2));
+        frame = Rect.init(x, y, image.size.?.width, image.size.?.height);
+    }
+
+    const bounds = Rect.init(0, 0, frame.width, frame.height);
+
+    _ = c.HPDF_Page_DrawImage(hpage, himage, point.x, point.y, size.width, size.height);
 
     return Rect.init(frame.minX, frame.minY, bounds.width, bounds.height);
 }

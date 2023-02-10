@@ -78,8 +78,8 @@
           - [ ] Type1
         - [ ] TextSize
       - [ ] Content:Image
-        - [ ] Path
-        - [ ] Size
+        - [x] Path
+        - [x] Size
 
 ### Priority: Low
 
