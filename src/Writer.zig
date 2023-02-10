@@ -285,7 +285,7 @@ fn drawBorder(self: Self, hpage: c.HPDF_Page, border: Border, rect: Rect) !void 
         },
         else => {
             _ = c.HPDF_Page_SetDash(hpage, null, 0, 0);
-        }
+        },
     }
 
     if (border.top != 0 and border.right != 0 and border.bottom != 0 and border.left != 0) {
