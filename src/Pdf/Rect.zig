@@ -16,6 +16,7 @@ minY: f32,
 midY: f32,
 maxY: f32,
 
+// 原点は左下
 pub fn init(x: f32, y: f32, width: f32, height: f32) Self {
     return .{
         .origin = Point.init(x, y),
@@ -31,6 +32,15 @@ pub fn init(x: f32, y: f32, width: f32, height: f32) Self {
     };
 }
 
+pub fn offsetBy(self: Self, rect: Self) Self {
+    return init(
+        self.minX + rect.minX,
+        self.minY + rect.minY,
+        self.width,
+        self.height
+    );
+}
+
 test {
     const rect = init(10.0, 20.0, 100.0, 200.0);
     try std.testing.expectEqual(@floatCast(f32, 10), rect.minX);
@@ -39,4 +49,14 @@ test {
     try std.testing.expectEqual(@floatCast(f32, 20), rect.minY);
     try std.testing.expectEqual(@floatCast(f32, 120), rect.midY);
     try std.testing.expectEqual(@floatCast(f32, 220), rect.maxY);
+}
+
+test {
+    const rect = init(10.0, 20.0, 100.0, 200.0).offsetBy(init(100.0, 200.0, 1000.0, 2000.0));
+    try std.testing.expectEqual(@floatCast(f32, 110), rect.minX);
+    try std.testing.expectEqual(@floatCast(f32, 160), rect.midX);
+    try std.testing.expectEqual(@floatCast(f32, 210), rect.maxX);
+    try std.testing.expectEqual(@floatCast(f32, 220), rect.minY);
+    try std.testing.expectEqual(@floatCast(f32, 320), rect.midY);
+    try std.testing.expectEqual(@floatCast(f32, 420), rect.maxY);
 }
