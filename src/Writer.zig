@@ -162,33 +162,32 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             _ = c.HPDF_Page_EndText(hpage);
             // debug
 
-            // // debug
-            // try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.PositionedBox.init(10, null, null, 10, Size.init(20, 20))));
-            // try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.PositionedBox.init(10, 10, null, null, Size.init(20, 20))));
-            // try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.PositionedBox.init(null, 10, 10, null, Size.init(20, 20))));
-            // try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.PositionedBox.init(null, null, 10, 10, Size.init(20, 20))));
-            // // debug
+            // debug
+            try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.PositionedBox.init(10, null, null, 10, Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.PositionedBox.init(10, 10, null, null, Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.PositionedBox.init(null, 10, 10, null, Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.PositionedBox.init(null, null, 10, 10, Size.init(20, 20))));
+            // debug
 
             // // debug
             // try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
             // // debug
         },
         .positioned_box => {
-            // FIXME
-            // const positioned_box = container.positioned_box;
-            // const content_frame = try self.renderPositionedBox(hpdf, hpage, rect, positioned_box);
-            // try self.content_frame_map.put(positioned_box.id, content_frame);
+            const positioned_box = container.positioned_box;
+            const content_frame = try self.renderPositionedBox(hpdf, hpage, rect, positioned_box);
+            try self.content_frame_map.put(positioned_box.id, content_frame);
 
-            // // debug
-            // try self.drawBorder(hpage, Border.init(Color.init("0000FF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
-            // _ = c.HPDF_Page_BeginText(hpage);
-            // _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
-            // _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
-            // // _ = c.HPDF_Page_MoveTextPos(hpage, content_frame.minX, content_frame.minY);
-            // // _ = c.HPDF_Page_ShowText(hpage, "HELLO!!");
-            // _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Positioned box's drawable rect.");
-            // _ = c.HPDF_Page_EndText(hpage);
-            // // debug
+            // debug
+            try self.drawBorder(hpage, Border.init(Color.init("0000FF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
+            _ = c.HPDF_Page_BeginText(hpage);
+            _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
+            _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
+            // _ = c.HPDF_Page_MoveTextPos(hpage, content_frame.minX, content_frame.minY);
+            // _ = c.HPDF_Page_ShowText(hpage, "HELLO!!");
+            _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Positioned box's drawable rect.");
+            _ = c.HPDF_Page_EndText(hpage);
+            // debug
         },
         .col => {},
         .row => {},
@@ -240,36 +239,32 @@ fn renderBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect
     return frame.insets(pad.top, pad.right, pad.bottom, pad.left);
 }
 
-// FIXME
-// fn renderPositionedBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, positioned_box: Container.PositionedBox) !Rect {
-//     _ = self;
-//     _ = hpdf;
-//     _ = hpage;
+fn renderPositionedBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, positioned_box: Container.PositionedBox) !Rect {
+    _ = self;
+    _ = hpdf;
+    _ = hpage;
 
-//     const point = parent_rect.origin;
-//     const size = positioned_box.size orelse parent_rect.size;
+    const size = positioned_box.size orelse parent_rect.size;
 
-//     var x: f32 = 0;
-//     var y: f32 = 0;
-//     if (positioned_box.left) |left| {
-//         x = left;
-//     }
-//     if (positioned_box.right) |right| {
-//         x = parent_rect.width - size.width - right;
-//     }
-//     if (positioned_box.top) |top| {
-//         y = top;
-//     }
-//     if (positioned_box.bottom) |bottom| {
-//         y = parent_rect.height - size.height - bottom;
-//     }
+    var x: f32 = 0;
+    var y: f32 = 0;
+    if (positioned_box.left) |left| {
+        x = left;
+    }
+    if (positioned_box.right) |right| {
+        x = parent_rect.width - size.width - right;
+    }
+    if (positioned_box.top) |top| {
+        y = top;
+    }
+    if (positioned_box.bottom) |bottom| {
+        y = parent_rect.height - size.height - bottom;
+    }
 
-//     // 描画は左下が原点のためY座標から高さを引く
-//     const frame = Rect.init(point.x + x, parent_rect.maxY - y - size.height, size.width, size.height);
-//     const bounds = Rect.init(0, 0, frame.width, frame.height);
+    const frame = parent_rect.offsetLTWH(x, y, size.width, size.height);
 
-//     return Rect.init(frame.minX, frame.minY, bounds.width, bounds.height);
-// }
+    return frame;
+}
 
 // FIXME
 // fn renderImage(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, alignment: ?Alignment, image: Container.Image) !Rect {
