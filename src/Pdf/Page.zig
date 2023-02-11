@@ -11,8 +11,8 @@ const Size = @import("Size.zig");
 alignment: ?Alignment,
 background_color: ?Color,
 border: ?Border,
-bounds: Rect,
 container: Container.Box,
+content_frame: Rect,
 frame: Rect,
 
 pub fn init(container: Container.Box, page_size: Size, background_color: ?Color, padding: ?Padding, alignment: ?Alignment, border: ?Border) Self {
@@ -25,8 +25,8 @@ pub fn init(container: Container.Box, page_size: Size, background_color: ?Color,
         .alignment = alignment,
         .background_color = background_color,
         .border = border,
-        .bounds = Rect.init(pad.left, pad.top, width - pad.left - pad.right, height - pad.top - pad.bottom),
         .container = container,
+        .content_frame = Rect.init(pad.left, pad.top, width - pad.left - pad.right, height - pad.top - pad.bottom),
         .frame = Rect.init(0, 0, width, height),
     };
 }
