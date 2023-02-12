@@ -77,8 +77,10 @@
           - [ ] TTF
           - [ ] Type1
         - [ ] TextSize
-      - [ ] Content:Image
+      - [x] Content:Image
         - [x] Path
+          - [x] JPEG
+          - [x] PNG
         - [x] Size
 
 ### Priority: Low

@@ -171,7 +171,7 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
 
             // debug
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.topRight, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.Image.init("src/images/sample.png", Size.init(20, 20))));
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomLeft, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
             // debug
         },
@@ -270,7 +270,8 @@ fn renderPositionedBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_
 fn renderImage(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, alignment: ?Alignment, image: Container.Image) !Rect {
     _ = self;
 
-    const himage = c.HPDF_LoadJpegImageFromFile(hpdf, image.path.ptr);
+    const extension = std.fs.path.extension(image.path);
+    const himage = if (std.mem.eql(u8, extension, ".png")) c.HPDF_LoadPngImageFromFile(hpdf, image.path.ptr) else c.HPDF_LoadJpegImageFromFile(hpdf, image.path.ptr);
     const imageWidth: f32 = @intToFloat(f32, c.HPDF_Image_GetWidth(himage));
     const imageHeight: f32 = @intToFloat(f32, c.HPDF_Image_GetHeight(himage));
 
