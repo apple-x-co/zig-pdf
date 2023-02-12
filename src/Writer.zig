@@ -163,17 +163,16 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             // debug
 
             // debug
-            try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.PositionedBox.init(10, null, null, 10, Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.PositionedBox.init(10, 10, null, null, Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.PositionedBox.init(null, 10, 10, null, Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.PositionedBox.init(null, null, 10, 10, Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.PositionedBox.init(10, null, null, 10, Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.PositionedBox.init(10, 10, null, null, Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.PositionedBox.init(null, 10, 10, null, Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.PositionedBox.init(null, null, 10, 10, Size.init(20, 20))));
             // debug
 
-            // TODO: TL.jpg, TC.jpg TR.jpg
-            // TODO: CL.jpg, C.jpg  CR.jpg
-            // TODO: BL.jpg, BC.jpg BR.jpg
             // debug
-            try self.renderContainer(hpdf, hpage, content_frame, box.alignment, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topRight, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomLeft, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
             // debug
         },
         .positioned_box => {
@@ -225,8 +224,8 @@ fn renderBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect
     var content_frame = parent_rect.offsetLTWH(0, 0, width, height);
 
     if (box.size != null and alignment != null) {
-        const x = alignment.?.x * (box.size.?.width / 2) + (box.size.?.width / 2);
-        const y = alignment.?.y * (box.size.?.height / 2) + (box.size.?.height / 2);
+        const x = (alignment.?.x * (box.size.?.width / 2) + (box.size.?.width / 2)) - (alignment.?.x * parent_rect.width / 2);
+        const y = (alignment.?.y * (box.size.?.height / 2) + (box.size.?.height / 2)) - (alignment.?.y * parent_rect.height / 2);
         content_frame = parent_rect.offsetCenterXYWH(x * -1, y * -1, box.size.?.width, box.size.?.height);
     }
 
@@ -280,11 +279,8 @@ fn renderImage(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Re
     var content_frame = parent_rect.offsetLTWH(0, 0, size.width, size.height);
 
     if (image.size != null and alignment != null) {
-        // const w = alignment.?.x * (image.size.?.width / 2) + (image.size.?.width / 2);
-        // const h = alignment.?.y * (image.size.?.height / 2) + (image.size.?.height / 2);
-        // content_frame = parent_rect.offsetCenterXYWH(w * -1, h * -1, image.size.?.width, image.size.?.height);
-        const x = alignment.?.x * (parent_rect.width / 2) + (parent_rect.width / 2);
-        const y = alignment.?.y * (parent_rect.height / 2) + (parent_rect.height / 2);
+        const x = (alignment.?.x * (image.size.?.width / 2) + (image.size.?.width / 2)) - (alignment.?.x * parent_rect.width / 2);
+        const y = (alignment.?.y * (image.size.?.height / 2) + (image.size.?.height / 2)) - (alignment.?.y * parent_rect.height / 2);
         content_frame = parent_rect.offsetCenterXYWH(x * -1, y * -1, image.size.?.width, image.size.?.height);
     }
 
@@ -389,7 +385,15 @@ test {
         Page.init(Container.Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EEEEEE"), Padding.init(10, 10, 10, 10), null, Border.init(Color.init("000090"), Border.Style.solid, 1, 1, 1, 1)),
         Page.init(Container.Box.init(false, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), null, Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
         Page.init(Container.Box.init(true, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), null, Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
+        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.topLeft, null),
+        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.topCenter, null),
+        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.topRight, null),
+        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.centerLeft, null),
         Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
+        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.centerRight, null),
+        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.bottomLeft, null),
+        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.bottomCenter, null),
+        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.bottomRight, null),
         Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(300, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
         Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(500, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
     };
