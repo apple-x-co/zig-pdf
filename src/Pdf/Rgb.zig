@@ -55,3 +55,53 @@ pub fn hex(value: []const u8) !Self {
         else => return init(0, 0, 0, 1),
     }
 }
+
+test {
+    const rgb = try hex("fff");
+    const red: u8 = 255;
+    const green: u8 = 255;
+    const blue: u8 = 255;
+    try std.testing.expectEqual(red, rgb.red);
+    try std.testing.expectEqual(green, rgb.green);
+    try std.testing.expectEqual(blue, rgb.blue);
+}
+
+test {
+    const rgb = try hex("000");
+    const red: u8 = 0;
+    const green: u8 = 0;
+    const blue: u8 = 0;
+    try std.testing.expectEqual(red, rgb.red);
+    try std.testing.expectEqual(green, rgb.green);
+    try std.testing.expectEqual(blue, rgb.blue);
+}
+
+test {
+    const rgb = try hex("FC0");
+    const red: u8 = 255;
+    const green: u8 = 204;
+    const blue: u8 = 0;
+    try std.testing.expectEqual(red, rgb.red);
+    try std.testing.expectEqual(green, rgb.green);
+    try std.testing.expectEqual(blue, rgb.blue);
+}
+
+test {
+    const rgb = try hex("FFCC00");
+    const red: u8 = 255;
+    const green: u8 = 204;
+    const blue: u8 = 0;
+    try std.testing.expectEqual(red, rgb.red);
+    try std.testing.expectEqual(green, rgb.green);
+    try std.testing.expectEqual(blue, rgb.blue);
+}
+
+test {
+    const rgb = try hex("FFCC00FF");
+    const red: u8 = 255;
+    const green: u8 = 204;
+    const blue: u8 = 0;
+    try std.testing.expectEqual(red, rgb.red);
+    try std.testing.expectEqual(green, rgb.green);
+    try std.testing.expectEqual(blue, rgb.blue);
+}
