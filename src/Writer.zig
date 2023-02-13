@@ -185,8 +185,10 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomLeft, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
             // debug
 
-            // debug image
+            // debug text
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topLeft, Container.make(Container.Text.init("HELLO TypogrAphy.")));
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.make(Container.Text.init("HELLO TypogrAphy.")));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomCenter, Container.make(Container.Text.init("HELLO TypogrAphy.")));
             // debug
         },
         .positioned_box => {
@@ -315,7 +317,6 @@ fn renderImage(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Re
 // TODO: 指定された幅で自動改行する版のテキストが必要
 fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, alignment: ?Alignment, text: Container.Text) !Rect {
     _ = self;
-    _ = alignment;
 
     const font: c.HPDF_Font = c.HPDF_GetFont(hpdf, default_font_name, default_font_encode_name);
     const font_size = text.text_size orelse default_text_size;
@@ -326,6 +327,12 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
     const size = Size.init(width, ascent - descent);
 
     var content_frame = parent_rect.offsetLTWH(0, 0, size.width, size.height);
+
+    if (alignment != null) {
+        const x = (alignment.?.x * (size.width / 2) + (size.width / 2)) - (alignment.?.x * parent_rect.width / 2);
+        const y = (alignment.?.y * (size.height / 2) + (size.height / 2)) - (alignment.?.y * parent_rect.height / 2);
+        content_frame = parent_rect.offsetCenterXYWH(x * -1, y * -1, size.width, size.height);
+    }
 
     _ = c.HPDF_Page_BeginText(hpage);
     _ = c.HPDF_Page_SetRGBFill(hpage, 0.0, 0.0, 0.0);

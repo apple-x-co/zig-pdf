@@ -69,7 +69,7 @@
         - [ ] Alignment
         - [ ] Children
       - [ ] Content:Text
-        - [ ] Content
+        - [x] Content
         - [ ] Color
         - [ ] Font
           - [ ] Name, EncodingName
