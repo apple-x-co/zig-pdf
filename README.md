@@ -76,7 +76,7 @@
           - [ ] TTC
           - [ ] TTF
           - [ ] Type1
-        - [ ] TextSize
+        - [x] TextSize
         - [ ] MaxLines
         - [ ] SoftWrap
       - [x] Content:Image
