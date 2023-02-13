@@ -15,7 +15,7 @@ pub const Container = union(enum) {
     text: Text,
 };
 
-pub fn make(container: anytype) Container {
+pub fn wrap(container: anytype) Container {
     return switch (@TypeOf(container)) {
         Box => Container{ .box = container },
         Col => Container{ .col = container },

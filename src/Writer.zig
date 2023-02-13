@@ -151,7 +151,7 @@ fn renderPage(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
         try self.drawBorder(hpage, border, page.content_frame);
     }
 
-    try self.renderContainer(hpdf, hpage, page.content_frame, page.alignment, Container.make(page.container));
+    try self.renderContainer(hpdf, hpage, page.content_frame, page.alignment, Container.wrap(page.container));
 }
 
 fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect, alignment: ?Alignment, container: Container.Container) !void {
@@ -173,23 +173,23 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             // debug
 
             // debug positioned_box
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.PositionedBox.init(10, null, null, 10, Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.PositionedBox.init(10, 10, null, null, Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.PositionedBox.init(null, 10, 10, null, Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.PositionedBox.init(null, null, 10, 10, Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.PositionedBox.init(10, null, null, 10, Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.PositionedBox.init(10, 10, null, null, Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.PositionedBox.init(null, 10, 10, null, Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.PositionedBox.init(null, null, 10, 10, Size.init(20, 20))));
             // debug
 
             // debug image
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topRight, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.Image.init("src/images/sample.png", Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomLeft, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topRight, Container.wrap(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.Image.init("src/images/sample.png", Size.init(20, 20))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomLeft, Container.wrap(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
             // debug
 
             // debug text
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topCenter, Container.make(Container.Text.init("HELLO TypogrAphy.", Color.init("FF00FF"), 16)));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.make(Container.Text.init("HELLO TypogrAphy.", null, null)));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerLeft, Container.make(Container.Text.init("HELLO TypogrAphy.", null, null)));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomCenter, Container.make(Container.Text.init("HELLO TypogrAphy.", null, null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", Color.init("FF00FF"), 16)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerLeft, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null)));
             // debug
         },
         .positioned_box => {
