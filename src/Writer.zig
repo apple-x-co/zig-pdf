@@ -10,6 +10,9 @@ const Color = @import("Pdf/Color.zig");
 const CompressionMode = @import("Compression.zig").CompressionMode;
 const Container = @import("Pdf/Container.zig");
 const Date = @import("Date.zig");
+const default_font_encode_name = "90ms-RKSJ-H";
+const default_font_name = "MS-Gothic";
+const default_text_size: f32 = 8;
 const EncryptionMode = @import("Encryption.zig").EncryptionMode;
 const Padding = @import("Pdf/Padding.zig");
 const Page = @import("Pdf/Page.zig");
@@ -21,18 +24,21 @@ const Size = @import("Pdf/Size.zig");
 
 allocator: std.mem.Allocator,
 content_frame_map: std.AutoHashMap(u32, Rect),
+// font_map: std.StringHashMap(c.HPDF_Font),
 pdf: Pdf,
 
 pub fn init(allocator: std.mem.Allocator, pdf: Pdf) Self {
     return .{
         .allocator = allocator,
         .content_frame_map = std.AutoHashMap(u32, Rect).init(allocator),
+        // .font_map = std.StringHashMap(c.HPDF_Font).init(allocator),
         .pdf = pdf,
     };
 }
 
 pub fn deinit(self: *Self) void {
     self.content_frame_map.deinit();
+    // self.font_map.deinit();
 }
 
 pub fn save(self: *Self, file_name: []const u8) !void {
@@ -40,6 +46,10 @@ pub fn save(self: *Self, file_name: []const u8) !void {
     defer c.HPDF_Free(hpdf);
 
     self.setPdfAttributes(hpdf);
+
+    // const font: c.HPDF_Font = c.HPDF_GetFont(hpdf, "MS-Gothic", "90ms-RKSJ-H");
+    // try self.font_map.put("default", font);
+    // _ = try self.font_map.get("default"); // FIXME: error: expected error union type, found '?[*c].xxxxx.zig-cache.o.f626383f61633cb0db6ac93886e75491.cimport.struct__HPDF_Dict_Rec'
 
     for (self.pdf.pages) |page| {
         const hpage = c.HPDF_AddPage(hpdf);
@@ -162,17 +172,21 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             _ = c.HPDF_Page_EndText(hpage);
             // debug
 
-            // debug
+            // debug positioned_box
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.PositionedBox.init(10, null, null, 10, Size.init(20, 20))));
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.PositionedBox.init(10, 10, null, null, Size.init(20, 20))));
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.PositionedBox.init(null, 10, 10, null, Size.init(20, 20))));
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.PositionedBox.init(null, null, 10, 10, Size.init(20, 20))));
             // debug
 
-            // debug
+            // debug image
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.topRight, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.make(Container.Image.init("src/images/sample.png", Size.init(20, 20))));
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomLeft, Container.make(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
+            // debug
+
+            // debug image
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.make(Container.Text.init("HELLO TypogrAphy.")));
             // debug
         },
         .positioned_box => {
@@ -209,7 +223,15 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             _ = c.HPDF_Page_EndText(hpage);
             // debug
         },
-        .text => {},
+        .text => {
+            const text = container.text;
+            const content_frame = try self.renderText(hpdf, hpage, rect, alignment, text);
+            try self.content_frame_map.put(text.id, content_frame);
+
+            // debug
+            try self.drawBorder(hpage, Border.init(Color.init("FF00FF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
+            // debug
+        },
     }
 }
 
@@ -286,6 +308,30 @@ fn renderImage(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Re
     }
 
     _ = c.HPDF_Page_DrawImage(hpage, himage, content_frame.minX, content_frame.minY, content_frame.width, content_frame.height);
+
+    return content_frame;
+}
+
+// TODO: 指定された幅で自動改行する版のテキストが必要
+fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, alignment: ?Alignment, text: Container.Text) !Rect {
+    _ = self;
+    _ = alignment;
+
+    const font: c.HPDF_Font = c.HPDF_GetFont(hpdf, default_font_name, default_font_encode_name);
+    const font_size = text.text_size orelse default_text_size;
+    _ = c.HPDF_Page_SetFontAndSize(hpage, font, font_size);
+    const width = (@intToFloat(f32, c.HPDF_Font_TextWidth(font, text.content.ptr, @intCast(c_uint, text.content.len)).width) / 1000) * font_size;
+    const ascent = (@intToFloat(f32, c.HPDF_Font_GetAscent(font)) / 1000) * font_size;
+    const descent = (@intToFloat(f32, c.HPDF_Font_GetDescent(font)) / 1000) * font_size;
+    const size = Size.init(width, ascent - descent);
+
+    var content_frame = parent_rect.offsetLTWH(0, 0, size.width, size.height);
+
+    _ = c.HPDF_Page_BeginText(hpage);
+    _ = c.HPDF_Page_SetRGBFill(hpage, 0.0, 0.0, 0.0);
+    _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
+    _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY - descent, text.content.ptr);
+    _ = c.HPDF_Page_EndText(hpage);
 
     return content_frame;
 }
