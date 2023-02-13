@@ -186,8 +186,9 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             // debug
 
             // debug text
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topLeft, Container.make(Container.Text.init("HELLO TypogrAphy.", Color.init("FF00FF"), null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topCenter, Container.make(Container.Text.init("HELLO TypogrAphy.", Color.init("FF00FF"), 16)));
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.make(Container.Text.init("HELLO TypogrAphy.", null, null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerLeft, Container.make(Container.Text.init("HELLO TypogrAphy.", null, null)));
             try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomCenter, Container.make(Container.Text.init("HELLO TypogrAphy.", null, null)));
             // debug
         },
@@ -319,11 +320,11 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
     _ = self;
 
     const font: c.HPDF_Font = c.HPDF_GetFont(hpdf, default_font_name, default_font_encode_name);
-    const font_size = text.text_size orelse default_text_size;
-    _ = c.HPDF_Page_SetFontAndSize(hpage, font, font_size);
-    const width = (@intToFloat(f32, c.HPDF_Font_TextWidth(font, text.content.ptr, @intCast(c_uint, text.content.len)).width) / 1000) * font_size;
-    const ascent = (@intToFloat(f32, c.HPDF_Font_GetAscent(font)) / 1000) * font_size;
-    const descent = (@intToFloat(f32, c.HPDF_Font_GetDescent(font)) / 1000) * font_size;
+    const text_size = text.text_size orelse default_text_size;
+    _ = c.HPDF_Page_SetFontAndSize(hpage, font, text_size);
+    const width = (@intToFloat(f32, c.HPDF_Font_TextWidth(font, text.content.ptr, @intCast(c_uint, text.content.len)).width) / 1000) * text_size;
+    const ascent = (@intToFloat(f32, c.HPDF_Font_GetAscent(font)) / 1000) * text_size;
+    const descent = (@intToFloat(f32, c.HPDF_Font_GetDescent(font)) / 1000) * text_size;
     const size = Size.init(width, ascent - descent);
 
     var content_frame = parent_rect.offsetLTWH(0, 0, size.width, size.height);
