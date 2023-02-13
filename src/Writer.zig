@@ -186,9 +186,9 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             // debug
 
             // debug text
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topLeft, Container.make(Container.Text.init("HELLO TypogrAphy.")));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.make(Container.Text.init("HELLO TypogrAphy.")));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomCenter, Container.make(Container.Text.init("HELLO TypogrAphy.")));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topLeft, Container.make(Container.Text.init("HELLO TypogrAphy.", Color.init("FF00FF"), null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.make(Container.Text.init("HELLO TypogrAphy.", null, null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomCenter, Container.make(Container.Text.init("HELLO TypogrAphy.", null, null)));
             // debug
         },
         .positioned_box => {
@@ -336,6 +336,15 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
 
     _ = c.HPDF_Page_BeginText(hpage);
     _ = c.HPDF_Page_SetRGBFill(hpage, 0.0, 0.0, 0.0);
+    if (text.color) |text_color| {
+        if (text_color.value) |hex| {
+            const rgb = try Rgb.hex(hex);
+            const red = @intToFloat(f32, rgb.red) / 255;
+            const green = @intToFloat(f32, rgb.green) / 255;
+            const blue = @intToFloat(f32, rgb.blue) / 255;
+            _ = c.HPDF_Page_SetRGBFill(hpage, red, green, blue);
+        }
+    }
     _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
     _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY - descent, text.content.ptr);
     _ = c.HPDF_Page_EndText(hpage);

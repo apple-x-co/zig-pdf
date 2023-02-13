@@ -70,13 +70,15 @@
         - [ ] Children
       - [ ] Content:Text
         - [x] Content
-        - [ ] Color
+        - [x] Color
         - [ ] Font
           - [ ] Name, EncodingName
           - [ ] TTC
           - [ ] TTF
           - [ ] Type1
         - [ ] TextSize
+        - [ ] MaxLines
+        - [ ] SoftWrap
       - [x] Content:Image
         - [x] Path
           - [x] JPEG
