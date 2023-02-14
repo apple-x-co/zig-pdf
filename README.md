@@ -71,11 +71,11 @@
       - [ ] Content:Text
         - [x] Content
         - [x] Color
-        - [ ] Font
-          - [ ] Name, EncodingName
-          - [ ] TTC
-          - [ ] TTF
-          - [ ] Type1
+        - [x] Font
+          - [x] Named
+          - [x] TTC
+          - [x] TTF
+          - [x] Type1
         - [x] TextSize
         - [ ] MaxLines
         - [ ] SoftWrap
