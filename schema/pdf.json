@@ -158,15 +158,28 @@
       "description": "フォントを設定",
       "type": "object",
       "properties": {
-        "name": {
-          "title": "フォント名",
-          "type": "string",
-          "minLength": 1
-        },
-        "encodingName": {
-          "title": "エンコーディング名",
-          "type": "string",
-          "minLength": 1
+        "named": {
+          "title": "標準フォント",
+          "type": "object",
+          "properties": {
+            "name": {
+              "title": "フォント名",
+              "type": "string",
+              "minLength": 1
+            },
+            "encodingName": {
+              "title": "エンコーディング名",
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": ["90ms-RKSJ-H", "90ms-RKSJ-V", "90msp-RKSJ-H", "EUC-H", "EUC-V", null]
+            }  
+          },
+          "required": [
+            "name",
+            "encodingName"
+          ]
         },
         "ttc": {
           "title": "TTCフォト",
@@ -186,12 +199,21 @@
               "title": "埋め込み",
               "type": "boolean",
               "default": false
+            },
+            "encodingName": {
+              "title": "エンコーディング名",
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": ["90ms-RKSJ-H", "90ms-RKSJ-V", "90msp-RKSJ-H", "EUC-H", "EUC-V", null]
             }
           },
           "required": [
             "filePath",
             "index",
-            "embedding"
+            "embedding",
+            "encodingName"
           ]
         },
         "ttf": {
@@ -205,11 +227,20 @@
             "embedding": {
               "title": "埋め込み",
               "type": "boolean"
+            },
+            "encodingName": {
+              "title": "エンコーディング名",
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": ["90ms-RKSJ-H", "90ms-RKSJ-V", "90msp-RKSJ-H", "EUC-H", "EUC-V", null]
             }
           },
           "required": [
             "filePath",
-            "embedding"
+            "embedding",
+            "encodingName"
           ]
         },
         "type1": {
@@ -223,11 +254,20 @@
             "dataFilePath": {
               "title": "データファイルパス",
               "type": "string"
+            },
+            "encodingName": {
+              "title": "エンコーディング名",
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": ["90ms-RKSJ-H", "90ms-RKSJ-V", "90msp-RKSJ-H", "EUC-H", "EUC-V", null]
             }
           },
           "required": [
             "armFilePath",
-            "dataFilePath"
+            "dataFilePath",
+            "encodingName"
           ]
         }
       }

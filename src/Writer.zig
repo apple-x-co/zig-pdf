@@ -14,6 +14,7 @@ const default_font_encode_name = "90ms-RKSJ-H";
 const default_font_name = "MS-Gothic";
 const default_text_size: f32 = 8;
 const EncryptionMode = @import("Encryption.zig").EncryptionMode;
+const Font = @import("Pdf/Font.zig");
 const Padding = @import("Pdf/Padding.zig");
 const Page = @import("Pdf/Page.zig");
 const Pdf = @import("Pdf.zig");
@@ -186,10 +187,10 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             // debug
 
             // debug text
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", Color.init("FF00FF"), 16)));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null)));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerLeft, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null)));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", Color.init("FF00FF"), 16, Font.wrap(Font.NamedFont.init("Helvetica", null)))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, null)))));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerLeft, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null, null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null, null)));
             // debug
         },
         .positioned_box => {
@@ -319,12 +320,39 @@ fn renderImage(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Re
 fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, alignment: ?Alignment, text: Container.Text) !Rect {
     _ = self;
 
-    const font: c.HPDF_Font = c.HPDF_GetFont(hpdf, default_font_name, default_font_encode_name);
+    var hfont: c.HPDF_Font = null;
+    if (text.font) |font| {
+        switch (font) {
+            .named_font => {
+                const named_font = font.named_font;
+                hfont = c.HPDF_GetFont(hpdf, named_font.name.ptr, if (named_font.encoding_name == null) null else named_font.encoding_name.?.ptr);
+            },
+            .ttc => {
+                const ttc = font.ttc;
+                const name = c.HPDF_LoadTTFontFromFile2(hpdf, ttc.file_path.ptr, ttc.index, if (ttc.embedding) c.HPDF_TRUE else c.HPDF_FALSE);
+                hfont = c.HPDF_GetFont(hpdf, name, if (ttc.encoding_name == null) null else ttc.encoding_name.?.ptr);
+            },
+            .ttf => {
+                const ttf = font.ttf;
+                const name = c.HPDF_LoadTTFontFromFile(hpdf, ttf.file_path.ptr, if (ttf.embedding) c.HPDF_TRUE else c.HPDF_FALSE);
+                hfont = c.HPDF_GetFont(hpdf, name, if (ttf.encoding_name == null) null else ttf.encoding_name.?.ptr);
+            },
+            .type1 => {
+                const type1 = font.type1;
+                const name = c.HPDF_LoadType1FontFromFile(hpdf, type1.arm_file_path.ptr, type1.data_file_path.ptr);
+                hfont = c.HPDF_GetFont(hpdf, name, if (type1.encoding_name == null) null else type1.encoding_name.?.ptr);
+            },
+        }
+    }
+    if (hfont == null) {
+        hfont = c.HPDF_GetFont(hpdf, default_font_name, default_font_encode_name);
+    }
+
     const text_size = text.text_size orelse default_text_size;
-    _ = c.HPDF_Page_SetFontAndSize(hpage, font, text_size);
-    const width = (@intToFloat(f32, c.HPDF_Font_TextWidth(font, text.content.ptr, @intCast(c_uint, text.content.len)).width) / 1000) * text_size;
-    const ascent = (@intToFloat(f32, c.HPDF_Font_GetAscent(font)) / 1000) * text_size;
-    const descent = (@intToFloat(f32, c.HPDF_Font_GetDescent(font)) / 1000) * text_size;
+    _ = c.HPDF_Page_SetFontAndSize(hpage, hfont, text_size);
+    const width = (@intToFloat(f32, c.HPDF_Font_TextWidth(hfont, text.content.ptr, @intCast(c_uint, text.content.len)).width) / 1000) * text_size;
+    const ascent = (@intToFloat(f32, c.HPDF_Font_GetAscent(hfont)) / 1000) * text_size;
+    const descent = (@intToFloat(f32, c.HPDF_Font_GetDescent(hfont)) / 1000) * text_size;
     const size = Size.init(width, ascent - descent);
 
     var content_frame = parent_rect.offsetLTWH(0, 0, size.width, size.height);
