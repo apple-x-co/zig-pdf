@@ -368,21 +368,15 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
     if (soft_wrap) {
         const word_space = c.HPDF_Page_GetWordSpace(hpage);
         const char_space = c.HPDF_Page_GetCharSpace(hpage);
-        const text_reading = c.HPDF_Page_GetTextLeading(hpage);
-        std.log.warn("word_space:{d}, char_space:{d}, text_reading:{d}", .{word_space, char_space, text_reading});
+        // const text_leading = c.HPDF_Page_GetTextLeading(hpage);
 
         // ページ設定で指定した幅の中に配置できる文字の数を計算する - HPDF_Page_MeasureText
         // 指定した幅の中に配置できる文字の数を計算する - HPDF_Font_MeasureText
         var real_width: c.HPDF_REAL = 0;
-        _ = c.HPDF_Page_MeasureText(hpage, text.content.ptr, parent_rect.width, c.HPDF_FALSE, &real_width);
+        // _ = c.HPDF_Page_MeasureText(hpage, text.content.ptr, parent_rect.width, c.HPDF_FALSE, &real_width);
         _ = c.HPDF_Font_MeasureText(hfont, text.content.ptr, text_len, parent_rect.width, text_size, char_space, word_space, c.HPDF_FALSE, &real_width);
         if (size.width > real_width) {
             const number_lines = @ceil(size.width / real_width);
-            const text_leading = c.HPDF_Page_GetTextLeading(hpage);
-            // const line_height = font_height + text_leading;
-            // std.log.warn("{s}, size width: {d}, real_width:{d}, number_lines:{d}, font_height:{d}, text_leading:{d}, line_height:{d}\n", .{text.content, size.width, real_width, number_lines, font_height, text_leading, line_height});
-            std.log.warn("{s}, size width: {d}, real_width:{d}, number_lines:{d}, font_height:{d} text_leading:{d}", .{text.content, size.width, real_width, number_lines, font_height, text_leading});
-
             size = Size.init(real_width, (font_height * number_lines));
         } else {
             soft_wrap = false;
@@ -410,7 +404,7 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
     }
     _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
     if (soft_wrap) {
-        _ = c.HPDF_Page_TextRect(hpage, content_frame.minX, content_frame.maxY, content_frame.maxX, content_frame.minY + descent, text.content.ptr, c.HPDF_TALIGN_LEFT, null);
+        _ = c.HPDF_Page_TextRect(hpage, content_frame.minX, content_frame.maxY + descent, content_frame.maxX, content_frame.minY + descent, text.content.ptr, c.HPDF_TALIGN_LEFT, null);
     } else {
         _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY + descent, text.content.ptr);
     }
