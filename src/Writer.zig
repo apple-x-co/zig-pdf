@@ -187,10 +187,10 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             // debug
 
             // debug text
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", Color.init("FF00FF"), 16, Font.wrap(Font.NamedFont.init("Helvetica", null)), true)));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.wrap(Container.Text.init("ABCDEFGHIJKLMNOPQRSTUVWXYZ.", null, null, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, null)), null)));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerLeft, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null, null, null)));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null, null, null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", Color.init("FF00FF"), 16, Font.wrap(Font.NamedFont.init("Helvetica", null)), true, 5, null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.wrap(Container.Text.init("ABCDEFGHIJKLMNOPQRSTUVWXYZ.", null, null, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, null)), null, null, null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerLeft, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null, null, null, null, null)));
+            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null, null, null, null, null)));
             // debug
         },
         .positioned_box => {
@@ -210,7 +210,7 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             // debug
 
             // debug text
-            try self.renderContainer(hpdf, hpage, content_frame, alignment, Container.wrap(Container.Text.init("Typo grAp", null, 6, null, true)));
+            try self.renderContainer(hpdf, hpage, content_frame, alignment, Container.wrap(Container.Text.init("Typo grAp", null, 6, null, true, null, null)));
             // debug
         },
         .col => {},
@@ -354,26 +354,27 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
     }
 
     const text_size = text.text_size orelse default_text_size;
+    const word_space = text.word_space orelse 0;
+    const char_space = text.char_space orelse 0;
+    var soft_wrap = text.soft_wrap;
+
     _ = c.HPDF_Page_SetFontAndSize(hpage, hfont, text_size);
+    _ = c.HPDF_Page_SetWordSpace(hpage, word_space);
+    _ = c.HPDF_Page_SetCharSpace(hpage, char_space);
+
     const text_len = @intCast(c_uint, text.content.len);
-    const width = (@intToFloat(f32, c.HPDF_Font_TextWidth(hfont, text.content.ptr, text_len).width) / 1000) * text_size;
+    const text_width = c.HPDF_Font_TextWidth(hfont, text.content.ptr, text_len);
+    const width = ((@intToFloat(f32, text_width.width) / 1000) * text_size) + (word_space * @intToFloat(f32, text_width.numwords - 1)) + (char_space * @intToFloat(f32, text_width.numchars - 1));
     // const ascent = ((@intToFloat(f32, c.HPDF_Font_GetAscent(hfont)) / 1000) * text_size);
     const descent = (@intToFloat(f32, c.HPDF_Font_GetDescent(hfont) * -1) / 1000) * text_size;
     // const font_height = ascent + descent;
     const b_box = c.HPDF_Font_GetBBox(hfont);
     const line_height = ((b_box.top + (b_box.bottom * -1)) / 1000) * text_size;
     var size = Size.init(width, line_height);
-    var soft_wrap = text.soft_wrap;
 
-    _ = c.HPDF_Page_SetWordSpace(hpage, 0); // TODO: 単語間隔
-    _ = c.HPDF_Page_SetCharSpace(hpage, 0); // TODO: 文字間隔
     _ = c.HPDF_Page_SetTextLeading(hpage, line_height);
 
     if (soft_wrap) {
-        const word_space = c.HPDF_Page_GetWordSpace(hpage);
-        const char_space = c.HPDF_Page_GetCharSpace(hpage);
-        // const text_leading = c.HPDF_Page_GetTextLeading(hpage);
-
         // ページ設定で指定した幅の中に配置できる文字の数を計算する - HPDF_Page_MeasureText
         // 指定した幅の中に配置できる文字の数を計算する - HPDF_Font_MeasureText
         var real_width: c.HPDF_REAL = 0;
@@ -381,7 +382,7 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
         _ = c.HPDF_Font_MeasureText(hfont, text.content.ptr, text_len, parent_rect.width, text_size, char_space, word_space, c.HPDF_FALSE, &real_width);
         if (size.width - real_width > 1.0) {
             const number_lines = @ceil(size.width / real_width);
-            size = Size.init(real_width, (line_height * number_lines));
+            size = Size.init(real_width, line_height * number_lines);
         } else {
             soft_wrap = false;
         }

@@ -68,7 +68,7 @@
       - [ ] Layout:Col
         - [ ] Alignment
         - [ ] Children
-      - [ ] Content:Text
+      - [x] Content:Text
         - [x] Content
         - [x] Color
         - [x] Font
@@ -78,8 +78,8 @@
           - [x] Type1
         - [x] TextSize
         - [x] SoftWrap
-        - [ ] WordSpace
-        - [ ] CharSpace
+        - [x] WordSpace
+        - [x] CharSpace
       - [x] Content:Image
         - [x] Path
           - [x] JPEG
