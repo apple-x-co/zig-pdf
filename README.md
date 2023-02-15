@@ -77,10 +77,9 @@
           - [x] TTF
           - [x] Type1
         - [x] TextSize
-        - [ ] SoftWrap *(WIP)*
+        - [x] SoftWrap
         - [ ] WordSpace
         - [ ] CharSpace
-        - [ ] TextLeading
       - [x] Content:Image
         - [x] Path
           - [x] JPEG
