@@ -459,6 +459,11 @@
           "$ref": "#/definitions/container_type",
           "enum": ["text"]
         },
+        "char_space": {
+          "title": "文字間幅",
+          "type": "number",
+          "minimum": 0
+        },
         "content": {
           "title": "テキスト内容",
           "type": "string",
@@ -472,6 +477,11 @@
         },
         "textSize": {
           "$ref": "#/definitions/textSize"
+        },
+        "word_space": {
+          "title": "単語間幅",
+          "type": "number",
+          "minimum": 0
         }
       },
       "required": [
