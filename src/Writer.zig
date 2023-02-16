@@ -413,7 +413,19 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
     // 指定した位置にテキストを表示する - HPDF_Page_TextOut
     // ページの現在位置にテキストを表示する - HPDF_Page_ShowText
     if (soft_wrap) {
+        // "HPDF_Page_TextRect" は単語の途中で改行されない
         _ = c.HPDF_Page_TextRect(hpage, content_frame.minX, content_frame.maxY, content_frame.maxX, content_frame.minY, text.content.ptr, c.HPDF_TALIGN_LEFT, null);
+
+        // 上記問題を解決するために以下実装を試したが、言語側の問題なのかライブラリ側の問題なのか、複数箇所で出力を行うと文字化けやおかしな状態になる。
+        // _ = c.HPDF_Page_MoveTextPos(hpage, content_frame.minX, content_frame.maxY - line_height + descent);
+        // for (text.content) |char| {
+        //     const x = c.HPDF_Page_GetCurrentTextPos(hpage).x;
+        //     const w = emToPoint(@intToFloat(f32, c.HPDF_Font_TextWidth(hfont, &[_]u8{char}, 1).width), text_size);
+        //     if (x + w > content_frame.maxX) {
+        //         _ = c.HPDF_Page_MoveToNextLine(hpage);
+        //     }
+        //     _ = c.HPDF_Page_ShowText(hpage, &[_]u8{char});
+        // }
     } else {
         _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY + descent, text.content.ptr);
     }
@@ -498,6 +510,10 @@ fn drawBorder(self: Self, hpage: c.HPDF_Page, border: Border, rect: Rect) !void 
         _ = c.HPDF_Page_LineTo(hpage, rect.minX, rect.maxY);
         _ = c.HPDF_Page_Stroke(hpage);
     }
+}
+
+fn emToPoint(em: f32, text_size: f32) f32 {
+    return (em / 1000) * text_size;
 }
 
 fn errorEandler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?*anyopaque) callconv(.C) void {
