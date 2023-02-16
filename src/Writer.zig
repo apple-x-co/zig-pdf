@@ -144,7 +144,9 @@ fn renderPage(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
     _ = c.HPDF_Page_SetWidth(hpage, page.frame.width);
     _ = c.HPDF_Page_SetHeight(hpage, page.frame.height);
 
-    grid.printGrid(hpdf, hpage); // for debug
+    if (self.is_debug) {
+        grid.printGrid(hpdf, hpage);
+    }
 
     if (page.background_color) |background_color| {
         try self.drawBackground(hpage, background_color, page.frame);
@@ -560,8 +562,36 @@ test "permission" {
         Page.init(Container.wrap(Container.Box.init(false, null, null, null, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "permission", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/permission.pdf");
+}
+
+test "page" {
+    const permissions = [_]PermissionName{
+        PermissionName.read,
+        PermissionName.edit_all,
+    };
+
+    var pages = [_]Page{
+        Page.init(Container.wrap(Container.Text.init("Background color #EFEFEF", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EFEFEF"), null, null, null),
+        Page.init(Container.wrap(Container.Text.init("Padding color (10, 10, 10, 10)", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment top x left", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topLeft, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment top x center", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topCenter, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment top x right", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topRight, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment center x left", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.centerLeft, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment center", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.center, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment center x right", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.centerRight, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment bottom x left", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomLeft, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment bottom x center", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomCenter, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment bottom x right", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomRight, null),
+        Page.init(Container.wrap(Container.Text.init("Border", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 5, 5, 5, 5)),
+        Page.init(Container.wrap(Container.Text.init("All page properties", null, null, null, true, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), Alignment.topRight, Border.init(Color.init("FFF00F"), Border.Style.dot, 5, 5, 5, 5)),
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "page", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var pdfWriter = init(std.testing.allocator, pdf, true);
+    defer pdfWriter.deinit();
+    try pdfWriter.save("demo/page.pdf");
 }
