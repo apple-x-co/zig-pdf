@@ -621,7 +621,7 @@ test "box" {
         Page.init(Container.wrap(Container.Box.init(false, Alignment.center, Color.init("EFEFEF"), Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), null, Padding.init(10, 10, 10, 10), Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), Alignment.center, null),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "page", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "box", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/box.pdf");
@@ -645,8 +645,27 @@ test "positioned_box" {
         Page.init(Container.wrap(Container.PositionedBox.init(null, 50, 50, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "page", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "positioned_box", CompressionMode.text, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/positioned_box.pdf");
+}
+
+test "image" {
+    const permissions = [_]PermissionName{
+        PermissionName.read,
+        PermissionName.edit_all,
+    };
+
+    var pages = [_]Page{
+        Page.init(Container.wrap(Container.Image.init("src/images/sample.jpg", null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.Image.init("src/images/sample.png", null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.Image.init("src/images/sample.png", Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.Image.init("src/images/sample.png", Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "image", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var pdfWriter = init(std.testing.allocator, pdf, true);
+    defer pdfWriter.deinit();
+    try pdfWriter.save("demo/image.pdf");
 }
