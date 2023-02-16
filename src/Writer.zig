@@ -167,8 +167,6 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             _ = c.HPDF_Page_BeginText(hpage);
             _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
             _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
-            // _ = c.HPDF_Page_MoveTextPos(hpage, content_frame.minX, content_frame.minY);
-            // _ = c.HPDF_Page_ShowText(hpage, "HELLO!!");
             _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Page container's drawable rect.");
             _ = c.HPDF_Page_EndText(hpage);
             // debug
@@ -203,8 +201,6 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             _ = c.HPDF_Page_BeginText(hpage);
             _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
             _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
-            // _ = c.HPDF_Page_MoveTextPos(hpage, content_frame.minX, content_frame.minY);
-            // _ = c.HPDF_Page_ShowText(hpage, "HELLO!!");
             _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Positioned box's drawable rect.");
             _ = c.HPDF_Page_EndText(hpage);
             // debug
@@ -225,8 +221,6 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             _ = c.HPDF_Page_BeginText(hpage);
             _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
             _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
-            // _ = c.HPDF_Page_MoveTextPos(hpage, content_frame.minX, content_frame.minY);
-            // _ = c.HPDF_Page_ShowText(hpage, "HELLO!!");
             _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Image's rect.");
             _ = c.HPDF_Page_EndText(hpage);
             // debug
