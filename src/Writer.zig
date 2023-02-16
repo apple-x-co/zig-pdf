@@ -250,12 +250,7 @@ fn renderPositionedBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_
     _ = hpage;
 
     if (positioned_box.size == null) {
-        return parent_rect.insets(
-            positioned_box.top orelse 0,
-            positioned_box.right orelse 0,
-            positioned_box.bottom orelse 0,
-            positioned_box.left orelse 0
-        );
+        return parent_rect.insets(positioned_box.top orelse 0, positioned_box.right orelse 0, positioned_box.bottom orelse 0, positioned_box.left orelse 0);
     }
 
     const size = positioned_box.size.?;
