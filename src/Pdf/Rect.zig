@@ -32,7 +32,7 @@ pub fn init(x: f32, y: f32, width: f32, height: f32) Self {
 }
 
 pub fn insets(self: Self, top: ?f32, right: ?f32, bottom: ?f32, left: ?f32) Self {
-    return init(self.minX + (left orelse 0), self.minY + (bottom orelse 0), self.width - (left orelse 0) - (right orelse 0), self.height - (top orelse 0) - (right orelse 0));
+    return init(self.minX + (left orelse 0), self.minY + (bottom orelse 0), self.width - (left orelse 0) - (right orelse 0), self.height - (top orelse 0) - (bottom orelse 0));
 }
 
 pub fn offsetLTWH(self: Self, left: f32, top: f32, width: f32, height: f32) Self {

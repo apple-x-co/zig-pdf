@@ -249,7 +249,16 @@ fn renderPositionedBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_
     _ = hpdf;
     _ = hpage;
 
-    const size = positioned_box.size orelse parent_rect.size;
+    if (positioned_box.size == null) {
+        return parent_rect.insets(
+            positioned_box.top orelse 0,
+            positioned_box.right orelse 0,
+            positioned_box.bottom orelse 0,
+            positioned_box.left orelse 0
+        );
+    }
+
+    const size = positioned_box.size.?;
 
     var x: f32 = 0;
     var y: f32 = 0;
@@ -616,4 +625,28 @@ test "box" {
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/box.pdf");
+}
+
+test "positioned_box" {
+    const permissions = [_]PermissionName{
+        PermissionName.read,
+        PermissionName.edit_all,
+    };
+
+    var pages = [_]Page{
+        Page.init(Container.wrap(Container.PositionedBox.init(50, null, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, 50, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, null, 50, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, null, null, 50, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(50, 50, 50, 50, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(50, 50, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, null, 50, 50, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, 50, 50, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "page", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var pdfWriter = init(std.testing.allocator, pdf, true);
+    defer pdfWriter.deinit();
+    try pdfWriter.save("demo/positioned_box.pdf");
 }
