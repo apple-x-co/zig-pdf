@@ -64,13 +64,10 @@ pub fn save(self: *Self, file_name: []const u8) !void {
 }
 
 fn setPdfAttributes(self: Self, hpdf: c.HPDF_Doc) void {
-    if (! self.is_debug) {
-        const date = Date.now();
-        const hdate = c.HPDF_Date{ .year = date.year, .month = date.month, .day = date.day, .hour = date.hours, .minutes = date.minutes, .seconds = date.seconds, .ind = ' ', .off_hour = 0, .off_minutes = 0 };
-
-        _ = c.HPDF_SetInfoDateAttr(hpdf, c.HPDF_INFO_CREATION_DATE, hdate);
-        _ = c.HPDF_SetInfoDateAttr(hpdf, c.HPDF_INFO_MOD_DATE, hdate);
-    }
+    const date = Date.now();
+    const hdate = c.HPDF_Date{ .year = date.year, .month = date.month, .day = date.day, .hour = date.hours, .minutes = date.minutes, .seconds = date.seconds, .ind = ' ', .off_hour = 0, .off_minutes = 0 };
+    _ = c.HPDF_SetInfoDateAttr(hpdf, c.HPDF_INFO_CREATION_DATE, hdate);
+    _ = c.HPDF_SetInfoDateAttr(hpdf, c.HPDF_INFO_MOD_DATE, hdate);
 
     _ = c.HPDF_UseJPFonts(hpdf);
     _ = c.HPDF_UseJPEncodings(hpdf);
