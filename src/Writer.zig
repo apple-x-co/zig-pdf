@@ -26,13 +26,15 @@ const Size = @import("Pdf/Size.zig");
 allocator: std.mem.Allocator,
 content_frame_map: std.AutoHashMap(u32, Rect),
 // font_map: std.StringHashMap(c.HPDF_Font),
+is_debug: bool,
 pdf: Pdf,
 
-pub fn init(allocator: std.mem.Allocator, pdf: Pdf) Self {
+pub fn init(allocator: std.mem.Allocator, pdf: Pdf, is_debug: bool) Self {
     return .{
         .allocator = allocator,
         .content_frame_map = std.AutoHashMap(u32, Rect).init(allocator),
         // .font_map = std.StringHashMap(c.HPDF_Font).init(allocator),
+        .is_debug = is_debug,
         .pdf = pdf,
     };
 }
@@ -152,7 +154,7 @@ fn renderPage(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
         try self.drawBorder(hpage, border, page.content_frame);
     }
 
-    try self.renderContainer(hpdf, hpage, page.content_frame, page.alignment, Container.wrap(page.container));
+    try self.renderContainer(hpdf, hpage, page.content_frame, page.alignment, page.container);
 }
 
 fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect, alignment: ?Alignment, container: Container.Container) !void {
@@ -162,52 +164,28 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             const content_frame = try self.renderBox(hpdf, hpage, rect, alignment, box);
             try self.content_frame_map.put(box.id, content_frame);
 
-            // debug
-            try self.drawBorder(hpage, Border.init(Color.init("FF0000"), Border.Style.dash, 0.5, 0.5, 0.5, 0.5), content_frame);
-            _ = c.HPDF_Page_BeginText(hpage);
-            _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
-            _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
-            _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Page container's drawable rect.");
-            _ = c.HPDF_Page_EndText(hpage);
-            // debug
-
-            // debug positioned_box
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.PositionedBox.init(10, null, null, 10, Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.PositionedBox.init(10, 10, null, null, Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.PositionedBox.init(null, 10, 10, null, Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.PositionedBox.init(null, null, 10, 10, Size.init(20, 20))));
-            // debug
-
-            // debug image
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topRight, Container.wrap(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.Image.init("src/images/sample.png", Size.init(20, 20))));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomLeft, Container.wrap(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
-            // debug
-
-            // debug text
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.topCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", Color.init("FF00FF"), 16, Font.wrap(Font.NamedFont.init("Helvetica", null)), true, 5, null)));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.wrap(Container.Text.init("ABCDEFGHIJKLMNOPQRSTUVWXYZ.", null, null, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, null)), null, null, null)));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerLeft, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null, null, null, null, null)));
-            try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null, null, null, null, null)));
-            // debug
+            if (self.is_debug) {
+                try self.drawBorder(hpage, Border.init(Color.init("FF0000"), Border.Style.dash, 0.5, 0.5, 0.5, 0.5), content_frame);
+                _ = c.HPDF_Page_BeginText(hpage);
+                _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
+                _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
+                _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Page container's drawable rect.");
+                _ = c.HPDF_Page_EndText(hpage);
+            }
         },
         .positioned_box => {
             const positioned_box = container.positioned_box;
             const content_frame = try self.renderPositionedBox(hpdf, hpage, rect, positioned_box);
             try self.content_frame_map.put(positioned_box.id, content_frame);
 
-            // debug
-            try self.drawBorder(hpage, Border.init(Color.init("0000FF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
-            _ = c.HPDF_Page_BeginText(hpage);
-            _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
-            _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
-            _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Positioned box's drawable rect.");
-            _ = c.HPDF_Page_EndText(hpage);
-            // debug
-
-            // debug text
-            try self.renderContainer(hpdf, hpage, content_frame, alignment, Container.wrap(Container.Text.init("Typo grAp", null, 6, null, true, null, null)));
-            // debug
+            if (self.is_debug) {
+                try self.drawBorder(hpage, Border.init(Color.init("0000FF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
+                _ = c.HPDF_Page_BeginText(hpage);
+                _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
+                _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
+                _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Positioned box's drawable rect.");
+                _ = c.HPDF_Page_EndText(hpage);
+            }
         },
         .col => {},
         .row => {},
@@ -216,23 +194,23 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             const content_frame = try self.renderImage(hpdf, hpage, rect, alignment, image);
             try self.content_frame_map.put(image.id, content_frame);
 
-            // debug
-            try self.drawBorder(hpage, Border.init(Color.init("00FFFF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
-            _ = c.HPDF_Page_BeginText(hpage);
-            _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
-            _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
-            _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Image's rect.");
-            _ = c.HPDF_Page_EndText(hpage);
-            // debug
+            if (self.is_debug) {
+                try self.drawBorder(hpage, Border.init(Color.init("00FFFF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
+                _ = c.HPDF_Page_BeginText(hpage);
+                _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
+                _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
+                _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Image's rect.");
+                _ = c.HPDF_Page_EndText(hpage);
+            }
         },
         .text => {
             const text = container.text;
             const content_frame = try self.renderText(hpdf, hpage, rect, alignment, text);
             try self.content_frame_map.put(text.id, content_frame);
 
-            // debug
-            try self.drawBorder(hpage, Border.init(Color.init("FF00FF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
-            // debug
+            if (self.is_debug) {
+                try self.drawBorder(hpage, Border.init(Color.init("FF00FF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
+            }
         },
     }
 }
@@ -518,36 +496,72 @@ fn errorEandler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?*
     std.log.err("ERROR: error_no={}, detail_no={}", .{ error_no, detail_no });
 }
 
-test {
+// test {
+//     const permissions = [_]PermissionName{
+//         PermissionName.read,
+//         PermissionName.copy,
+//         PermissionName.print,
+//     };
+
+//     var pages = [_]Page{
+//         Page.init(Container.wrap(Container.Box.init(false, null, null, null, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+//         Page.init(Container.wrap(Container.Box.init(false, null, null, null, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EEEEEE"), Padding.init(10, 10, 10, 10), null, Border.init(Color.init("000090"), Border.Style.solid, 1, 1, 1, 1)),
+//         Page.init(Container.wrap(Container.Box.init(false, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550))), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), null, Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
+//         Page.init(Container.wrap(Container.Box.init(true, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550))), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), null, Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
+//         Page.init(Container.wrap(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.topLeft, null),
+//         Page.init(Container.wrap(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.topCenter, null),
+//         Page.init(Container.wrap(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.topRight, null),
+//         Page.init(Container.wrap(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.centerLeft, null),
+//         Page.init(Container.wrap(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
+//         Page.init(Container.wrap(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.centerRight, null),
+//         Page.init(Container.wrap(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.bottomLeft, null),
+//         Page.init(Container.wrap(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.bottomCenter, null),
+//         Page.init(Container.wrap(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.bottomRight, null),
+//         Page.init(Container.wrap(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(300, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
+//         Page.init(Container.wrap(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(500, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
+//     };
+
+//     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+//     var pdfWriter = init(std.testing.allocator, pdf);
+//     defer pdfWriter.deinit();
+//     try pdfWriter.save("demo/demo.pdf");
+// }
+
+// // debug positioned_box
+// try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.PositionedBox.init(10, null, null, 10, Size.init(20, 20))));
+// try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.PositionedBox.init(10, 10, null, null, Size.init(20, 20))));
+// try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.PositionedBox.init(null, 10, 10, null, Size.init(20, 20))));
+// try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.PositionedBox.init(null, null, 10, 10, Size.init(20, 20))));
+// // debug
+
+// // debug image
+// try self.renderContainer(hpdf, hpage, content_frame, Alignment.topRight, Container.wrap(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
+// try self.renderContainer(hpdf, hpage, content_frame, Alignment.center, Container.wrap(Container.Image.init("src/images/sample.png", Size.init(20, 20))));
+// try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomLeft, Container.wrap(Container.Image.init("src/images/sample.jpg", Size.init(20, 20))));
+// // debug
+
+// // debug text
+// try self.renderContainer(hpdf, hpage, content_frame, Alignment.topCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", Color.init("FF00FF"), 16, Font.wrap(Font.NamedFont.init("Helvetica", null)), true, 5, null)));
+// try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerRight, Container.wrap(Container.Text.init("ABCDEFGHIJKLMNOPQRSTUVWXYZ.", null, null, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, null)), null, null, null)));
+// try self.renderContainer(hpdf, hpage, content_frame, Alignment.centerLeft, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null, null, null, null, null)));
+// try self.renderContainer(hpdf, hpage, content_frame, Alignment.bottomCenter, Container.wrap(Container.Text.init("HELLO TypogrAphy.", null, null, null, null, null, null)));
+// // debug
+
+// // debug text
+// try self.renderContainer(hpdf, hpage, content_frame, alignment, Container.wrap(Container.Text.init("Typo grAp", null, 6, null, true, null, null)));
+// // debug
+
+test "permission" {
     const permissions = [_]PermissionName{
         PermissionName.read,
-        PermissionName.copy,
-        PermissionName.print,
     };
 
     var pages = [_]Page{
-        Page.init(Container.Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
-        Page.init(Container.Box.init(false, null, null, null, null, null, null), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EEEEEE"), Padding.init(10, 10, 10, 10), null, Border.init(Color.init("000090"), Border.Style.solid, 1, 1, 1, 1)),
-        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), null, Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
-        Page.init(Container.Box.init(true, null, Color.init("fef1ec"), Border.init(Color.init("f9aa8f"), Border.Style.solid, 1, 1, 1, 1), null, Padding.init(25, 25, 25, 25), Size.init(550, 550)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), null, Border.init(Color.init("009000"), Border.Style.solid, 1, 1, 1, 1)),
-        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.topLeft, null),
-        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.topCenter, null),
-        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.topRight, null),
-        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.centerLeft, null),
-        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
-        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.centerRight, null),
-        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.bottomLeft, null),
-        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.bottomCenter, null),
-        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(100, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.bottomRight, null),
-        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(300, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
-        Page.init(Container.Box.init(false, null, Color.init("fef1ec"), null, null, null, Size.init(500, 100)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
+        Page.init(Container.wrap(Container.Box.init(false, null, null, null, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
-    var pdfWriter = init(std.testing.allocator, pdf);
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
-    try pdfWriter.save("demo/demo.pdf");
-
-    // TODO: Cleanup file
-    // TODO: 一時ディレクトリw std.testing.tmpDir から取得できないか!?
+    try pdfWriter.save("demo/permission.pdf");
 }

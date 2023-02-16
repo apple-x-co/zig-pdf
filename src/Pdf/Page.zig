@@ -11,11 +11,11 @@ const Size = @import("Size.zig");
 alignment: ?Alignment,
 background_color: ?Color,
 border: ?Border,
-container: Container.Box,
+container: Container.Container,
 content_frame: Rect,
 frame: Rect,
 
-pub fn init(container: Container.Box, page_size: Size, background_color: ?Color, padding: ?Padding, alignment: ?Alignment, border: ?Border) Self {
+pub fn init(container: Container.Container, page_size: Size, background_color: ?Color, padding: ?Padding, alignment: ?Alignment, border: ?Border) Self {
     const width: f32 = page_size.width;
     const height: f32 = page_size.height;
 
