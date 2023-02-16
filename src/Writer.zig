@@ -223,7 +223,8 @@ fn renderBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect
     const size = box.size orelse parent_rect.size;
     const pad = box.padding orelse Padding.zeroPadding;
     const width = if (box.expanded) (parent_rect.size.width / size.width) * size.width else size.width;
-    const height = size.height;
+    // const height = size.height;
+    const height = if (box.expanded) (parent_rect.size.height / size.height) * size.height else size.height;
 
     var content_frame = parent_rect.offsetLTWH(0, 0, width, height);
 
@@ -559,6 +560,8 @@ test "box" {
         Page.init(Container.wrap(Container.Box.init(false, null, null, null, null, Padding.init(10, 10, 10, 10), null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
         Page.init(Container.wrap(Container.Box.init(false, null, null, null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
         Page.init(Container.wrap(Container.Box.init(false, Alignment.center, Color.init("EFEFEF"), Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), null, Padding.init(10, 10, 10, 10), Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), Alignment.center, null),
+        Page.init(Container.wrap(Container.Box.init(false, null, null, null, null, null, Size.init(600, 900))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.Box.init(true, null, null, null, null, null, Size.init(600, 900))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "box", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
