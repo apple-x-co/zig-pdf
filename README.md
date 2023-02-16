@@ -69,7 +69,9 @@
         - [ ] Alignment
         - [ ] Children
       - [x] Content:Text
-        - [x] Content
+        - [ ] Content *(WIP)*
+          - [x] English
+          - [ ] Japanese
         - [x] Color
         - [x] Font
           - [x] Named
@@ -77,7 +79,9 @@
           - [x] TTF
           - [x] Type1
         - [x] TextSize
-        - [x] SoftWrap
+        - [ ] SoftWrap *(WIP)*
+          - [x] English
+          - [ ] Japanese
         - [x] WordSpace
         - [x] CharSpace
       - [x] Content:Image
