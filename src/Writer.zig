@@ -43,7 +43,7 @@ pub fn deinit(self: *Self) void {
 }
 
 pub fn save(self: *Self, file_name: []const u8) !void {
-    const hpdf = c.HPDF_New(null, null); // FIXME: self.errorEandler を指定するとエラーになる
+    const hpdf = c.HPDF_New(errorEandler, null);
     defer c.HPDF_Free(hpdf);
 
     self.setPdfAttributes(hpdf);
@@ -518,9 +518,7 @@ fn emToPoint(em: f32, text_size: f32) f32 {
 
 fn errorEandler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?*anyopaque) callconv(.C) void {
     _ = user_data;
-
-    const stdErr = std.io.getStdErr();
-    std.fmt.format(stdErr, "ERROR: error_no={}, detail_no={}\n", .{ error_no, detail_no }) catch unreachable;
+    std.log.err("ERROR: error_no={}, detail_no={}", .{ error_no, detail_no });
 }
 
 test {
