@@ -24,5 +24,5 @@ test {
     const utf8: []const u8 = "HELLO";
     const shift_jis = try convertShiftJis(allocator, utf8);
     defer allocator.free(shift_jis);
-    std.log.warn("{s} --> {s}", .{utf8, shift_jis});
+    std.log.warn("{s} --> {s}", .{ utf8, shift_jis });
 }
