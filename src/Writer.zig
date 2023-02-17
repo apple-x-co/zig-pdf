@@ -10,6 +10,7 @@ const Color = @import("Pdf/Color.zig");
 const CompressionMode = @import("Compression.zig").CompressionMode;
 const Container = @import("Pdf/Container.zig");
 const Date = @import("Date.zig");
+const Encode = @import("Encode.zig");
 const default_font_encode_name = "90ms-RKSJ-H";
 const default_font_name = "MS-Gothic";
 const default_text_size: f32 = 8;
@@ -388,6 +389,10 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
 
     _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
 
+    // // FIXME:
+    // const shift_jis = try Encode.convertShiftJis(self.allocator, text.content);
+    // defer self.allocator.free(shift_jis);
+
     // 指定した領域内にテキストを表示する - HPDF_Page_TextRect
     // 指定した位置にテキストを表示する - HPDF_Page_TextOut
     // ページの現在位置にテキストを表示する - HPDF_Page_ShowText
@@ -630,6 +635,7 @@ test "text" {
         Page.init(Container.wrap(Container.Text.init("Hello TypogrAphy. (change word space)", null, null, null, null, null, 10)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
         Page.init(Container.wrap(Container.Text.init("Hello TypogrAphy. (mix)", Color.init("FF00FF"), 30, Font.wrap(Font.NamedFont.init("Helvetica", null)), null, 2, 5)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
         Page.init(Container.wrap(Container.Text.init("Hello TypogrAphy. (mix)", Color.init("FF00FF"), 30, Font.wrap(Font.NamedFont.init("Helvetica", null)), true, 2, 5)), Size.init(@as(f32, 200), @as(f32, 300)), null, null, Alignment.center, null),
+        // Page.init(Container.wrap(Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", null, null, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, "90msp-RKSJ-H")), null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "text", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
