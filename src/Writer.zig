@@ -190,7 +190,7 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
                 _ = c.HPDF_Page_EndText(hpage);
             }
         },
-        .col => {},
+        .column => {},
         .row => {},
         .image => {
             const image = container.image;
