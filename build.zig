@@ -15,7 +15,7 @@ pub fn build(b: *std.build.Builder) void {
     exe.addIncludePath("/usr/local/include");
     exe.addLibraryPath("/usr/local/lib");
     exe.linkSystemLibrary("hpdf");
-    exe.linkSystemLibrary("iconv");
+    // exe.linkSystemLibrary("iconv");
     exe.linkLibC();
     exe.setTarget(target);
     exe.setBuildMode(mode);
@@ -34,7 +34,7 @@ pub fn build(b: *std.build.Builder) void {
     exe_tests.addIncludePath("/usr/local/include");
     exe_tests.addLibraryPath("/usr/local/lib");
     exe_tests.linkSystemLibrary("hpdf");
-    exe_tests.linkSystemLibrary("iconv");
+    // exe_tests.linkSystemLibrary("iconv");
     exe_tests.linkLibC();
     exe_tests.setTarget(target);
     exe_tests.setBuildMode(mode);
