@@ -43,17 +43,14 @@
     - [x] Content Size
     - [x] Padding
     - [ ] Container
-      - [ ] Layout:Box
-        - [ ] Alignment *(later)*
+      - [x] Layout:Box
+        - [x] Alignment
         - [x] Background Color
         - [x] Border
         - [x] Expanded(width)
         - [x] Padding
         - [x] Size
-        - [ ] Child *(later)*
-          - "depends on itself" エラーが起きる
-          - "anyopaque" を使えないか?
-          - 後で実装する
+        - [x] Child
       - [ ] Layout:Positioned Box
         - [ ] Alignment *(later)*
         - [x] Top

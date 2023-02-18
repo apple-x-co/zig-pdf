@@ -10,7 +10,7 @@ const Size = @import("Size.zig");
 alignment: ?Alignment,
 background_color: ?Color,
 border: ?Border,
-child: ?*anyopaque, // expect "Container"
+child: ?*anyopaque,
 expanded: bool,
 id: u32,
 padding: ?Padding,
