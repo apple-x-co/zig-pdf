@@ -570,6 +570,15 @@ test "box" {
     var child = Container.wrap(Container.Box.init(false, null, Color.init("DEDEDE"), null, null, null, Size.init(200, 200)));
     const opaque_child: *anyopaque = &child;
 
+    var text = Container.wrap(Container.Text.init("Hello World :)", Color.init("000FFF"), 30, null, null, null, null));
+    const opaque_text: *anyopaque = &text;
+
+    var text2 = Container.wrap(Container.Text.init("Hello World :)", Color.init("000FFF"), null, null, null, null, null));
+    const opaque_text2: *anyopaque = &text2;
+
+    var child2 = Container.wrap(Container.Box.init(false, null, Color.init("DEDEDE"), null, opaque_text2, Padding.init(10, 10, 10, 10), Size.init(200, 200)));
+    const opaque_child2: *anyopaque = &child2;
+
     var pages = [_]Page{
         Page.init(Container.wrap(Container.Box.init(false, null, null, null, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
         Page.init(Container.wrap(Container.Box.init(false, Alignment.center, null, null, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
@@ -581,6 +590,8 @@ test "box" {
         Page.init(Container.wrap(Container.Box.init(false, null, null, null, null, null, Size.init(600, 900))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
         Page.init(Container.wrap(Container.Box.init(true, null, null, null, null, null, Size.init(600, 900))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
         Page.init(Container.wrap(Container.Box.init(false, Alignment.bottomRight, Color.init("EFEFEF"), null, opaque_child, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+        Page.init(Container.wrap(Container.Box.init(false, Alignment.bottomLeft, Color.init("EFEFEF"), null, opaque_child2, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+        Page.init(Container.wrap(Container.Box.init(false, Alignment.center, null, null, opaque_text, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "box", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
