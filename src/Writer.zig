@@ -194,6 +194,11 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
                 _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Positioned box's drawable rect.");
                 _ = c.HPDF_Page_EndText(hpage);
             }
+
+            if (positioned_box.child) |child| {
+                const child_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
+                try self.renderContainer(hpdf, hpage, content_frame, null, child_container.*);
+            }
         },
         .column => {},
         .row => {},
@@ -590,16 +595,20 @@ test "positioned_box" {
         PermissionName.edit_all,
     };
 
+    var child = Container.wrap(Container.PositionedBox.init(null, null, null, 50, 50, Size.init(100, 100)));
+    const opaque_child: *anyopaque = &child;
+
     var pages = [_]Page{
-        Page.init(Container.wrap(Container.PositionedBox.init(50, null, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
-        Page.init(Container.wrap(Container.PositionedBox.init(null, 50, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
-        Page.init(Container.wrap(Container.PositionedBox.init(null, null, 50, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
-        Page.init(Container.wrap(Container.PositionedBox.init(null, null, null, 50, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
-        Page.init(Container.wrap(Container.PositionedBox.init(null, null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
-        Page.init(Container.wrap(Container.PositionedBox.init(50, 50, 50, 50, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
-        Page.init(Container.wrap(Container.PositionedBox.init(50, 50, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
-        Page.init(Container.wrap(Container.PositionedBox.init(null, null, 50, 50, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
-        Page.init(Container.wrap(Container.PositionedBox.init(null, 50, 50, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, 50, null, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, null, 50, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, null, null, 50, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, null, null, null, 50, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, null, null, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, 50, 50, 50, 50, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, 50, 50, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, null, null, 50, 50, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(null, null, 50, 50, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(Container.PositionedBox.init(opaque_child, 50, 50, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "positioned_box", CompressionMode.text, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
