@@ -13,6 +13,17 @@ pub const Container = union(enum) {
     positioned_box: PositionedBox,
     row: Row,
     text: Text,
+
+    pub fn getId(self: Container) u32 {
+        return switch(self) {
+            Container.box => self.box.id,
+            Container.column => self.column.id,
+            Container.image => self.image.id,
+            Container.positioned_box => self.positioned_box.id,
+            Container.row => self.row.id,
+            Container.text => self.text.id,
+        };
+    }
 };
 
 pub fn wrap(container: anytype) Container {

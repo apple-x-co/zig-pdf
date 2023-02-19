@@ -4,10 +4,10 @@ const Alignment = @import("Alignment.zig");
 const Random = @import("Random.zig");
 
 alignment: ?Alignment,
-children: ?[]*anyopaque, // expect "Container"
+children: []*anyopaque,
 id: u32,
 
-pub fn init (alignment: ?Alignment, children: ?[]*anyopaque) Self {
+pub fn init (children: []*anyopaque, alignment: ?Alignment) Self {
     return .{
         .alignment = alignment,
         .children = children,

@@ -61,9 +61,9 @@
       - [ ] Layout:Row
         - [ ] Alignment
         - [ ] Children
-      - [ ] Layout:Col
+      - [x] Layout:Col
         - [ ] Alignment
-        - [ ] Children
+        - [x] Children
       - [x] Content:Text
         - [ ] Content *(WIP)*
           - [x] English

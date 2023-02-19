@@ -200,7 +200,29 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
                 try self.renderContainer(hpdf, hpage, content_frame, null, child_container.*);
             }
         },
-        .column => {},
+        .column => {
+            const column = container.column;
+            var content_frame = rect;
+            try self.content_frame_map.put(column.id, content_frame);
+
+            if (self.is_debug) {
+                try self.drawBorder(hpage, Border.init(Color.init("F00FFF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
+                _ = c.HPDF_Page_BeginText(hpage);
+                _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
+                _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
+                _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Columns's drawable rect.");
+                _ = c.HPDF_Page_EndText(hpage);
+            }
+
+            for (column.children) |child| {
+                const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
+                const child_container = child_container_ptr.*;
+                try self.renderContainer(hpdf, hpage, content_frame, null, child_container);
+                if (self.content_frame_map.get(child_container.getId())) |child_content_frame| {
+                    content_frame = content_frame.offsetLTWH(0, child_content_frame.height, content_frame.width, content_frame.height - child_content_frame.height);
+                }
+            }
+        },
         .row => {},
         .image => {
             const image = container.image;
@@ -673,22 +695,29 @@ test "text" {
     try pdfWriter.save("demo/text.pdf");
 }
 
-// test "column" {
-//     const permissions = [_]PermissionName{
-//         PermissionName.read,
-//         PermissionName.edit_all,
-//     };
+test "column" {
+    const permissions = [_]PermissionName{
+        PermissionName.read,
+        PermissionName.edit_all,
+    };
 
-//     const children = [_]Container.Container{
-//         Container.wrap(Container.Box.init(false, null, null, null, null, null, null)),
-//     };
+    var box1 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(100, 50)));
+    const opaque_box1: *anyopaque = &box1;
 
-//     var pages = [_]Page{
-//         Page.init(Container.wrap(Container.Column.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
-//     };
+    var box2 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(100, 50)));
+    const opaque_box2: *anyopaque = &box2;
 
-//     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
-//     var pdfWriter = init(std.testing.allocator, pdf, true);
-//     defer pdfWriter.deinit();
-//     try pdfWriter.save("demo/column.pdf");
-// }
+    var children = [_]*anyopaque{
+        opaque_box1,
+        opaque_box2,
+    };
+
+    var pages = [_]Page{
+        Page.init(Container.wrap(Container.Column.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var pdfWriter = init(std.testing.allocator, pdf, true);
+    defer pdfWriter.deinit();
+    try pdfWriter.save("demo/column.pdf");
+}
