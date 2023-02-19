@@ -58,9 +58,9 @@
         - [x] Left
         - [x] Size
         - [x] Child
-      - [ ] Layout:Row
+      - [x] Layout:Row
         - [ ] Alignment
-        - [ ] Children
+        - [x] Children
       - [x] Layout:Col
         - [ ] Alignment
         - [x] Children
