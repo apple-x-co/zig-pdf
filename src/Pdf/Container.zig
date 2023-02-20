@@ -15,7 +15,7 @@ pub const Container = union(enum) {
     text: Text,
 
     pub fn getId(self: Container) u32 {
-        return switch(self) {
+        return switch (self) {
             Container.box => self.box.id,
             Container.column => self.column.id,
             Container.image => self.image.id,

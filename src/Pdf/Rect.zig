@@ -40,7 +40,7 @@ pub fn fromPoints(x1: f32, y1: f32, x2: f32, y2: f32) Self {
     const y: f32 = y2;
     const width: f32 = x2 - x1;
     const height: f32 = y1 - y2;
-    
+
     return .{
         .origin = Point.init(x, y),
         .size = Size.init(width, height),

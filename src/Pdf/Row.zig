@@ -7,7 +7,7 @@ alignment: ?Alignment,
 children: []*anyopaque,
 id: u32,
 
-pub fn init (children: []*anyopaque, alignment: ?Alignment) Self {
+pub fn init(children: []*anyopaque, alignment: ?Alignment) Self {
     return .{
         .alignment = alignment,
         .children = children,
