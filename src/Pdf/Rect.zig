@@ -31,6 +31,30 @@ pub fn init(x: f32, y: f32, width: f32, height: f32) Self {
     };
 }
 
+// @var x1 left-top x
+// @var y1 left-top y
+// @var x2 right-bottom x
+// @var y2 right-bottom y
+pub fn fromPoints(x1: f32, y1: f32, x2: f32, y2: f32) Self {
+    const x: f32 = x1;
+    const y: f32 = y2;
+    const width: f32 = x2 - x1;
+    const height: f32 = y1 - y2;
+    
+    return .{
+        .origin = Point.init(x, y),
+        .size = Size.init(width, height),
+        .width = width,
+        .height = height,
+        .minX = x,
+        .midX = x + (width / 2),
+        .maxX = x + width,
+        .minY = y,
+        .midY = y + (height / 2),
+        .maxY = y + height,
+    };
+}
+
 pub fn insets(self: Self, top: ?f32, right: ?f32, bottom: ?f32, left: ?f32) Self {
     return init(self.minX + (left orelse 0), self.minY + (bottom orelse 0), self.width - (left orelse 0) - (right orelse 0), self.height - (top orelse 0) - (bottom orelse 0));
 }
@@ -81,4 +105,14 @@ test {
     try std.testing.expectEqual(@floatCast(f32, 95), rect.minY);
     try std.testing.expectEqual(@floatCast(f32, 145), rect.midY);
     try std.testing.expectEqual(@floatCast(f32, 195), rect.maxY);
+}
+
+test {
+    const rect = fromPoints(1, 6, 6, 3);
+    try std.testing.expectEqual(@floatCast(f32, 1), rect.minX);
+    try std.testing.expectEqual(@floatCast(f32, 3.5), rect.midX);
+    try std.testing.expectEqual(@floatCast(f32, 6), rect.maxX);
+    try std.testing.expectEqual(@floatCast(f32, 3), rect.minY);
+    try std.testing.expectEqual(@floatCast(f32, 4.5), rect.midY);
+    try std.testing.expectEqual(@floatCast(f32, 6), rect.maxY);
 }

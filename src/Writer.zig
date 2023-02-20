@@ -203,7 +203,7 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
         .column => {
             const column = container.column;
             var content_frame = rect;
-            try self.content_frame_map.put(column.id, content_frame);
+            // try self.content_frame_map.put(column.id, content_frame);
 
             if (self.is_debug) {
                 try self.drawBorder(hpage, Border.init(Color.init("F00FFF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
@@ -214,19 +214,28 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
                 _ = c.HPDF_Page_EndText(hpage);
             }
 
+            var children_width: f32 = 0;
+            var children_height: f32 = 0;
+
             for (column.children) |child| {
                 const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
                 const child_container = child_container_ptr.*;
                 try self.renderContainer(hpdf, hpage, content_frame, null, child_container);
                 if (self.content_frame_map.get(child_container.getId())) |child_content_frame| {
                     content_frame = content_frame.offsetLTWH(0, child_content_frame.height, content_frame.width, content_frame.height - child_content_frame.height);
+
+                    children_width = if (children_width < child_content_frame.width) child_content_frame.width else children_width;
+                    children_height += child_content_frame.height;
                 }
             }
+
+            var wrap_frame = Rect.fromPoints(rect.minX, rect.maxY, rect.minX + children_width, rect.maxY - children_height);
+            try self.content_frame_map.put(column.id, wrap_frame);
         },
         .row => {
             const row = container.row;
             var content_frame = rect;
-            try self.content_frame_map.put(row.id, content_frame);
+            // try self.content_frame_map.put(row.id, content_frame);
 
             if (self.is_debug) {
                 try self.drawBorder(hpage, Border.init(Color.init("F00FFF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
@@ -237,14 +246,23 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
                 _ = c.HPDF_Page_EndText(hpage);
             }
 
+            var children_width: f32 = 0;
+            var children_height: f32 = 0;
+
             for (row.children) |child| {
                 const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
                 const child_container = child_container_ptr.*;
                 try self.renderContainer(hpdf, hpage, content_frame, null, child_container);
                 if (self.content_frame_map.get(child_container.getId())) |child_content_frame| {
                     content_frame = content_frame.offsetLTWH(child_content_frame.width, 0, content_frame.width - child_content_frame.width, content_frame.height);
+
+                    children_width += child_content_frame.width;
+                    children_height = if (children_height < child_content_frame.height) child_content_frame.height else children_height;
                 }
             }
+
+            var wrap_frame = Rect.fromPoints(rect.minX, rect.maxY, rect.minX + children_width, rect.maxY - children_height);
+            try self.content_frame_map.put(row.id, wrap_frame);
         },
         .image => {
             const image = container.image;
@@ -769,4 +787,67 @@ test "row" {
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/row.pdf");
+}
+
+test "row_column" {
+    const permissions = [_]PermissionName{
+        PermissionName.read,
+        PermissionName.edit_all,
+    };
+
+    // FIXME: Row や Column は、自身の横幅や高さを子要素が描画される前に知っている必要がある?
+
+    var text1 = Container.wrap(Container.Text.init("Box1 Box1 Box1 Box1 Box1 Box1", Color.init("000FFF"), null, null, true, null, null));
+    const opaque_text1: *anyopaque = &text1;
+
+    var box1 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text1, null, Size.init(100, 50)));
+    const opaque_box1: *anyopaque = &box1;
+
+    var text2 = Container.wrap(Container.Text.init("Box2", Color.init("000FFF"), null, null, null, null, null));
+    const opaque_text2: *anyopaque = &text2;
+
+    var box2 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text2, null, Size.init(100, 50)));
+    const opaque_box2: *anyopaque = &box2;
+
+    var boxes1 = [_]*anyopaque{
+        opaque_box1,
+        opaque_box2,
+    };
+
+    var text3 = Container.wrap(Container.Text.init("Box3", Color.init("000FFF"), null, null, null, null, null));
+    const opaque_text3: *anyopaque = &text3;
+
+    var box3 = Container.wrap(Container.Box.init(false, null, Color.init("F0F0FF"), null, opaque_text3, null, Size.init(100, 50)));
+    const opaque_box3: *anyopaque = &box3;
+
+    var text4 = Container.wrap(Container.Text.init("Box4", Color.init("000FFF"), null, null, null, null, null));
+    const opaque_text4: *anyopaque = &text4;
+
+    var box4 = Container.wrap(Container.Box.init(false, null, Color.init("F0FFF0"), null, opaque_text4, null, Size.init(100, 50)));
+    const opaque_box4: *anyopaque = &box4;
+
+    var boxes2 = [_]*anyopaque{
+        opaque_box3,
+        opaque_box4,
+    };
+
+    var column1 = Container.wrap(Container.Column.init(&boxes1, null));
+    const opaque_column1: *anyopaque = &column1;
+
+    var column2 = Container.wrap(Container.Column.init(&boxes2, null));
+    const opaque_column2: *anyopaque = &column2;
+
+    var children = [_]*anyopaque{
+        opaque_column1,
+        opaque_column2,
+    };
+
+    var pages = [_]Page{
+        Page.init(Container.wrap(Container.Row.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var pdfWriter = init(std.testing.allocator, pdf, true);
+    defer pdfWriter.deinit();
+    try pdfWriter.save("demo/row_column.pdf");
 }
