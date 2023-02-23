@@ -13,19 +13,28 @@ jobs:
     runs-on: ${{matrix.os}}
     steps:
       - uses: actions/checkout@v3
+
       - uses: goto-bus-stop/setup-zig@v2
         with:
           version: 0.10.1
+
       - uses: apple-x-co/setup-libharu@v1
         with:
           libharu-version: 2.4.3
+
+      - uses: apple-x-co/setup-libiconv/action.yml@main
+        with:
+          libiconv-version: 1.7
+
       - run: zig build test
+
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - uses: goto-bus-stop/setup-zig@v2
         with:
           version: 0.10.1
-      - uses: apple-x-co/setup-libharu@v1
+
       - run: zig fmt --check src/*.zig
