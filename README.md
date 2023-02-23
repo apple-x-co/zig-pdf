@@ -65,9 +65,9 @@
         - [ ] Alignment
         - [x] Children
       - [x] Content:Text
-        - [ ] Content *(WIP)*
+        - [x] Content
           - [x] English
-          - [ ] Japanese
+          - [x] Japanese
         - [x] Color
         - [x] Font
           - [x] Named

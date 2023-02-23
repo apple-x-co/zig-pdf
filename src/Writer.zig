@@ -372,8 +372,6 @@ fn renderImage(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Re
 }
 
 fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, alignment: ?Alignment, text: Container.Text) !Rect {
-    _ = self;
-
     _ = c.HPDF_Page_BeginText(hpage);
 
     var hfont: c.HPDF_Font = undefined;
@@ -453,9 +451,8 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
 
     _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
 
-    // // FIXME:
-    // const shift_jis = try Encode.convertShiftJis(self.allocator, text.content);
-    // defer self.allocator.free(shift_jis);
+    const sjis = try Encode.encodeSjis(self.allocator, text.content);
+    defer self.allocator.free(sjis);
 
     // 指定した領域内にテキストを表示する - HPDF_Page_TextRect
     // 指定した位置にテキストを表示する - HPDF_Page_TextOut
@@ -478,7 +475,7 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
             _ = c.HPDF_Page_ShowText(hpage, s.ptr);
         }
     } else {
-        _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY + descent, text.content.ptr);
+        _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY + descent, sjis.ptr);
     }
 
     _ = c.HPDF_Page_EndText(hpage);
@@ -754,7 +751,9 @@ test "text" {
 
     const text10 = Container.Text.init("Hello TypogrAphy. (mix)", Color.init("FF00FF"), text_size_30, helvetica_font, true, char_space_2, word_space_5);
 
-    // const text11 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", default_text_color, text_size_30, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, "90msp-RKSJ-H")), false, char_space_2, word_space_5);
+    const text11 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", default_text_color, text_size_30, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, "90msp-RKSJ-H")), false, char_space_2, word_space_5);
+
+    // const text12 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", default_text_color, text_size_30, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, "90msp-RKSJ-H")), true, char_space_2, word_space_5);
 
     var pages = [_]Page{
         Page.init(Container.wrap(text1), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
@@ -767,7 +766,8 @@ test "text" {
         Page.init(Container.wrap(text8), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
         Page.init(Container.wrap(text9), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
         Page.init(Container.wrap(text10), Size.init(@as(f32, 200), @as(f32, 300)), null, null, Alignment.center, null),
-        // Page.init(Container.wrap(text11), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(text11), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        // Page.init(Container.wrap(text12), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "text", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
