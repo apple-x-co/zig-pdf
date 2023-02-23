@@ -466,6 +466,7 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
         var w: f32 = 0;
         var buf: [2]u8 = undefined;
         for (text.content) |char| {
+            // const s: []const u8 = &[_]u8{char}; // NG
             var s = try std.fmt.bufPrintZ(&buf, "{u}", .{char});
             x = c.HPDF_Page_GetCurrentTextPos(hpage).x;
             w = emToPoint(@intToFloat(f32, c.HPDF_Font_TextWidth(hfont, s.ptr, 1).width), text_size);
