@@ -754,7 +754,7 @@ test "text" {
 
     const text10 = Container.Text.init("Hello TypogrAphy. (mix)", Color.init("FF00FF"), text_size_30, helvetica_font, true, char_space_2, word_space_5);
 
-    // const text11 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", null, null, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, "90msp-RKSJ-H")), null, null, null);
+    // const text11 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", default_text_color, text_size_30, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, "90msp-RKSJ-H")), false, char_space_2, word_space_5);
 
     var pages = [_]Page{
         Page.init(Container.wrap(text1), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),

@@ -1,28 +1,38 @@
-// const std = @import("std");
-// const c = @cImport({
-//     @cInclude("iconv.h");
-// });
+const std = @import("std");
+const c = @cImport({
+    @cInclude("iconv.h");
+});
 
-// pub fn convertShiftJis(allocator: std.mem.Allocator, utf8: []const u8) ![]u8 {
-//     const cd = c.iconv_open("SHIFT-JIS", "UTF-8");
-//     defer _ = c.iconv_close(cd);
+fn encode(allocator: std.mem.Allocator, iconv: c.iconv_t, string: *[]const u8) ![:0]const u8 {
+    var input_ptr = string.*;
+    var input_length: usize = string.len;
 
-//     var input = utf8[0..];
-//     var input_len: usize = input.len;
-//     var output_len: usize = input_len * 2;
-//     var output = try allocator.alloc(u8, output_len);
-//     defer allocator.free(output);
+    var output_ptr = try allocator.alloc(u8, string.len * 4);
+    for (output_ptr[0..]) |*b| b.* = 0;
+    var output = output_ptr;
+    var output_length: usize = string.len * 4;
 
-//     _ = c.iconv(cd, @ptrCast([*c][*c]u8, &input.ptr), &input_len, @ptrCast([*c][*c]u8, &output.ptr), &output_len);
-//     var shift_jis = try allocator.dupeZ(u8, output);
+    _ = c.iconv(iconv, @ptrCast([*c][*c]u8, &input_ptr), &input_length, @ptrCast([*c][*c]u8, &output_ptr), &output_length);
 
-//     return shift_jis;
-// }
+    var index = std.mem.indexOf(u8, output, "\x00").?;
+    var buff = try allocator.dupeZ(u8, output[0..index]);
+    allocator.free(output);
 
-// test {
-//     const allocator: std.mem.Allocator = std.testing.allocator;
-//     const utf8: []const u8 = "HELLO";
-//     const shift_jis = try convertShiftJis(allocator, utf8);
-//     defer allocator.free(shift_jis);
-//     std.log.warn("{s} --> {s}", .{ utf8, shift_jis });
-// }
+    return buff;
+}
+
+pub fn encodeSjis(allocator: std.mem.Allocator, utf8: []const u8) ![:0]const u8 {
+    const cd = c.iconv_open("SHIFT-JIS", "UTF-8");
+    defer _ = c.iconv_close(cd);
+
+    var slice: []const u8 = utf8[0..];
+
+    return encode(allocator, cd, &slice);
+}
+
+test {
+    const allocator: std.mem.Allocator = std.testing.allocator;
+    const utf8: []const u8 = "こんにちは";
+    const sjis = try encodeSjis(allocator, utf8);
+    defer allocator.free(sjis);
+}
