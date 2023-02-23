@@ -22,7 +22,7 @@ jobs:
         with:
           libharu-version: 2.4.3
 
-      - uses: apple-x-co/setup-libiconv/action.yml@main
+      - uses: apple-x-co/setup-libiconv@v1
         with:
           libiconv-version: 1.7
 
