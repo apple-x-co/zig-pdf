@@ -14,7 +14,7 @@ pub fn build(b: *std.build.Builder) void {
     const exe = b.addExecutable("zig-pdf", "src/main.zig");
     exe.addIncludePath("/usr/local/include");
     exe.addLibraryPath("/usr/local/lib");
-    exe.addLibraryPath("/usr/local/libiconv");
+    exe.addLibraryPath("/usr/local/libiconv/lib");
     exe.linkSystemLibrary("hpdf");
     exe.linkSystemLibrary("iconv");
     exe.linkLibC();
@@ -34,7 +34,7 @@ pub fn build(b: *std.build.Builder) void {
     const exe_tests = b.addTest("src/test.zig");
     exe_tests.addIncludePath("/usr/local/include");
     exe_tests.addLibraryPath("/usr/local/lib");
-    exe_tests.addLibraryPath("/usr/local/libiconv");
+    exe_tests.addLibraryPath("/usr/local/libiconv/lib");
     exe_tests.linkSystemLibrary("hpdf");
     exe_tests.linkSystemLibrary("iconv");
     exe_tests.linkLibC();
