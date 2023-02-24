@@ -156,16 +156,21 @@
     "font": {
       "title": "フォント",
       "description": "フォントを設定",
-      "type": "object",
-      "properties": {
-        "named": {
+      "oneOf": [
+        {
           "title": "標準フォント",
           "type": "object",
           "properties": {
+            "family": {
+              "title": "フォントファミリー",
+              "type": "string",
+              "minLength": 1
+            },
             "name": {
               "title": "フォント名",
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "enum": ["Courie", "Courier-Bold", "Courier-Oblique", "Courier-BoldOblique", "Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Helvetica-BoldOblique", "Times-Roman", "Times-Bold", "Times-Italic", "Times-BoldItalic", "Symbol", "ZapfDingbats"]
             },
             "encodingName": {
               "title": "エンコーディング名",
@@ -177,14 +182,20 @@
             }  
           },
           "required": [
+            "family",
             "name",
             "encodingName"
           ]
         },
-        "ttc": {
+        {
           "title": "TTCフォト",
           "type": "object",
           "properties": {
+            "family": {
+              "title": "フォントファミリー",
+              "type": "string",
+              "minLength": 1
+            },
             "filePath": {
               "title": "フォントファイルパス",
               "type": "string",
@@ -210,16 +221,22 @@
             }
           },
           "required": [
+            "family",
             "filePath",
             "index",
             "embedding",
             "encodingName"
           ]
         },
-        "ttf": {
+        {
           "title": "TTFフォント",
           "type": "object",
           "properties": {
+            "family": {
+              "title": "フォントファミリー",
+              "type": "string",
+              "minLength": 1
+            },
             "filePath": {
               "title": "フォントファイルパス",
               "type": "string"
@@ -238,15 +255,21 @@
             }
           },
           "required": [
+            "family",
             "filePath",
             "embedding",
             "encodingName"
           ]
         },
-        "type1": {
+        {
           "title": "Type1フォント",
           "type": "object",
           "properties": {
+            "family": {
+              "title": "フォントファミリー",
+              "type": "string",
+              "minLength": 1
+            },
             "armFilePath": {
               "title": "ARMファイルパス",
               "type": "string"
@@ -267,10 +290,11 @@
           "required": [
             "armFilePath",
             "dataFilePath",
-            "encodingName"
+            "encodingName",
+            "family"
           ]
         }
-      }
+      ]
     },
     "image": {
       "title": "画像",
@@ -472,8 +496,10 @@
         "color": {
           "$ref": "#/definitions/color"
         },
-        "font": {
-          "$ref": "#/definitions/font"
+        "font_family": {
+          "title": "フォントファミリー名",
+          "type": "string",
+          "minLength": 1
         },
         "textSize": {
           "$ref": "#/definitions/textSize"
@@ -564,6 +590,13 @@
           ]
         }
       ]
+    },
+    "fonts": {
+      "title": "フォント定義",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/font"
+      }
     },
     "pages": {
       "title": "ページ",

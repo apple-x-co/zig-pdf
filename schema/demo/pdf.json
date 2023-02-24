@@ -16,6 +16,13 @@
     "read",
     "print"
   ],
+  "fonts": [
+    {
+      "family": "font1",
+      "name": "Helvetica",
+      "encodingName": null
+    }
+  ],
   "pages": [
     {
       "container": {
@@ -63,7 +70,8 @@
             "child": {
               "type": "text",
               "content": "HELLO WORLD",
-              "color": "FFCC00"
+              "color": "FFCC00",
+              "font_family": "font1"
             },
             "top": 100,
             "left": 100
