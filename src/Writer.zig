@@ -451,9 +451,6 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
 
     _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
 
-    const sjis = try Encode.encodeSjis(self.allocator, text.content);
-    defer self.allocator.free(sjis);
-
     // 指定した領域内にテキストを表示する - HPDF_Page_TextRect
     // 指定した位置にテキストを表示する - HPDF_Page_TextOut
     // ページの現在位置にテキストを表示する - HPDF_Page_ShowText
@@ -461,13 +458,34 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
         // "HPDF_Page_TextRect" は単語の途中で改行されない
         // _ = c.HPDF_Page_TextRect(hpage, content_frame.minX, content_frame.maxY, content_frame.maxX, content_frame.minY, text.content.ptr, c.HPDF_TALIGN_LEFT, null);
 
+        var iter = (try std.unicode.Utf8View.init(text.content)).iterator();
+
         _ = c.HPDF_Page_MoveTextPos(hpage, content_frame.minX, content_frame.maxY - line_height + descent);
         var x: f32 = 0;
         var w: f32 = 0;
-        var buf: [2]u8 = undefined;
-        for (text.content) |char| {
-            // const s: []const u8 = &[_]u8{char}; // NG
-            var s = try std.fmt.bufPrintZ(&buf, "{u}", .{char});
+        var buf: [4]u8 = undefined;
+        while (iter.nextCodepoint()) |cp| {
+            var bytes = try std.unicode.utf8CodepointSequenceLength(cp);
+
+            if (bytes > 1) {
+                var utf8 = try self.allocator.alloc(u8, bytes);
+                defer self.allocator.free(utf8);
+                _ = try std.unicode.utf8Encode(cp, utf8);
+
+                var sjis = try Encode.encodeSjis(self.allocator, utf8);
+                defer self.allocator.free(sjis);
+                
+                x = c.HPDF_Page_GetCurrentTextPos(hpage).x;
+                w = emToPoint(@intToFloat(f32, c.HPDF_Font_TextWidth(hfont, sjis.ptr, 1).width), text_size);
+                if (x + w > content_frame.maxX) {
+                    _ = c.HPDF_Page_MoveToNextLine(hpage);
+                }
+                _ = c.HPDF_Page_ShowText(hpage, sjis.ptr);
+
+                continue;
+            }
+
+            var s = try std.fmt.bufPrintZ(&buf, "{u}", .{cp});
             x = c.HPDF_Page_GetCurrentTextPos(hpage).x;
             w = emToPoint(@intToFloat(f32, c.HPDF_Font_TextWidth(hfont, s.ptr, 1).width), text_size);
             if (x + w > content_frame.maxX) {
@@ -476,6 +494,9 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
             _ = c.HPDF_Page_ShowText(hpage, s.ptr);
         }
     } else {
+        const sjis = try Encode.encodeSjis(self.allocator, text.content);
+        defer self.allocator.free(sjis);
+
         _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY + descent, sjis.ptr);
     }
 
@@ -754,7 +775,7 @@ test "text" {
 
     const text11 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", default_text_color, text_size_30, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, "90msp-RKSJ-H")), false, char_space_2, word_space_5);
 
-    // const text12 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", default_text_color, text_size_30, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, "90msp-RKSJ-H")), true, char_space_2, word_space_5);
+    const text12 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", default_text_color, text_size_30, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, "90msp-RKSJ-H")), true, char_space_2, word_space_5);
 
     var pages = [_]Page{
         Page.init(Container.wrap(text1), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
@@ -768,7 +789,7 @@ test "text" {
         Page.init(Container.wrap(text9), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
         Page.init(Container.wrap(text10), Size.init(@as(f32, 200), @as(f32, 300)), null, null, Alignment.center, null),
         Page.init(Container.wrap(text11), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
-        // Page.init(Container.wrap(text12), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
+        Page.init(Container.wrap(text12), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "text", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);

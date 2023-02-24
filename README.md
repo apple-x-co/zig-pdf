@@ -75,9 +75,9 @@
           - [x] TTF
           - [x] Type1
         - [x] TextSize
-        - [ ] SoftWrap *(WIP)*
+        - [x] SoftWrap
           - [x] English
-          - [ ] Japanese
+          - [x] Japanese
         - [x] WordSpace
         - [x] CharSpace
       - [x] Content:Image
