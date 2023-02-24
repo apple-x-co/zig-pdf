@@ -474,7 +474,7 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
 
                 var sjis = try Encode.encodeSjis(self.allocator, utf8);
                 defer self.allocator.free(sjis);
-                
+
                 x = c.HPDF_Page_GetCurrentTextPos(hpage).x;
                 w = emToPoint(@intToFloat(f32, c.HPDF_Font_TextWidth(hfont, sjis.ptr, 1).width), text_size);
                 if (x + w > content_frame.maxX) {
