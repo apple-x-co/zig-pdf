@@ -1,18 +1,19 @@
 const Self = @This();
 
-pub const Font = union(enum) {
+pub const FontFace = union(enum) {
     named_font: NamedFont,
     ttc: Ttc,
     ttf: Ttf,
-    type1: Type1,
 };
 
 pub const NamedFont = struct {
     const NamedFontSelf = @This();
+    family: []const u8,
     name: []const u8,
     encoding_name: ?[]const u8,
-    pub fn init(name: []const u8, encoding_name: ?[]const u8) NamedFontSelf {
+    pub fn init(family: []const u8, name: []const u8, encoding_name: ?[]const u8) NamedFontSelf {
         return .{
+            .family = family,
             .name = name,
             .encoding_name = encoding_name,
         };
@@ -21,12 +22,14 @@ pub const NamedFont = struct {
 
 pub const Ttc = struct {
     const TtcSelf = @This();
+    family: []const u8,
     file_path: []const u8,
     index: u32,
     embedding: bool,
     encoding_name: ?[]const u8,
-    pub fn init(file_path: []const u8, index: u32, embedding: bool, encoding_name: ?[]const u8) TtcSelf {
+    pub fn init(family: []const u8, file_path: []const u8, index: u32, embedding: bool, encoding_name: ?[]const u8) TtcSelf {
         return .{
+            .family = family,
             .file_path = file_path,
             .index = index,
             .embedding = embedding,
@@ -37,11 +40,13 @@ pub const Ttc = struct {
 
 pub const Ttf = struct {
     const TtfSelf = @This();
+    family: []const u8,
     file_path: []const u8,
     embedding: bool,
     encoding_name: ?[]const u8,
-    pub fn init(file_path: []const u8, embedding: bool, encoding_name: ?[]const u8) TtfSelf {
+    pub fn init(family: []const u8, file_path: []const u8, embedding: bool, encoding_name: ?[]const u8) TtfSelf {
         return .{
+            .family = family,
             .file_path = file_path,
             .embedding = embedding,
             .encoding_name = encoding_name,
@@ -49,26 +54,11 @@ pub const Ttf = struct {
     }
 };
 
-pub const Type1 = struct {
-    const Type1Self = @This();
-    arm_file_path: []const u8,
-    data_file_path: []const u8,
-    encoding_name: ?[]const u8,
-    pub fn init(arm_file_path: []const u8, data_file_path: []const u8, encoding_name: ?[]const u8) Type1Self {
-        return .{
-            .arm_file_path = arm_file_path,
-            .data_file_path = data_file_path,
-            .encoding_name = encoding_name,
-        };
-    }
-};
-
-pub fn wrap(font: anytype) Font {
+pub fn wrap(font: anytype) FontFace {
     return switch (@TypeOf(font)) {
-        NamedFont => Font{ .named_font = font },
-        Ttc => Font{ .ttc = font },
-        Ttf => Font{ .ttf = font },
-        Type1 => Font{ .type1 = font },
+        NamedFont => FontFace{ .named_font = font },
+        Ttc => FontFace{ .ttc = font },
+        Ttf => FontFace{ .ttf = font },
         else => @panic("unexpected"),
     };
 }

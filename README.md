@@ -36,7 +36,10 @@
   - [x] Meta:Encryption
   - [x] Meta:Password
   - [x] Meta:Permission
-  - [ ] Fonts *WIP*
+  - [x] Fonts
+    - [x] Named
+    - [x] TTF
+    - [x] TTC
   - [ ] Page
     - [x] Alignment
     - [x] Background Color
@@ -70,12 +73,7 @@
           - [x] English
           - [x] Japanese
         - [x] Color
-        - [ ] Font family *WIP*
-        - [x] Font *DROP*
-          - [x] Named
-          - [x] TTC
-          - [x] TTF
-          - [x] Type1
+        - [x] Font family
         - [x] TextSize
         - [x] SoftWrap
           - [x] English

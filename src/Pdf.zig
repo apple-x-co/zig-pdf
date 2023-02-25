@@ -5,6 +5,7 @@ const EncryptionMode = @import("Encryption.zig").EncryptionMode;
 const PermissionName = @import("Permission.zig").PermissionName;
 const Page = @import("Pdf/Page.zig");
 const Size = @import("Pdf/Size.zig");
+const Font = @import("Pdf/Font.zig");
 
 author: ?[]const u8,
 creator: ?[]const u8,
@@ -16,9 +17,10 @@ user_password: ?[]const u8,
 encryption_mode: ?EncryptionMode,
 encryption_length: ?u32,
 permission_names: ?[]const PermissionName,
+fonts: ?[]Font.FontFace,
 pages: []Page,
 
-pub fn init(author: ?[]const u8, creator: ?[]const u8, title: ?[]const u8, subject: ?[]const u8, compression_mode: ?CompressionMode, owner_password: ?[]const u8, user_password: ?[]const u8, encryption_mode: ?EncryptionMode, encryption_length: ?u32, permission_names: ?[]const PermissionName, pages: []Page) Self {
+pub fn init(author: ?[]const u8, creator: ?[]const u8, title: ?[]const u8, subject: ?[]const u8, compression_mode: ?CompressionMode, owner_password: ?[]const u8, user_password: ?[]const u8, encryption_mode: ?EncryptionMode, encryption_length: ?u32, permission_names: ?[]const PermissionName, fonts: ?[]Font.FontFace, pages: []Page) Self {
     return .{
         .author = author,
         .creator = creator,
@@ -30,6 +32,7 @@ pub fn init(author: ?[]const u8, creator: ?[]const u8, title: ?[]const u8, subje
         .encryption_mode = encryption_mode,
         .encryption_length = encryption_length,
         .permission_names = permission_names,
+        .fonts = fonts,
         .pages = pages,
     };
 }
@@ -40,9 +43,13 @@ test {
         PermissionName.print,
     };
 
+    var fonts = [_]Font.FontFace{
+        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
+    };
+
     const pages = [_]Page{};
 
-    const pdf = init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.all, null, null, EncryptionMode.Revision2, null, &permissions, &pages);
+    const pdf = init("apple-x-co", "zig-pdf", "demo", "demo1", CompressionMode.all, null, null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     try std.testing.expectEqual(pdf.author, "apple-x-co");
     try std.testing.expectEqual(pdf.creator, "zig-pdf");
     try std.testing.expectEqual(pdf.title, "demo");

@@ -260,39 +260,6 @@
             "embedding",
             "encodingName"
           ]
-        },
-        {
-          "title": "Type1フォント",
-          "type": "object",
-          "properties": {
-            "family": {
-              "title": "フォントファミリー",
-              "type": "string",
-              "minLength": 1
-            },
-            "armFilePath": {
-              "title": "ARMファイルパス",
-              "type": "string"
-            },
-            "dataFilePath": {
-              "title": "データファイルパス",
-              "type": "string"
-            },
-            "encodingName": {
-              "title": "エンコーディング名",
-              "type": [
-                "string",
-                "null"
-              ],
-              "enum": ["90ms-RKSJ-H", "90ms-RKSJ-V", "90msp-RKSJ-H", "EUC-H", "EUC-V", null]
-            }
-          },
-          "required": [
-            "armFilePath",
-            "dataFilePath",
-            "encodingName",
-            "family"
-          ]
         }
       ]
     },

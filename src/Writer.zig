@@ -25,7 +25,7 @@ const Size = @import("Pdf/Size.zig");
 
 allocator: std.mem.Allocator,
 content_frame_map: std.AutoHashMap(u32, Rect),
-// font_map: std.StringHashMap(c.HPDF_Font),
+font_map: std.StringHashMap(Font.NamedFont),
 is_debug: bool,
 pdf: Pdf,
 
@@ -33,7 +33,7 @@ pub fn init(allocator: std.mem.Allocator, pdf: Pdf, is_debug: bool) Self {
     return .{
         .allocator = allocator,
         .content_frame_map = std.AutoHashMap(u32, Rect).init(allocator),
-        // .font_map = std.StringHashMap(c.HPDF_Font).init(allocator),
+        .font_map = std.StringHashMap(Font.NamedFont).init(allocator),
         .is_debug = is_debug,
         .pdf = pdf,
     };
@@ -41,7 +41,7 @@ pub fn init(allocator: std.mem.Allocator, pdf: Pdf, is_debug: bool) Self {
 
 pub fn deinit(self: *Self) void {
     self.content_frame_map.deinit();
-    // self.font_map.deinit();
+    self.font_map.deinit();
 }
 
 pub fn save(self: *Self, file_name: []const u8) !void {
@@ -50,9 +50,12 @@ pub fn save(self: *Self, file_name: []const u8) !void {
 
     self.setPdfAttributes(hpdf);
 
-    // const font: c.HPDF_Font = c.HPDF_GetFont(hpdf, "MS-Gothic", "90ms-RKSJ-H");
-    // try self.font_map.put("default", font);
-    // _ = try self.font_map.get("default"); // FIXME: error: expected error union type, found '?[*c].xxxxx.zig-cache.o.f626383f61633cb0db6ac93886e75491.cimport.struct__HPDF_Dict_Rec'
+    if (self.pdf.fonts) |fonts| {
+        for (fonts) |font| {
+            const named_font = self.loadFont(hpdf, font);
+            try self.font_map.put(named_font.family, named_font);
+        }
+    }
 
     for (self.pdf.pages) |page| {
         const hpage = c.HPDF_AddPage(hpdf);
@@ -140,6 +143,31 @@ fn setPdfAttributes(self: Self, hpdf: c.HPDF_Doc) void {
     }
 }
 
+fn loadFont(self: Self, hpdf: c.HPDF_Doc, font: Font.FontFace) Font.NamedFont {
+    _ = self;
+    switch (font) {
+        .named_font => {
+            const named_font = font.named_font;
+            
+            return Font.NamedFont.init(named_font.family, named_font.name, named_font.encoding_name);
+        },
+        .ttc => {
+            const ttc = font.ttc;
+            const ptr = c.HPDF_LoadTTFontFromFile2(hpdf, ttc.file_path.ptr, ttc.index, if (ttc.embedding) c.HPDF_TRUE else c.HPDF_FALSE);
+            const font_name = std.mem.sliceTo(ptr, 0);
+            
+            return Font.NamedFont.init(ttc.family, font_name, ttc.encoding_name);
+        },
+        .ttf => {
+            const ttf = font.ttf;
+            const ptr = c.HPDF_LoadTTFontFromFile(hpdf, ttf.file_path.ptr, if (ttf.embedding) c.HPDF_TRUE else c.HPDF_FALSE);
+            const font_name = std.mem.sliceTo(ptr, 0);
+
+            return Font.NamedFont.init(ttf.family, font_name, ttf.encoding_name);
+        },
+    }
+}
+
 fn renderPage(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !void {
     _ = c.HPDF_Page_SetWidth(hpage, page.frame.width);
     _ = c.HPDF_Page_SetHeight(hpage, page.frame.height);
@@ -202,7 +230,6 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
         .column => {
             const column = container.column;
             var content_frame = rect;
-            // try self.content_frame_map.put(column.id, content_frame);
 
             if (self.is_debug) {
                 try self.drawBorder(hpage, Border.init(Color.init("F00FFF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
@@ -234,7 +261,6 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
         .row => {
             const row = container.row;
             var content_frame = rect;
-            // try self.content_frame_map.put(row.id, content_frame);
 
             if (self.is_debug) {
                 try self.drawBorder(hpage, Border.init(Color.init("F00FFF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
@@ -295,7 +321,6 @@ fn renderBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect
     const size = box.size orelse parent_rect.size;
     const pad = box.padding orelse Padding.zeroPadding;
     const width = if (box.expanded) (parent_rect.size.width / size.width) * size.width else size.width;
-    // const height = size.height;
     const height = if (box.expanded) (parent_rect.size.height / size.height) * size.height else size.height;
 
     var content_frame = parent_rect.offsetLTWH(0, 0, width, height);
@@ -374,28 +399,8 @@ fn renderImage(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Re
 fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, alignment: ?Alignment, text: Container.Text) !Rect {
     _ = c.HPDF_Page_BeginText(hpage);
 
-    var hfont: c.HPDF_Font = undefined;
-    switch (text.font) {
-        .named_font => {
-            const named_font = text.font.named_font;
-            hfont = c.HPDF_GetFont(hpdf, named_font.name.ptr, if (named_font.encoding_name == null) null else named_font.encoding_name.?.ptr);
-        },
-        .ttc => {
-            const ttc = text.font.ttc;
-            const name = c.HPDF_LoadTTFontFromFile2(hpdf, ttc.file_path.ptr, ttc.index, if (ttc.embedding) c.HPDF_TRUE else c.HPDF_FALSE);
-            hfont = c.HPDF_GetFont(hpdf, name, if (ttc.encoding_name == null) null else ttc.encoding_name.?.ptr);
-        },
-        .ttf => {
-            const ttf = text.font.ttf;
-            const name = c.HPDF_LoadTTFontFromFile(hpdf, ttf.file_path.ptr, if (ttf.embedding) c.HPDF_TRUE else c.HPDF_FALSE);
-            hfont = c.HPDF_GetFont(hpdf, name, if (ttf.encoding_name == null) null else ttf.encoding_name.?.ptr);
-        },
-        .type1 => {
-            const type1 = text.font.type1;
-            const name = c.HPDF_LoadType1FontFromFile(hpdf, type1.arm_file_path.ptr, type1.data_file_path.ptr);
-            hfont = c.HPDF_GetFont(hpdf, name, if (type1.encoding_name == null) null else type1.encoding_name.?.ptr);
-        },
-    }
+    const font: Font.NamedFont = self.font_map.get(text.font_family) orelse @panic("undefined font.");
+    const hfont: c.HPDF_Font = c.HPDF_GetFont(hpdf, font.name.ptr, if (font.encoding_name == null) null else font.encoding_name.?.ptr);
 
     const text_size = text.text_size;
     const word_space = text.word_space;
@@ -600,7 +605,11 @@ test "permission" {
         Page.init(Container.wrap(Container.Box.init(false, null, null, null, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "permission", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var fonts = [_]Font.FontFace{
+        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "permission", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/permission.pdf");
@@ -612,28 +621,33 @@ test "page" {
         PermissionName.edit_all,
     };
 
-    const default_font = Font.wrap(Font.NamedFont.init(Default.font_name, Default.font_encode_name));
-    const default_text_color = Color.init(Default.text_color);
+    const text_color = Color.init(Default.text_color);
     const char_space_0 = 0;
     const word_space_0 = 0;
 
     var pages = [_]Page{
-        Page.init(Container.wrap(Container.Text.init("Background color #EFEFEF", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EFEFEF"), null, null, null),
-        Page.init(Container.wrap(Container.Text.init("Padding color (10, 10, 10, 10)", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment top x left", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topLeft, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment top x center", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topCenter, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment top x right", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topRight, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment center x left", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.centerLeft, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment center", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.center, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment center x right", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.centerRight, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment bottom x left", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomLeft, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment bottom x center", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomCenter, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment bottom x right", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomRight, null),
-        Page.init(Container.wrap(Container.Text.init("Border", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 5, 5, 5, 5)),
-        Page.init(Container.wrap(Container.Text.init("All page properties", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), Alignment.topRight, Border.init(Color.init("FFF00F"), Border.Style.dot, 5, 5, 5, 5)),
+        Page.init(Container.wrap(Container.Text.init("Background color #EFEFEF", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EFEFEF"), null, null, null),
+        Page.init(Container.wrap(Container.Text.init("Padding color (10, 10, 10, 10)", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment top x left", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topLeft, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment top x center", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topCenter, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment top x right", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topRight, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment center x left", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.centerLeft, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment center", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.center, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment center x right", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.centerRight, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment bottom x left", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomLeft, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment bottom x center", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomCenter, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment bottom x right", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomRight, null),
+        Page.init(Container.wrap(Container.Text.init("Border", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 5, 5, 5, 5)),
+        Page.init(Container.wrap(Container.Text.init("All page properties", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), Alignment.topRight, Border.init(Color.init("FFF00F"), Border.Style.dot, 5, 5, 5, 5)),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "page", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var fonts = [_]Font.FontFace{
+        Font.wrap(Font.NamedFont.init("Default", "MS-Gothic", "90ms-RKSJ-H")),
+        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null)),
+        Font.wrap(Font.Ttf.init("MPLUS1p-Thin", "src/fonts/MPLUS1p-Thin.ttf", true, null)),
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "page", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/page.pdf");
@@ -645,7 +659,6 @@ test "box" {
         PermissionName.edit_all,
     };
 
-    const default_font = Font.wrap(Font.NamedFont.init(Default.font_name, Default.font_encode_name));
     const char_space_0 = 0;
     const word_space_0 = 0;
     const text_size_30 = 30;
@@ -653,10 +666,10 @@ test "box" {
     var child = Container.wrap(Container.Box.init(false, null, Color.init("DEDEDE"), null, null, null, Size.init(200, 200)));
     const opaque_child: *anyopaque = &child;
 
-    var text = Container.wrap(Container.Text.init("Hello World :)", Color.init("000FFF"), text_size_30, default_font, false, char_space_0, word_space_0));
+    var text = Container.wrap(Container.Text.init("Hello World :)", Color.init("000FFF"), text_size_30, "Default", false, char_space_0, word_space_0));
     const opaque_text: *anyopaque = &text;
 
-    var text2 = Container.wrap(Container.Text.init("Hello World :)", Color.init("000FFF"), Default.text_size, default_font, false, char_space_0, word_space_0));
+    var text2 = Container.wrap(Container.Text.init("Hello World :)", Color.init("000FFF"), Default.text_size, "Default", false, char_space_0, word_space_0));
     const opaque_text2: *anyopaque = &text2;
 
     var child2 = Container.wrap(Container.Box.init(false, null, Color.init("DEDEDE"), null, opaque_text2, Padding.init(10, 10, 10, 10), Size.init(200, 200)));
@@ -677,7 +690,12 @@ test "box" {
         Page.init(Container.wrap(Container.Box.init(false, Alignment.center, null, null, opaque_text, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "box", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var fonts = [_]Font.FontFace{
+        Font.wrap(Font.NamedFont.init("Default", "MS-Gothic", "90ms-RKSJ-H")),
+        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "box", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/box.pdf");
@@ -705,7 +723,11 @@ test "positioned_box" {
         Page.init(Container.wrap(Container.PositionedBox.init(opaque_child, 50, 50, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "positioned_box", CompressionMode.text, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var fonts = [_]Font.FontFace{
+        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "positioned_box", CompressionMode.text, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/positioned_box.pdf");
@@ -727,7 +749,11 @@ test "image" {
         Page.init(Container.wrap(Container.Image.init("src/images/sample.png", Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "image", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var fonts = [_]Font.FontFace{
+        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "image", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/image.pdf");
@@ -739,10 +765,7 @@ test "text" {
         PermissionName.edit_all,
     };
 
-    const default_font = Font.wrap(Font.NamedFont.init(Default.font_name, Default.font_encode_name));
-    const mplus_font = Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, null));
-    const helvetica_font = Font.wrap(Font.NamedFont.init("Helvetica", null));
-    const default_text_color = Color.init(Default.text_color);
+    const text_color = Color.init(Default.text_color);
     const text_size_20 = 20;
     const text_size_30 = 30;
     const char_space_0 = 0;
@@ -753,29 +776,29 @@ test "text" {
     const word_space_10 = 10;
 
     // const text_metrics1 = Measure.text("Hello TypogrAphy. (default)", Default.text_size, default_font, char_space_0, word_space_0);
-    const text1 = Container.Text.init("Hello TypogrAphy. (default)", default_text_color, Default.text_size, default_font, false, char_space_0, word_space_0);
+    const text1 = Container.Text.init("Hello TypogrAphy. (default)", text_color, Default.text_size, "Default", false, char_space_0, word_space_0);
 
-    const text2 = Container.Text.init("Hello TypogrAphy. (change color)", Color.init("FF00FF"), Default.text_size, default_font, false, char_space_0, word_space_0);
+    const text2 = Container.Text.init("Hello TypogrAphy. (change color)", Color.init("FF00FF"), Default.text_size, "Default", false, char_space_0, word_space_0);
 
-    const text3 = Container.Text.init("Hello TypogrAphy. (change size)", default_text_color, text_size_20, default_font, false, char_space_0, word_space_0);
+    const text3 = Container.Text.init("Hello TypogrAphy. (change size)", text_color, text_size_20, "Default", false, char_space_0, word_space_0);
 
-    const text4 = Container.Text.init("Hello TypogrAphy. (change font face to helvetica)", default_text_color, Default.text_size, helvetica_font, false, char_space_0, word_space_0);
+    const text4 = Container.Text.init("Hello TypogrAphy. (change font face to helvetica)", text_color, Default.text_size, "Helvetica", false, char_space_0, word_space_0);
 
-    const text5 = Container.Text.init("Hello TypogrAphy. (change font face to mplus1p)", default_text_color, Default.text_size, mplus_font, false, char_space_0, word_space_0);
+    const text5 = Container.Text.init("Hello TypogrAphy. (change font face to mplus1p)", text_color, Default.text_size, "MPLUS1p-Thin", false, char_space_0, word_space_0);
 
-    const text6 = Container.Text.init("Hello TypogrAphy1. Hello TypogrAphy2. Hello TypogrAphy3. Hello TypogrAphy4. Hello TypogrAphy5. Hello TypogrAphy6. Hello TypogrAphy7. Hello TypogrAphy8. Hello TypogrAphy9. Hello TypogrAphy10. Hello TypogrAphy11. Hello TypogrAphy12.", default_text_color, Default.text_size, default_font, true, char_space_0, word_space_0);
+    const text6 = Container.Text.init("Hello TypogrAphy1. Hello TypogrAphy2. Hello TypogrAphy3. Hello TypogrAphy4. Hello TypogrAphy5. Hello TypogrAphy6. Hello TypogrAphy7. Hello TypogrAphy8. Hello TypogrAphy9. Hello TypogrAphy10. Hello TypogrAphy11. Hello TypogrAphy12.", text_color, Default.text_size, "Default", true, char_space_0, word_space_0);
 
-    const text7 = Container.Text.init("Hello TypogrAphy. (change character space)", default_text_color, Default.text_size, default_font, false, char_space_10, word_space_0);
+    const text7 = Container.Text.init("Hello TypogrAphy. (change character space)", text_color, Default.text_size, "Default", false, char_space_10, word_space_0);
 
-    const text8 = Container.Text.init("Hello TypogrAphy. (change word space)", default_text_color, Default.text_size, default_font, false, char_space_0, word_space_10);
+    const text8 = Container.Text.init("Hello TypogrAphy. (change word space)", text_color, Default.text_size, "Default", false, char_space_0, word_space_10);
 
-    const text9 = Container.Text.init("Hello TypogrAphy. (mix)", Color.init("FF00FF"), text_size_30, helvetica_font, false, char_space_2, word_space_5);
+    const text9 = Container.Text.init("Hello TypogrAphy. (mix)", Color.init("FF00FF"), text_size_30, "Helvetica", false, char_space_2, word_space_5);
 
-    const text10 = Container.Text.init("Hello TypogrAphy. (mix)", Color.init("FF00FF"), text_size_30, helvetica_font, true, char_space_2, word_space_5);
+    const text10 = Container.Text.init("Hello TypogrAphy. (mix)", Color.init("FF00FF"), text_size_30, "Helvetica", true, char_space_2, word_space_5);
 
-    const text11 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", default_text_color, text_size_30, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, "90msp-RKSJ-H")), false, char_space_2, word_space_5);
+    const text11 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", text_color, text_size_30, "MPLUS1p-Thin", false, char_space_2, word_space_5);
 
-    const text12 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", default_text_color, text_size_30, Font.wrap(Font.Ttf.init("src/fonts/MPLUS1p-Thin.ttf", true, "90msp-RKSJ-H")), true, char_space_2, word_space_5);
+    const text12 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", text_color, text_size_30, "MPLUS1p-Thin", true, char_space_2, word_space_5);
 
     var pages = [_]Page{
         Page.init(Container.wrap(text1), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
@@ -792,7 +815,13 @@ test "text" {
         Page.init(Container.wrap(text12), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "text", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var fonts = [_]Font.FontFace{
+        Font.wrap(Font.NamedFont.init("Default", "MS-Gothic", "90ms-RKSJ-H")),
+        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null)),
+        Font.wrap(Font.Ttf.init("MPLUS1p-Thin", "src/fonts/MPLUS1p-Thin.ttf", true, "90msp-RKSJ-H")),
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "text", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/text.pdf");
@@ -819,7 +848,11 @@ test "column" {
         Page.init(Container.wrap(Container.Column.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var fonts = [_]Font.FontFace{
+        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/column.pdf");
@@ -846,7 +879,11 @@ test "row" {
         Page.init(Container.wrap(Container.Row.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var fonts = [_]Font.FontFace{
+        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/row.pdf");
@@ -858,19 +895,16 @@ test "row_column" {
         PermissionName.edit_all,
     };
 
-    // FIXME: Row や Column は、自身の横幅や高さを子要素が描画される前に知っている必要がある?
-
-    const default_font = Font.wrap(Font.NamedFont.init(Default.font_name, Default.font_encode_name));
     const char_space_0 = 0;
     const word_space_0 = 0;
 
-    var text1 = Container.wrap(Container.Text.init("Box1 Box1 Box1 Box1 Box1 Box1", Color.init("000FFF"), Default.text_size, default_font, true, char_space_0, word_space_0));
+    var text1 = Container.wrap(Container.Text.init("Box1 Box1 Box1 Box1 Box1 Box1", Color.init("000FFF"), Default.text_size, "Default", true, char_space_0, word_space_0));
     const opaque_text1: *anyopaque = &text1;
 
     var box1 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text1, null, Size.init(100, 50)));
     const opaque_box1: *anyopaque = &box1;
 
-    var text2 = Container.wrap(Container.Text.init("Box2", Color.init("000FFF"), Default.text_size, default_font, false, char_space_0, word_space_0));
+    var text2 = Container.wrap(Container.Text.init("Box2", Color.init("000FFF"), Default.text_size, "Default", false, char_space_0, word_space_0));
     const opaque_text2: *anyopaque = &text2;
 
     var box2 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text2, null, Size.init(100, 50)));
@@ -881,13 +915,13 @@ test "row_column" {
         opaque_box2,
     };
 
-    var text3 = Container.wrap(Container.Text.init("Box3", Color.init("000FFF"), Default.text_size, default_font, false, char_space_0, word_space_0));
+    var text3 = Container.wrap(Container.Text.init("Box3", Color.init("000FFF"), Default.text_size, "Default", false, char_space_0, word_space_0));
     const opaque_text3: *anyopaque = &text3;
 
     var box3 = Container.wrap(Container.Box.init(false, null, Color.init("F0F0FF"), null, opaque_text3, null, Size.init(100, 50)));
     const opaque_box3: *anyopaque = &box3;
 
-    var text4 = Container.wrap(Container.Text.init("Box4", Color.init("000FFF"), Default.text_size, default_font, false, char_space_0, word_space_0));
+    var text4 = Container.wrap(Container.Text.init("Box4", Color.init("000FFF"), Default.text_size, "Default", false, char_space_0, word_space_0));
     const opaque_text4: *anyopaque = &text4;
 
     var box4 = Container.wrap(Container.Box.init(false, null, Color.init("F0FFF0"), null, opaque_text4, null, Size.init(100, 50)));
@@ -913,7 +947,12 @@ test "row_column" {
         Page.init(Container.wrap(Container.Row.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
     };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &pages);
+    var fonts = [_]Font.FontFace{
+        Font.wrap(Font.NamedFont.init("Default", "MS-Gothic", "90ms-RKSJ-H")),
+        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
+    };
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/row_column.pdf");
