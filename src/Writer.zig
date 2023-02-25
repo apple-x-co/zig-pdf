@@ -148,14 +148,14 @@ fn loadFont(self: Self, hpdf: c.HPDF_Doc, font: Font.FontFace) Font.NamedFont {
     switch (font) {
         .named_font => {
             const named_font = font.named_font;
-            
+
             return Font.NamedFont.init(named_font.family, named_font.name, named_font.encoding_name);
         },
         .ttc => {
             const ttc = font.ttc;
             const ptr = c.HPDF_LoadTTFontFromFile2(hpdf, ttc.file_path.ptr, ttc.index, if (ttc.embedding) c.HPDF_TRUE else c.HPDF_FALSE);
             const font_name = std.mem.sliceTo(ptr, 0);
-            
+
             return Font.NamedFont.init(ttc.family, font_name, ttc.encoding_name);
         },
         .ttf => {
@@ -605,9 +605,7 @@ test "permission" {
         Page.init(Container.wrap(Container.Box.init(false, null, null, null, null, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
-    var fonts = [_]Font.FontFace{
-        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
-    };
+    var fonts = [_]Font.FontFace{Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))};
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "permission", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
@@ -690,10 +688,7 @@ test "box" {
         Page.init(Container.wrap(Container.Box.init(false, Alignment.center, null, null, opaque_text, null, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
-    var fonts = [_]Font.FontFace{
-        Font.wrap(Font.NamedFont.init("Default", "MS-Gothic", "90ms-RKSJ-H")),
-        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
-    };
+    var fonts = [_]Font.FontFace{ Font.wrap(Font.NamedFont.init("Default", "MS-Gothic", "90ms-RKSJ-H")), Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null)) };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "box", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
@@ -723,9 +718,7 @@ test "positioned_box" {
         Page.init(Container.wrap(Container.PositionedBox.init(opaque_child, 50, 50, null, null, Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
     };
 
-    var fonts = [_]Font.FontFace{
-        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
-    };
+    var fonts = [_]Font.FontFace{Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))};
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "positioned_box", CompressionMode.text, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
@@ -749,9 +742,7 @@ test "image" {
         Page.init(Container.wrap(Container.Image.init("src/images/sample.png", Size.init(100, 100))), Size.init(@as(f32, 595), @as(f32, 842)), null, null, Alignment.center, null),
     };
 
-    var fonts = [_]Font.FontFace{
-        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
-    };
+    var fonts = [_]Font.FontFace{Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))};
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "image", CompressionMode.image, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
@@ -848,9 +839,7 @@ test "column" {
         Page.init(Container.wrap(Container.Column.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
     };
 
-    var fonts = [_]Font.FontFace{
-        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
-    };
+    var fonts = [_]Font.FontFace{Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))};
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
@@ -879,9 +868,7 @@ test "row" {
         Page.init(Container.wrap(Container.Row.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
     };
 
-    var fonts = [_]Font.FontFace{
-        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
-    };
+    var fonts = [_]Font.FontFace{Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))};
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
@@ -947,10 +934,7 @@ test "row_column" {
         Page.init(Container.wrap(Container.Row.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
     };
 
-    var fonts = [_]Font.FontFace{
-        Font.wrap(Font.NamedFont.init("Default", "MS-Gothic", "90ms-RKSJ-H")),
-        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
-    };
+    var fonts = [_]Font.FontFace{ Font.wrap(Font.NamedFont.init("Default", "MS-Gothic", "90ms-RKSJ-H")), Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null)) };
 
     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);

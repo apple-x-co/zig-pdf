@@ -43,9 +43,7 @@ test {
         PermissionName.print,
     };
 
-    var fonts = [_]Font.FontFace{
-        Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))
-    };
+    var fonts = [_]Font.FontFace{Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))};
 
     const pages = [_]Page{};
 
