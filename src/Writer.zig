@@ -14,7 +14,6 @@ const Default = @import("Default.zig");
 const Encode = @import("Encode.zig");
 const EncryptionMode = @import("Encryption.zig").EncryptionMode;
 const Font = @import("Pdf/Font.zig");
-const Measure = @import("Measure.zig");
 const Padding = @import("Pdf/Padding.zig");
 const Page = @import("Pdf/Page.zig");
 const Pdf = @import("Pdf.zig");
@@ -187,6 +186,149 @@ fn renderPage(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
     try self.renderContainer(hpdf, hpage, page.content_frame, page.alignment, page.container);
 }
 
+// WIP
+fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: Container.Container) !Size {
+    switch (container) {
+        .box => {
+            const box = container.box;
+
+            if (box.size) |size| {
+                return size;
+            }
+
+            if (box.child) |child| {
+                const child_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
+
+                const size = parent_rect.size;
+                const pad = box.padding orelse Padding.zeroPadding;
+                const width = if (box.expanded) (parent_rect.size.width / size.width) * size.width else size.width;
+                const height = if (box.expanded) (parent_rect.size.height / size.height) * size.height else size.height;
+
+                var content_frame = parent_rect.offsetLTWH(0, 0, width, height);
+                content_frame = content_frame.insets(pad.top, pad.right, pad.bottom, pad.left);
+
+                return try self.layoutContainer(hpdf, content_frame, child_container.*);
+            }
+
+            return Size.zeroSize;
+        },
+        .positioned_box => {
+            return Size.zeroSize;
+        },
+        .flexible => {
+            return Size.zeroSize;
+        },
+        .column => {
+            const column = container.column;
+
+            var flex: u8 = 0;
+            var size = Size.zeroSize;
+
+            for (column.children) |child| {
+                const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
+                const child_container = child_container_ptr.*;
+
+                var child_size = try self.layoutContainer(hpdf, Rect.zeroRect, child_container);
+                size.width = if (size.width < child_size.width) child_size.width else size.width;
+                size.height += child_size.height;
+
+                flex += switch (child_container) {
+                    .flexible => child_container.flexible.flex,
+                    else => 0,
+                };
+            }
+
+            if (flex > 0) {
+                const flex_height = (parent_rect.size.height - size.height) / @intToFloat(f32, flex);
+
+                for (column.children) |child| {
+                    const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
+                    const child_container = child_container_ptr.*;
+                    switch (child_container) {
+                        .flexible => {
+                            const flexible = child_container.flexible;
+                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, parent_rect.size.width, flex_height * @intToFloat(f32, flexible.flex)));
+                        },
+                        else => {},
+                    }
+                }
+            }
+
+            return if (flex > 0) Size.init(size.width, parent_rect.size.height) else size;
+        },
+        .row => {
+            const row = container.row;
+
+            var flex: u8 = 0;
+            var size = Size.zeroSize;
+
+            for (row.children) |child| {
+                const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
+                const child_container = child_container_ptr.*;
+
+                var child_size = try self.layoutContainer(hpdf, Rect.zeroRect, child_container);
+                size.width += child_size.width;
+                size.height = if (size.height < child_size.height) child_size.height else size.height;
+
+                flex += switch (child_container) {
+                    .flexible => child_container.flexible.flex,
+                    else => 0,
+                };
+            }
+
+            if (flex > 0) {
+                const flex_width = (parent_rect.size.width - size.width) / @intToFloat(f32, flex);
+
+                for (row.children) |child| {
+                    const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
+                    const child_container = child_container_ptr.*;
+                    switch (child_container) {
+                        .flexible => {
+                            const flexible = child_container.flexible;
+                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, flex_width * @intToFloat(f32, flexible.flex), parent_rect.size.height));
+                        },
+                        else => {},
+                    }
+                }
+            }
+
+            return if (flex > 0) Size.init(parent_rect.size.width, size.height) else size;
+        },
+        .image => {
+            const image = container.image;
+
+            if (image.size) |size| {
+                return size;
+            }
+
+            const extension = std.fs.path.extension(image.path);
+            const himage = if (std.mem.eql(u8, extension, ".png")) c.HPDF_LoadPngImageFromFile2(hpdf, image.path.ptr) else c.HPDF_LoadJpegImageFromFile(hpdf, image.path.ptr);
+            const imageWidth: f32 = @intToFloat(f32, c.HPDF_Image_GetWidth(himage));
+            const imageHeight: f32 = @intToFloat(f32, c.HPDF_Image_GetHeight(himage));
+
+            return Size.init(imageWidth, imageHeight);
+        },
+        .text => {
+            const text = container.text;
+
+            const font: Font.NamedFont = self.font_map.get(text.font_family) orelse @panic("undefined font.");
+            const hfont: c.HPDF_Font = c.HPDF_GetFont(hpdf, font.name.ptr, if (font.encoding_name == null) null else font.encoding_name.?.ptr);
+
+            const text_size = text.text_size;
+            const word_space = text.word_space;
+            const char_space = text.char_space;
+
+            const text_len = @intCast(c_uint, text.content.len);
+            const text_width = c.HPDF_Font_TextWidth(hfont, text.content.ptr, text_len);
+            const width = ((@intToFloat(f32, text_width.width) / 1000) * text_size) + (word_space * @intToFloat(f32, text_width.numwords - 1)) + (char_space * @intToFloat(f32, text_width.numchars - 1));
+            const b_box = c.HPDF_Font_GetBBox(hfont);
+            const line_height = ((b_box.top + (b_box.bottom * -1)) / 1000) * text_size;
+
+            return Size.init(width, line_height);
+        },
+    }
+}
+
 fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect, alignment: ?Alignment, container: Container.Container) !void {
     switch (container) {
         .box => {
@@ -227,9 +369,20 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
                 try self.renderContainer(hpdf, hpage, content_frame, null, child_container.*);
             }
         },
+        .flexible => {
+            const flexible = container.flexible;
+            const child_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), flexible.child));
+            if (self.content_frame_map.get(flexible.id)) |content_frame| {
+                try self.renderContainer(hpdf, hpage, Rect.init(rect.origin.x, rect.origin.y, content_frame.size.width, content_frame.size.height), null, child_container.*);
+            } else {
+                try self.renderContainer(hpdf, hpage, rect, null, child_container.*);
+            }
+        },
         .column => {
             const column = container.column;
             var content_frame = rect;
+
+            _ = try self.layoutContainer(hpdf, rect, container);
 
             if (self.is_debug) {
                 try self.drawBorder(hpage, Border.init(Color.init("F00FFF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
@@ -248,7 +401,9 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
                 const child_container = child_container_ptr.*;
                 try self.renderContainer(hpdf, hpage, content_frame, null, child_container);
                 if (self.content_frame_map.get(child_container.getId())) |child_content_frame| {
+                    // std.log.warn("BERFORE x:{d},y:{d}", .{child_content_frame.origin.x, content_frame.origin.y});
                     content_frame = content_frame.offsetLTWH(0, child_content_frame.height, content_frame.width, content_frame.height - child_content_frame.height);
+                    // std.log.warn("AFTER x:{d},y:{d}", .{content_frame.origin.x, content_frame.origin.y});
 
                     children_width = if (children_width < child_content_frame.width) child_content_frame.width else children_width;
                     children_height += child_content_frame.height;
@@ -261,6 +416,8 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
         .row => {
             const row = container.row;
             var content_frame = rect;
+
+            _ = try self.layoutContainer(hpdf, rect, container);
 
             if (self.is_debug) {
                 try self.drawBorder(hpage, Border.init(Color.init("F00FFF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
@@ -732,9 +889,6 @@ test "image" {
         PermissionName.edit_all,
     };
 
-    // const mesured_size1 = Measure.image("src/images/sample.jpg");
-    // const mesured_size2 = Measure.image("src/images/sample.png");
-
     var pages = [_]Page{
         Page.init(Container.wrap(Container.Image.init("src/images/sample.jpg", null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
         Page.init(Container.wrap(Container.Image.init("src/images/sample.png", null)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
@@ -766,7 +920,6 @@ test "text" {
     const word_space_5 = 5;
     const word_space_10 = 10;
 
-    // const text_metrics1 = Measure.text("Hello TypogrAphy. (default)", Default.text_size, default_font, char_space_0, word_space_0);
     const text1 = Container.Text.init("Hello TypogrAphy. (default)", text_color, Default.text_size, "Default", false, char_space_0, word_space_0);
 
     const text2 = Container.Text.init("Hello TypogrAphy. (change color)", Color.init("FF00FF"), Default.text_size, "Default", false, char_space_0, word_space_0);
@@ -874,6 +1027,53 @@ test "row" {
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/row.pdf");
+}
+
+test "flexible" {
+    const permissions = [_]PermissionName{
+        PermissionName.read,
+        PermissionName.edit_all,
+    };
+
+    var box1 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(100, 50)));
+    const opaque_box1: *anyopaque = &box1;
+
+    var text1 = Container.wrap(Container.Text.init("Hello TypogrAphy. (flex1)", Color.init(Default.text_color), Default.text_size, "Default", true, 0, 0));
+    const opaque_text1: *anyopaque = &text1;
+
+    var flexible1 = Container.wrap(Container.Flexible.init(opaque_text1, 1));
+    const opaque_flexible1: *anyopaque = &flexible1;
+
+    var text2 = Container.wrap(Container.Text.init("Hello TypogrAphy. (flex2)", Color.init(Default.text_color), Default.text_size, "Default", false, 0, 0));
+    const opaque_text2: *anyopaque = &text2;
+
+    var flexible2 = Container.wrap(Container.Flexible.init(opaque_text2, 2));
+    const opaque_flexible2: *anyopaque = &flexible2;
+
+    var text3 = Container.wrap(Container.Text.init("Hello TypogrAphy. (flex3)", Color.init(Default.text_color), Default.text_size, "Default", false, 0, 0));
+    const opaque_text3: *anyopaque = &text3;
+
+    var flexible3 = Container.wrap(Container.Flexible.init(opaque_text3, 3));
+    const opaque_flexible3: *anyopaque = &flexible3;
+
+    var children = [_]*anyopaque{
+        opaque_box1,
+        opaque_flexible1,
+        opaque_flexible2,
+        opaque_flexible3,
+    };
+
+    var pages = [_]Page{
+        Page.init(Container.wrap(Container.Row.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+        Page.init(Container.wrap(Container.Column.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+    };
+
+    var fonts = [_]Font.FontFace{Font.wrap(Font.NamedFont.init("Default", "Helvetica", null))};
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
+    var pdfWriter = init(std.testing.allocator, pdf, true);
+    defer pdfWriter.deinit();
+    try pdfWriter.save("demo/flexible.pdf");
 }
 
 test "row_column" {

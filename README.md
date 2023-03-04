@@ -62,11 +62,12 @@
         - [x] Left
         - [x] Size
         - [x] Child
+      - [ ] Layout:Flexible
+        - [ ] Flex
+        - [ ] Child
       - [x] Layout:Row
-        - [ ] Alignment
         - [x] Children
       - [x] Layout:Col
-        - [ ] Alignment
         - [x] Children
       - [x] Content:Text
         - [x] Content
@@ -89,4 +90,11 @@
 ### Priority: Low
 
 - [ ] JSON Validation
+- [ ] Renderer
+  - [ ] Page
+    - [ ] Container
+      - [ ] Layout:Row
+        - [ ] Alignment
+      - [ ] Layout:Col
+        - [ ] Alignment
 - [ ] libharu's demo
