@@ -186,7 +186,6 @@ fn renderPage(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
     try self.renderContainer(hpdf, hpage, page.content_frame, page.alignment, page.container);
 }
 
-// WIP
 fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: Container.Container) !Size {
     switch (container) {
         .box => {
@@ -247,7 +246,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
                     switch (child_container) {
                         .flexible => {
                             const flexible = child_container.flexible;
-                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, parent_rect.size.width, flex_height * @intToFloat(f32, flexible.flex)));
+                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, size.width, flex_height * @intToFloat(f32, flexible.flex)));
                         },
                         else => {},
                     }
@@ -285,7 +284,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
                     switch (child_container) {
                         .flexible => {
                             const flexible = child_container.flexible;
-                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, flex_width * @intToFloat(f32, flexible.flex), parent_rect.size.height));
+                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, flex_width * @intToFloat(f32, flexible.flex), size.height));
                         },
                         else => {},
                     }
@@ -341,7 +340,7 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
                 _ = c.HPDF_Page_BeginText(hpage);
                 _ = c.HPDF_Page_SetRGBFill(hpage, 1.0, 0.0, 0.0);
                 _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
-                _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Page container's drawable rect.");
+                _ = c.HPDF_Page_TextOut(hpage, content_frame.minX, content_frame.minY, "Box's drawable rect.");
                 _ = c.HPDF_Page_EndText(hpage);
             }
 
@@ -372,8 +371,9 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
         .flexible => {
             const flexible = container.flexible;
             const child_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), flexible.child));
-            if (self.content_frame_map.get(flexible.id)) |content_frame| {
-                try self.renderContainer(hpdf, hpage, Rect.init(rect.origin.x, rect.origin.y, content_frame.size.width, content_frame.size.height), null, child_container.*);
+            if (self.content_frame_map.get(flexible.id)) |flexible_rect| {
+                const content_frame = rect.offsetLTWH(0, 0, flexible_rect.size.width, flexible_rect.size.height);
+                try self.renderContainer(hpdf, hpage, Rect.init(content_frame.origin.x, content_frame.origin.y, content_frame.size.width, content_frame.size.height), null, child_container.*);
             } else {
                 try self.renderContainer(hpdf, hpage, rect, null, child_container.*);
             }
@@ -401,9 +401,10 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
                 const child_container = child_container_ptr.*;
                 try self.renderContainer(hpdf, hpage, content_frame, null, child_container);
                 if (self.content_frame_map.get(child_container.getId())) |child_content_frame| {
-                    // std.log.warn("BERFORE x:{d},y:{d}", .{child_content_frame.origin.x, content_frame.origin.y});
+                    // std.log.warn("COLUMN CHILD w:{d},h:{d}", .{child_content_frame.size.width, child_content_frame.size.height});
+                    // std.log.warn("COLUMN BERFORE x:{d},y:{d}", .{content_frame.origin.x, content_frame.origin.y});
                     content_frame = content_frame.offsetLTWH(0, child_content_frame.height, content_frame.width, content_frame.height - child_content_frame.height);
-                    // std.log.warn("AFTER x:{d},y:{d}", .{content_frame.origin.x, content_frame.origin.y});
+                    // std.log.warn("COLUMN AFTER x:{d},y:{d}", .{content_frame.origin.x, content_frame.origin.y});
 
                     children_width = if (children_width < child_content_frame.width) child_content_frame.width else children_width;
                     children_height += child_content_frame.height;
@@ -436,7 +437,10 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
                 const child_container = child_container_ptr.*;
                 try self.renderContainer(hpdf, hpage, content_frame, null, child_container);
                 if (self.content_frame_map.get(child_container.getId())) |child_content_frame| {
+                    // std.log.warn("ROW CHILD w:{d},h:{d}", .{child_content_frame.size.width, child_content_frame.size.height});
+                    // std.log.warn("ROW BERFORE x:{d},y:{d}", .{content_frame.origin.x, content_frame.origin.y});
                     content_frame = content_frame.offsetLTWH(child_content_frame.width, 0, content_frame.width - child_content_frame.width, content_frame.height);
+                    // std.log.warn("ROW AFTER x:{d},y:{d}", .{content_frame.origin.x, content_frame.origin.y});
 
                     children_width += child_content_frame.width;
                     children_height = if (children_height < child_content_frame.height) child_content_frame.height else children_height;
@@ -1035,29 +1039,41 @@ test "flexible" {
         PermissionName.edit_all,
     };
 
-    var box1 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(100, 50)));
-    const opaque_box1: *anyopaque = &box1;
+    var box0 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(100, 50)));
+    const opaque_box0: *anyopaque = &box0;
 
+    // child1
     var text1 = Container.wrap(Container.Text.init("Hello TypogrAphy. (flex1)", Color.init(Default.text_color), Default.text_size, "Default", true, 0, 0));
     const opaque_text1: *anyopaque = &text1;
 
-    var flexible1 = Container.wrap(Container.Flexible.init(opaque_text1, 1));
+    var box1 = Container.wrap(Container.Box.init(true, null, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text1, null, null));
+    const opaque_box1: *anyopaque = &box1;
+
+    var flexible1 = Container.wrap(Container.Flexible.init(opaque_box1, 1));
     const opaque_flexible1: *anyopaque = &flexible1;
 
+    // child2
     var text2 = Container.wrap(Container.Text.init("Hello TypogrAphy. (flex2)", Color.init(Default.text_color), Default.text_size, "Default", false, 0, 0));
     const opaque_text2: *anyopaque = &text2;
 
-    var flexible2 = Container.wrap(Container.Flexible.init(opaque_text2, 2));
+    var box2 = Container.wrap(Container.Box.init(true, null, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text2, null, null));
+    const opaque_box2: *anyopaque = &box2;
+
+    var flexible2 = Container.wrap(Container.Flexible.init(opaque_box2, 2));
     const opaque_flexible2: *anyopaque = &flexible2;
 
+    // child3
     var text3 = Container.wrap(Container.Text.init("Hello TypogrAphy. (flex3)", Color.init(Default.text_color), Default.text_size, "Default", false, 0, 0));
     const opaque_text3: *anyopaque = &text3;
 
-    var flexible3 = Container.wrap(Container.Flexible.init(opaque_text3, 3));
+    var box3 = Container.wrap(Container.Box.init(true, null, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text3, null, null));
+    const opaque_box3: *anyopaque = &box3;
+
+    var flexible3 = Container.wrap(Container.Flexible.init(opaque_box3, 3));
     const opaque_flexible3: *anyopaque = &flexible3;
 
     var children = [_]*anyopaque{
-        opaque_box1,
+        opaque_box0,
         opaque_flexible1,
         opaque_flexible2,
         opaque_flexible3,
