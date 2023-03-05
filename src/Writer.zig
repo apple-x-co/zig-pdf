@@ -610,16 +610,53 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
         content_frame = parent_rect.offsetCenterXYWH(x * -1, y * -1, size.width, size.height);
     }
 
-    _ = c.HPDF_Page_SetRGBFill(hpage, 0.0, 0.0, 0.0);
-    if (text.color.value) |hex| {
-        const rgb = try Rgb.hex(hex);
-        const red = @intToFloat(f32, rgb.red) / 255;
-        const green = @intToFloat(f32, rgb.green) / 255;
-        const blue = @intToFloat(f32, rgb.blue) / 255;
-        _ = c.HPDF_Page_SetRGBFill(hpage, red, green, blue);
-    }
+    switch (text.style) {
+        .fill => {
+            _ = c.HPDF_Page_SetRGBFill(hpage, 0.0, 0.0, 0.0);
+            if (text.fill_color.value) |hex| {
+                const rgb = try Rgb.hex(hex);
+                const red = @intToFloat(f32, rgb.red) / 255;
+                const green = @intToFloat(f32, rgb.green) / 255;
+                const blue = @intToFloat(f32, rgb.blue) / 255;
+                _ = c.HPDF_Page_SetRGBFill(hpage, red, green, blue);
+            }
 
-    _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
+            _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL);
+        },
+        .stroke => {
+            _ = c.HPDF_Page_SetRGBStroke(hpage, 0.0, 0.0, 0.0);
+            if (text.stroke_color.value) |hex| {
+                const rgb = try Rgb.hex(hex);
+                const red = @intToFloat(f32, rgb.red) / 255;
+                const green = @intToFloat(f32, rgb.green) / 255;
+                const blue = @intToFloat(f32, rgb.blue) / 255;
+                _ = c.HPDF_Page_SetRGBStroke(hpage, red, green, blue);
+            }
+            
+            _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_STROKE);
+        },
+        .fill_and_stroke => {
+            _ = c.HPDF_Page_SetRGBFill(hpage, 0.0, 0.0, 0.0);
+            if (text.fill_color.value) |hex| {
+                const rgb = try Rgb.hex(hex);
+                const red = @intToFloat(f32, rgb.red) / 255;
+                const green = @intToFloat(f32, rgb.green) / 255;
+                const blue = @intToFloat(f32, rgb.blue) / 255;
+                _ = c.HPDF_Page_SetRGBFill(hpage, red, green, blue);
+            }
+
+            _ = c.HPDF_Page_SetRGBStroke(hpage, 0.0, 0.0, 0.0);
+            if (text.stroke_color.value) |hex| {
+                const rgb = try Rgb.hex(hex);
+                const red = @intToFloat(f32, rgb.red) / 255;
+                const green = @intToFloat(f32, rgb.green) / 255;
+                const blue = @intToFloat(f32, rgb.blue) / 255;
+                _ = c.HPDF_Page_SetRGBStroke(hpage, red, green, blue);
+            }
+
+            _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_FILL_THEN_STROKE);
+        },
+    }
 
     // 指定した領域内にテキストを表示する - HPDF_Page_TextRect
     // 指定した位置にテキストを表示する - HPDF_Page_TextOut
@@ -789,19 +826,19 @@ test "page" {
     const word_space_0 = 0;
 
     var pages = [_]Page{
-        Page.init(Container.wrap(Container.Text.init("Background color #EFEFEF", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EFEFEF"), null, null, null),
-        Page.init(Container.wrap(Container.Text.init("Padding color (10, 10, 10, 10)", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment top x left", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topLeft, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment top x center", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topCenter, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment top x right", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topRight, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment center x left", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.centerLeft, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment center", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.center, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment center x right", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.centerRight, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment bottom x left", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomLeft, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment bottom x center", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomCenter, null),
-        Page.init(Container.wrap(Container.Text.init("Alignment bottom x right", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomRight, null),
-        Page.init(Container.wrap(Container.Text.init("Border", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 5, 5, 5, 5)),
-        Page.init(Container.wrap(Container.Text.init("All page properties", text_color, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), Alignment.topRight, Border.init(Color.init("FFF00F"), Border.Style.dot, 5, 5, 5, 5)),
+        Page.init(Container.wrap(Container.Text.init("Background color #EFEFEF", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), Color.init("EFEFEF"), null, null, null),
+        Page.init(Container.wrap(Container.Text.init("Padding color (10, 10, 10, 10)", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment top x left", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topLeft, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment top x center", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topCenter, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment top x right", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.topRight, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment center x left", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.centerLeft, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment center", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.center, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment center x right", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.centerRight, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment bottom x left", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomLeft, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment bottom x center", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomCenter, null),
+        Page.init(Container.wrap(Container.Text.init("Alignment bottom x right", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 595)), null, null, Alignment.bottomRight, null),
+        Page.init(Container.wrap(Container.Text.init("Border", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 5, 5, 5, 5)),
+        Page.init(Container.wrap(Container.Text.init("All page properties", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(50, 50, 50, 50), Alignment.topRight, Border.init(Color.init("FFF00F"), Border.Style.dot, 5, 5, 5, 5)),
     };
 
     var fonts = [_]Font.FontFace{
@@ -829,10 +866,10 @@ test "box" {
     var child = Container.wrap(Container.Box.init(false, null, Color.init("DEDEDE"), null, null, null, Size.init(200, 200)));
     const opaque_child: *anyopaque = &child;
 
-    var text = Container.wrap(Container.Text.init("Hello World :)", Color.init("000FFF"), text_size_30, "Default", false, char_space_0, word_space_0));
+    var text = Container.wrap(Container.Text.init("Hello World :)", Color.init("000FFF"), null, .fill, text_size_30, "Default", false, char_space_0, word_space_0));
     const opaque_text: *anyopaque = &text;
 
-    var text2 = Container.wrap(Container.Text.init("Hello World :)", Color.init("000FFF"), Default.text_size, "Default", false, char_space_0, word_space_0));
+    var text2 = Container.wrap(Container.Text.init("Hello World :)", Color.init("000FFF"), null, .fill, Default.text_size, "Default", false, char_space_0, word_space_0));
     const opaque_text2: *anyopaque = &text2;
 
     var child2 = Container.wrap(Container.Box.init(false, null, Color.init("DEDEDE"), null, opaque_text2, Padding.init(10, 10, 10, 10), Size.init(200, 200)));
@@ -928,29 +965,29 @@ test "text" {
     const word_space_5 = 5;
     const word_space_10 = 10;
 
-    const text1 = Container.Text.init("Hello TypogrAphy. (default)", text_color, Default.text_size, "Default", false, char_space_0, word_space_0);
+    const text1 = Container.Text.init("Hello TypogrAphy. (default)", text_color, null, .fill, Default.text_size, "Default", false, char_space_0, word_space_0);
 
-    const text2 = Container.Text.init("Hello TypogrAphy. (change color)", Color.init("FF00FF"), Default.text_size, "Default", false, char_space_0, word_space_0);
+    const text2 = Container.Text.init("Hello TypogrAphy. (change color)", Color.init("FF00FF"), null, .fill, Default.text_size, "Default", false, char_space_0, word_space_0);
 
-    const text3 = Container.Text.init("Hello TypogrAphy. (change size)", text_color, text_size_20, "Default", false, char_space_0, word_space_0);
+    const text3 = Container.Text.init("Hello TypogrAphy. (change size)", text_color, null, .fill, text_size_20, "Default", false, char_space_0, word_space_0);
 
-    const text4 = Container.Text.init("Hello TypogrAphy. (change font face to helvetica)", text_color, Default.text_size, "Helvetica", false, char_space_0, word_space_0);
+    const text4 = Container.Text.init("Hello TypogrAphy. (change font face to helvetica)", text_color, null, .fill, Default.text_size, "Helvetica", false, char_space_0, word_space_0);
 
-    const text5 = Container.Text.init("Hello TypogrAphy. (change font face to mplus1p)", text_color, Default.text_size, "MPLUS1p-Thin", false, char_space_0, word_space_0);
+    const text5 = Container.Text.init("Hello TypogrAphy. (change font face to mplus1p)", text_color, null, .fill, Default.text_size, "MPLUS1p-Thin", false, char_space_0, word_space_0);
 
-    const text6 = Container.Text.init("Hello TypogrAphy1. Hello TypogrAphy2. Hello TypogrAphy3. Hello TypogrAphy4. Hello TypogrAphy5. Hello TypogrAphy6. Hello TypogrAphy7. Hello TypogrAphy8. Hello TypogrAphy9. Hello TypogrAphy10. Hello TypogrAphy11. Hello TypogrAphy12.", text_color, Default.text_size, "Default", true, char_space_0, word_space_0);
+    const text6 = Container.Text.init("Hello TypogrAphy1. Hello TypogrAphy2. Hello TypogrAphy3. Hello TypogrAphy4. Hello TypogrAphy5. Hello TypogrAphy6. Hello TypogrAphy7. Hello TypogrAphy8. Hello TypogrAphy9. Hello TypogrAphy10. Hello TypogrAphy11. Hello TypogrAphy12.", text_color, null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0);
 
-    const text7 = Container.Text.init("Hello TypogrAphy. (change character space)", text_color, Default.text_size, "Default", false, char_space_10, word_space_0);
+    const text7 = Container.Text.init("Hello TypogrAphy. (change character space)", text_color, null, .fill, Default.text_size, "Default", false, char_space_10, word_space_0);
 
-    const text8 = Container.Text.init("Hello TypogrAphy. (change word space)", text_color, Default.text_size, "Default", false, char_space_0, word_space_10);
+    const text8 = Container.Text.init("Hello TypogrAphy. (change word space)", text_color, null, .fill, Default.text_size, "Default", false, char_space_0, word_space_10);
 
-    const text9 = Container.Text.init("Hello TypogrAphy. (mix)", Color.init("FF00FF"), text_size_30, "Helvetica", false, char_space_2, word_space_5);
+    const text9 = Container.Text.init("Hello TypogrAphy. (mix)", Color.init("60FFF0"), Color.init("000000"), .fill_and_stroke, text_size_30, "Helvetica", false, char_space_2, word_space_5);
 
-    const text10 = Container.Text.init("Hello TypogrAphy. (mix)", Color.init("FF00FF"), text_size_30, "Helvetica", true, char_space_2, word_space_5);
+    const text10 = Container.Text.init("Hello TypogrAphy. (mix)", Color.init("FF00FF"), null, .stroke, text_size_30, "Helvetica", true, char_space_2, word_space_5);
 
-    const text11 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", text_color, text_size_30, "MPLUS1p-Thin", false, char_space_2, word_space_5);
+    const text11 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", text_color, null, .fill, text_size_30, "MPLUS1p-Thin", false, char_space_2, word_space_5);
 
-    const text12 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", text_color, text_size_30, "MPLUS1p-Thin", true, char_space_2, word_space_5);
+    const text12 = Container.Text.init("こんにちは　タイポグラフィ。(デフォルト)", text_color, null, .fill, text_size_30, "MPLUS1p-Thin", true, char_space_2, word_space_5);
 
     var pages = [_]Page{
         Page.init(Container.wrap(text1), Size.init(@as(f32, 595), @as(f32, 842)), null, null, null, null),
@@ -1047,7 +1084,7 @@ test "flexible" {
     const opaque_box0: *anyopaque = &box0;
 
     // child1
-    var text1 = Container.wrap(Container.Text.init("Hello TypogrAphy. (flex1)", Color.init(Default.text_color), Default.text_size, "Default", true, 0, 0));
+    var text1 = Container.wrap(Container.Text.init("Hello TypogrAphy. (flex1)", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", true, 0, 0));
     const opaque_text1: *anyopaque = &text1;
 
     var box1 = Container.wrap(Container.Box.init(true, null, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text1, null, null));
@@ -1057,7 +1094,7 @@ test "flexible" {
     const opaque_flexible1: *anyopaque = &flexible1;
 
     // child2
-    var text2 = Container.wrap(Container.Text.init("Hello TypogrAphy. (flex2)", Color.init(Default.text_color), Default.text_size, "Default", false, 0, 0));
+    var text2 = Container.wrap(Container.Text.init("Hello TypogrAphy. (flex2)", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", false, 0, 0));
     const opaque_text2: *anyopaque = &text2;
 
     var box2 = Container.wrap(Container.Box.init(true, null, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text2, null, null));
@@ -1067,7 +1104,7 @@ test "flexible" {
     const opaque_flexible2: *anyopaque = &flexible2;
 
     // child3
-    var text3 = Container.wrap(Container.Text.init("Hello TypogrAphy. (flex3)", Color.init(Default.text_color), Default.text_size, "Default", false, 0, 0));
+    var text3 = Container.wrap(Container.Text.init("Hello TypogrAphy. (flex3)", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", false, 0, 0));
     const opaque_text3: *anyopaque = &text3;
 
     var box3 = Container.wrap(Container.Box.init(true, null, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text3, null, null));
@@ -1105,13 +1142,13 @@ test "row_column" {
     const char_space_0 = 0;
     const word_space_0 = 0;
 
-    var text1 = Container.wrap(Container.Text.init("Box1 Box1 Box1 Box1 Box1 Box1", Color.init("000FFF"), Default.text_size, "Default", true, char_space_0, word_space_0));
+    var text1 = Container.wrap(Container.Text.init("Box1 Box1 Box1 Box1 Box1 Box1", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, char_space_0, word_space_0));
     const opaque_text1: *anyopaque = &text1;
 
     var box1 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text1, null, Size.init(100, 50)));
     const opaque_box1: *anyopaque = &box1;
 
-    var text2 = Container.wrap(Container.Text.init("Box2", Color.init("000FFF"), Default.text_size, "Default", false, char_space_0, word_space_0));
+    var text2 = Container.wrap(Container.Text.init("Box2", Color.init("000FFF"), null, .fill, Default.text_size, "Default", false, char_space_0, word_space_0));
     const opaque_text2: *anyopaque = &text2;
 
     var box2 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text2, null, Size.init(100, 50)));
@@ -1122,13 +1159,13 @@ test "row_column" {
         opaque_box2,
     };
 
-    var text3 = Container.wrap(Container.Text.init("Box3", Color.init("000FFF"), Default.text_size, "Default", false, char_space_0, word_space_0));
+    var text3 = Container.wrap(Container.Text.init("Box3", Color.init("000FFF"), null, .fill, Default.text_size, "Default", false, char_space_0, word_space_0));
     const opaque_text3: *anyopaque = &text3;
 
     var box3 = Container.wrap(Container.Box.init(false, null, Color.init("F0F0FF"), null, opaque_text3, null, Size.init(100, 50)));
     const opaque_box3: *anyopaque = &box3;
 
-    var text4 = Container.wrap(Container.Text.init("Box4", Color.init("000FFF"), Default.text_size, "Default", false, char_space_0, word_space_0));
+    var text4 = Container.wrap(Container.Text.init("Box4", Color.init("000FFF"), null, .fill, Default.text_size, "Default", false, char_space_0, word_space_0));
     const opaque_text4: *anyopaque = &text4;
 
     var box4 = Container.wrap(Container.Box.init(false, null, Color.init("F0FFF0"), null, opaque_text4, null, Size.init(100, 50)));
