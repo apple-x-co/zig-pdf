@@ -329,6 +329,8 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
 }
 
 fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect, alignment: ?Alignment, container: Container.Container) !void {
+    _ = c.HPDF_Page_GSave(hpage);
+
     switch (container) {
         .box => {
             const box = container.box;
@@ -474,6 +476,8 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             }
         },
     }
+
+    _ = c.HPDF_Page_GRestore(hpage);
 }
 
 fn renderBox(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rect, alignment: ?Alignment, box: Container.Box) !Rect {
