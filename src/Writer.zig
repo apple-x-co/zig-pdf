@@ -632,7 +632,7 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
                 const blue = @intToFloat(f32, rgb.blue) / 255;
                 _ = c.HPDF_Page_SetRGBStroke(hpage, red, green, blue);
             }
-            
+
             _ = c.HPDF_Page_SetTextRenderingMode(hpage, c.HPDF_STROKE);
         },
         .fill_and_stroke => {
