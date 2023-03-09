@@ -60,6 +60,7 @@ pub fn save(self: *Self, file_name: []const u8) !void {
         const hpage = c.HPDF_AddPage(hpdf);
 
         try self.renderPage(hpdf, hpage, page);
+        try self.renderContainer(hpdf, hpage, page.content_frame, page.alignment, page.container);
     }
 
     _ = c.HPDF_SaveToFile(hpdf, file_name.ptr);
@@ -182,8 +183,6 @@ fn renderPage(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, page: Page) !vo
     if (page.border) |border| {
         try self.drawBorder(hpage, border, page.content_frame);
     }
-
-    try self.renderContainer(hpdf, hpage, page.content_frame, page.alignment, page.container);
 }
 
 fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: Container.Container) !Size {
