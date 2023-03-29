@@ -324,6 +324,23 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
 
             return Size.init(width, line_height);
         },
+        .report => {
+            const report = container.report;
+
+            if (report.header) |header| {
+                const header_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), header));
+                var header_size = try self.layoutContainer(hpdf, parent_rect, header_container.*);
+                try self.content_frame_map.put(header_container.getId(), Rect.init(0, 0, header_size.width, header_size.height));
+            }
+
+            if (report.footer) |footer| {
+                const footer_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), footer));
+                var footer_size = try self.layoutContainer(hpdf, parent_rect, footer_container.*);
+                try self.content_frame_map.put(footer_container.getId(), Rect.init(0, 0, footer_size.width, footer_size.height));
+            }
+
+            return Size.init(0, 0);
+        },
     }
 }
 
@@ -472,6 +489,61 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
 
             if (self.is_debug) {
                 try self.drawBorder(hpage, Border.init(Color.init("FF00FF"), Border.Style.dot, 0.5, 0.5, 0.5, 0.5), content_frame);
+            }
+        },
+        .report => {
+            // @deprecated
+            const report = container.report;
+
+            _ = try self.layoutContainer(hpdf, rect, container);
+
+            var header_height: f32 = 0;
+            var footer_height: f32 = 0;
+
+            if (report.header) |header| {
+                const header_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), header));
+                if (self.content_frame_map.get(header_container.getId())) |header_frame| {
+                    const content_frame = Rect.init(rect.minX, rect.maxY - header_frame.height, header_frame.width, header_frame.height);
+                    try self.renderContainer(hpdf, hpage, content_frame, null, header_container.*);
+                    header_height = content_frame.height;
+                }
+            }
+
+            if (report.footer) |footer| {
+                const footer_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), footer));
+                if (self.content_frame_map.get(footer_container.getId())) |footer_frame| {
+                    const content_frame = Rect.init(rect.minX, rect.minY, footer_frame.width, footer_frame.height);
+                    try self.renderContainer(hpdf, hpage, content_frame, null, footer_container.*);
+                    footer_height = content_frame.height;
+                }
+            }
+
+            var body_frame = Rect.init(rect.minX, rect.minY + footer_height, rect.width, rect.height - header_height - footer_height);
+
+            const body_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), report.body));
+            const body_container = body_container_ptr.*;
+            switch (body_container) {
+                .column => {
+                    const column = body_container.column;
+                    var max_height = body_frame.height;
+                    for (column.children) |child| {
+                        const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
+                        const child_container = child_container_ptr.*;
+                        const child_size = try self.layoutContainer(hpdf, body_frame, child_container);
+
+                        if (max_height - child_size.height < 0) {
+                            // TODO: Break page
+                            continue;
+                        }
+
+                        max_height = max_height - child_size.height;
+                        try self.renderContainer(hpdf, hpage, body_frame, null, child_container);
+                        if (self.content_frame_map.get(child_container.getId())) |child_content_frame| {
+                            body_frame = body_frame.offsetLTWH(0, child_content_frame.height, body_frame.width, body_frame.height - child_content_frame.height);
+                        }
+                    }
+                },
+                else => {},
             }
         },
     }
@@ -794,7 +866,7 @@ fn emToPoint(em: f32, text_size: f32) f32 {
 
 fn errorEandler(error_no: c.HPDF_STATUS, detail_no: c.HPDF_STATUS, user_data: ?*anyopaque) callconv(.C) void {
     _ = user_data;
-    std.log.err("ERROR: error_no={}, detail_no={}", .{ error_no, detail_no });
+    std.log.err("libHaru ERROR: error_no={}, detail_no={}", .{ error_no, detail_no });
 }
 
 test "permission" {
@@ -1067,7 +1139,7 @@ test "row" {
 
     var fonts = [_]Font.FontFace{Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null))};
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "row", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/row.pdf");
@@ -1192,8 +1264,118 @@ test "row_column" {
 
     var fonts = [_]Font.FontFace{ Font.wrap(Font.NamedFont.init("Default", "MS-Gothic", "90ms-RKSJ-H")), Font.wrap(Font.NamedFont.init("Helvetica", "Helvetica", null)) };
 
-    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "row_column", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
     var pdfWriter = init(std.testing.allocator, pdf, true);
     defer pdfWriter.deinit();
     try pdfWriter.save("demo/row_column.pdf");
+}
+
+test "report" {
+    const permissions = [_]PermissionName{
+        PermissionName.read,
+        PermissionName.edit_all,
+    };
+
+    var header_text = Container.wrap(Container.Text.init("HEADER", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_header_text: *anyopaque = &header_text;
+
+    var header = Container.wrap(Container.Box.init(false, null, Color.init("FFF0F0"), null, opaque_header_text, null, Size.init(595 - 10 - 10, 100)));
+    const opaque_header: *anyopaque = &header;
+
+    var box1 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box1: *anyopaque = &box1;
+
+    var box2 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box2: *anyopaque = &box2;
+
+    var box3 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box3: *anyopaque = &box3;
+
+    var box4 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box4: *anyopaque = &box4;
+
+    var box5 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box5: *anyopaque = &box5;
+
+    var box6 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box6: *anyopaque = &box6;
+
+    var box7 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box7: *anyopaque = &box7;
+
+    var box8 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box8: *anyopaque = &box8;
+
+    var box9 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box9: *anyopaque = &box9;
+
+    var box10 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box10: *anyopaque = &box10;
+
+    var box11 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box11: *anyopaque = &box11;
+
+    var box12 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box12: *anyopaque = &box12;
+
+    var box13 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box13: *anyopaque = &box13;
+
+    var box14 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box14: *anyopaque = &box14;
+
+    var box15 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box15: *anyopaque = &box15;
+
+    var box16 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_box16: *anyopaque = &box16;
+
+    var boxes = [_]*anyopaque{
+        opaque_box1,
+        opaque_box2,
+        opaque_box3,
+        opaque_box4,
+        opaque_box5,
+        opaque_box6,
+        opaque_box7,
+        opaque_box8,
+        opaque_box9,
+        opaque_box10,
+        opaque_box11,
+        opaque_box12,
+        opaque_box13,
+        opaque_box14,
+        opaque_box15,
+        opaque_box16,
+    };
+
+    var column = Container.wrap(Container.Column.init(&boxes, null));
+    const opaque_column: *anyopaque = &column;
+
+    var footer_text = Container.wrap(Container.Text.init("FOOTER", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_footer_text: *anyopaque = &footer_text;
+
+    var footer = Container.wrap(Container.Box.init(false, null, Color.init("FFF0F0"), null, opaque_footer_text, null, Size.init(595 - 10 - 10, 50)));
+    const opaque_footer: *anyopaque = &footer;
+
+    var report = Container.Report.init(
+        opaque_header,
+        false,
+        opaque_column,
+        opaque_footer,
+        false,
+    );
+
+    // TODO: Report から Pages 配列を作り、 renderContainer 内で Page を追加しなくて済むようにする。
+
+    var pages = [_]Page{
+        Page.init(Container.wrap(report), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+    };
+
+    var fonts = [_]Font.FontFace{Font.wrap(Font.NamedFont.init("Default", "Helvetica", null))};
+
+    const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "report", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
+    var pdfWriter = init(std.testing.allocator, pdf, true);
+    defer pdfWriter.deinit();
+    try pdfWriter.save("demo/report.pdf");
 }

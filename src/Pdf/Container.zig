@@ -4,6 +4,7 @@ pub const Column = @import("Column.zig");
 pub const Flexible = @import("Flexible.zig");
 pub const Image = @import("Image.zig");
 pub const PositionedBox = @import("PositionedBox.zig");
+pub const Report = @import("Report.zig");
 pub const Row = @import("Row.zig");
 pub const Text = @import("Text.zig");
 
@@ -13,6 +14,7 @@ pub const Container = union(enum) {
     flexible: Flexible,
     image: Image,
     positioned_box: PositionedBox,
+    report: Report,
     row: Row,
     text: Text,
 
@@ -23,6 +25,7 @@ pub const Container = union(enum) {
             Container.flexible => self.flexible.id,
             Container.image => self.image.id,
             Container.positioned_box => self.positioned_box.id,
+            Container.report => self.report.id,
             Container.row => self.row.id,
             Container.text => self.text.id,
         };
@@ -36,6 +39,7 @@ pub fn wrap(container: anytype) Container {
         Flexible => Container{ .flexible = container },
         Image => Container{ .image = container },
         PositionedBox => Container{ .positioned_box = container },
+        Report => Container{ .report = container },
         Row => Container{ .row = container },
         Text => Container{ .text = container },
         else => @panic("unexpected"),
