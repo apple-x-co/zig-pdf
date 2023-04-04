@@ -57,6 +57,22 @@ pub fn save(self: *Self, file_name: []const u8) !void {
     }
 
     for (self.pdf.pages) |page| {
+        switch (page.container) {
+            .report => {
+                var r_pages = try self.generatePagesFromReport(hpdf, page);
+                defer self.allocator.free(r_pages);
+                for (r_pages) |r_page| {
+                    const hpage = c.HPDF_AddPage(hpdf);
+
+                    try self.renderPage(hpdf, hpage, r_page);
+                    try self.renderContainer(hpdf, hpage, r_page.content_frame, r_page.alignment, r_page.container);
+                }
+
+                continue;
+            },
+            else => {},
+        }
+
         const hpage = c.HPDF_AddPage(hpdf);
 
         try self.renderPage(hpdf, hpage, page);
@@ -195,7 +211,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
             }
 
             if (box.child) |child| {
-                const child_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
+                const child_container = materializeContainer(child);
 
                 const size = parent_rect.size;
                 const pad = box.padding orelse Padding.zeroPadding;
@@ -205,7 +221,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
                 var content_frame = parent_rect.offsetLTWH(0, 0, width, height);
                 content_frame = content_frame.insets(pad.top, pad.right, pad.bottom, pad.left);
 
-                return try self.layoutContainer(hpdf, content_frame, child_container.*);
+                return try self.layoutContainer(hpdf, content_frame, child_container);
             }
 
             return Size.zeroSize;
@@ -223,8 +239,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
             var size = Size.zeroSize;
 
             for (column.children) |child| {
-                const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
-                const child_container = child_container_ptr.*;
+                const child_container = materializeContainer(child);
 
                 var child_size = try self.layoutContainer(hpdf, Rect.zeroRect, child_container);
                 size.width = if (size.width < child_size.width) child_size.width else size.width;
@@ -240,8 +255,8 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
                 const flex_height = (parent_rect.size.height - size.height) / @intToFloat(f32, flex);
 
                 for (column.children) |child| {
-                    const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
-                    const child_container = child_container_ptr.*;
+                    const child_container = materializeContainer(child);
+
                     switch (child_container) {
                         .flexible => {
                             const flexible = child_container.flexible;
@@ -261,8 +276,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
             var size = Size.zeroSize;
 
             for (row.children) |child| {
-                const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
-                const child_container = child_container_ptr.*;
+                const child_container = materializeContainer(child);
 
                 var child_size = try self.layoutContainer(hpdf, Rect.zeroRect, child_container);
                 size.width += child_size.width;
@@ -278,8 +292,8 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
                 const flex_width = (parent_rect.size.width - size.width) / @intToFloat(f32, flex);
 
                 for (row.children) |child| {
-                    const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
-                    const child_container = child_container_ptr.*;
+                    const child_container = materializeContainer(child);
+
                     switch (child_container) {
                         .flexible => {
                             const flexible = child_container.flexible;
@@ -328,15 +342,32 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
             const report = container.report;
 
             if (report.header) |header| {
-                const header_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), header));
-                var header_size = try self.layoutContainer(hpdf, parent_rect, header_container.*);
+                const header_container = materializeContainer(header);
+
+                var header_size = try self.layoutContainer(hpdf, parent_rect, header_container);
                 try self.content_frame_map.put(header_container.getId(), Rect.init(0, 0, header_size.width, header_size.height));
             }
 
             if (report.footer) |footer| {
-                const footer_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), footer));
-                var footer_size = try self.layoutContainer(hpdf, parent_rect, footer_container.*);
+                const footer_container = materializeContainer(footer);
+
+                var footer_size = try self.layoutContainer(hpdf, parent_rect, footer_container);
                 try self.content_frame_map.put(footer_container.getId(), Rect.init(0, 0, footer_size.width, footer_size.height));
+            }
+
+            const body_container = materializeContainer(report.body);
+
+            switch (body_container) {
+                .column => {
+                    const column = body_container.column;
+                    for (column.children) |child| {
+                        const child_container = materializeContainer(child);
+
+                        var child_size = try self.layoutContainer(hpdf, parent_rect, child_container);
+                        try self.content_frame_map.put(child_container.getId(), Rect.init(0, 0, child_size.width, child_size.height));
+                    }
+                },
+                else => {},
             }
 
             return Size.init(0, 0);
@@ -363,8 +394,9 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             }
 
             if (box.child) |child| {
-                const child_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
-                try self.renderContainer(hpdf, hpage, content_frame, box.alignment, child_container.*);
+                const child_container = materializeContainer(child);
+
+                try self.renderContainer(hpdf, hpage, content_frame, box.alignment, child_container);
             }
         },
         .positioned_box => {
@@ -382,18 +414,20 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             }
 
             if (positioned_box.child) |child| {
-                const child_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
-                try self.renderContainer(hpdf, hpage, content_frame, null, child_container.*);
+                const child_container = materializeContainer(child);
+
+                try self.renderContainer(hpdf, hpage, content_frame, null, child_container);
             }
         },
         .flexible => {
             const flexible = container.flexible;
-            const child_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), flexible.child));
+            const child_container = materializeContainer(flexible.child);
+
             if (self.content_frame_map.get(flexible.id)) |flexible_rect| {
                 const content_frame = rect.offsetLTWH(0, 0, flexible_rect.size.width, flexible_rect.size.height);
-                try self.renderContainer(hpdf, hpage, Rect.init(content_frame.origin.x, content_frame.origin.y, content_frame.size.width, content_frame.size.height), null, child_container.*);
+                try self.renderContainer(hpdf, hpage, Rect.init(content_frame.origin.x, content_frame.origin.y, content_frame.size.width, content_frame.size.height), null, child_container);
             } else {
-                try self.renderContainer(hpdf, hpage, rect, null, child_container.*);
+                try self.renderContainer(hpdf, hpage, rect, null, child_container);
             }
         },
         .column => {
@@ -415,8 +449,8 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             var children_height: f32 = 0;
 
             for (column.children) |child| {
-                const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
-                const child_container = child_container_ptr.*;
+                const child_container = materializeContainer(child);
+
                 try self.renderContainer(hpdf, hpage, content_frame, null, child_container);
                 if (self.content_frame_map.get(child_container.getId())) |child_content_frame| {
                     // std.log.warn("COLUMN CHILD w:{d},h:{d}", .{child_content_frame.size.width, child_content_frame.size.height});
@@ -451,8 +485,8 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             var children_height: f32 = 0;
 
             for (row.children) |child| {
-                const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
-                const child_container = child_container_ptr.*;
+                const child_container = materializeContainer(child);
+
                 try self.renderContainer(hpdf, hpage, content_frame, null, child_container);
                 if (self.content_frame_map.get(child_container.getId())) |child_content_frame| {
                     // std.log.warn("ROW CHILD w:{d},h:{d}", .{child_content_frame.size.width, child_content_frame.size.height});
@@ -492,7 +526,6 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             }
         },
         .report => {
-            // @deprecated
             const report = container.report;
 
             _ = try self.layoutContainer(hpdf, rect, container);
@@ -501,42 +534,35 @@ fn renderContainer(self: *Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, rect: Rect
             var footer_height: f32 = 0;
 
             if (report.header) |header| {
-                const header_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), header));
+                const header_container = materializeContainer(header);
+
                 if (self.content_frame_map.get(header_container.getId())) |header_frame| {
                     const content_frame = Rect.init(rect.minX, rect.maxY - header_frame.height, header_frame.width, header_frame.height);
-                    try self.renderContainer(hpdf, hpage, content_frame, null, header_container.*);
+                    try self.renderContainer(hpdf, hpage, content_frame, null, header_container);
                     header_height = content_frame.height;
                 }
             }
 
             if (report.footer) |footer| {
-                const footer_container: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), footer));
+                const footer_container = materializeContainer(footer);
+
                 if (self.content_frame_map.get(footer_container.getId())) |footer_frame| {
                     const content_frame = Rect.init(rect.minX, rect.minY, footer_frame.width, footer_frame.height);
-                    try self.renderContainer(hpdf, hpage, content_frame, null, footer_container.*);
+                    try self.renderContainer(hpdf, hpage, content_frame, null, footer_container);
                     footer_height = content_frame.height;
                 }
             }
 
             var body_frame = Rect.init(rect.minX, rect.minY + footer_height, rect.width, rect.height - header_height - footer_height);
 
-            const body_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), report.body));
-            const body_container = body_container_ptr.*;
+            const body_container = materializeContainer(report.body);
+
             switch (body_container) {
                 .column => {
                     const column = body_container.column;
-                    var max_height = body_frame.height;
                     for (column.children) |child| {
-                        const child_container_ptr: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), child));
-                        const child_container = child_container_ptr.*;
-                        const child_size = try self.layoutContainer(hpdf, body_frame, child_container);
+                        const child_container = materializeContainer(child);
 
-                        if (max_height - child_size.height < 0) {
-                            // TODO: Break page
-                            continue;
-                        }
-
-                        max_height = max_height - child_size.height;
                         try self.renderContainer(hpdf, hpage, body_frame, null, child_container);
                         if (self.content_frame_map.get(child_container.getId())) |child_content_frame| {
                             body_frame = body_frame.offsetLTWH(0, child_content_frame.height, body_frame.width, body_frame.height - child_content_frame.height);
@@ -858,6 +884,62 @@ fn drawBorder(self: Self, hpage: c.HPDF_Page, border: Border, rect: Rect) !void 
         _ = c.HPDF_Page_LineTo(hpage, rect.minX, rect.maxY);
         _ = c.HPDF_Page_Stroke(hpage);
     }
+}
+
+fn generatePagesFromReport(self: *Self, hpdf: c.HPDF_Doc, orig_page: Page) ![]Page {
+    var init_size: usize = 10;
+    var used_size: usize = 0;
+
+    var pages: []Page = try self.allocator.alloc(Page, init_size);
+
+    _ = try self.layoutContainer(hpdf, orig_page.frame, orig_page.container);
+
+    const report = orig_page.container.report;
+
+    var has_header = false;
+    var has_footer = false;
+    var header_height: f32 = 0;
+    var footer_height: f32 = 0;
+
+    if (report.header) |header| {
+        const header_container = materializeContainer(header);
+
+        if (self.content_frame_map.get(header_container.getId())) |header_frame| {
+            has_header = true;
+            header_height = header_frame.height;
+        }
+    }
+
+    if (report.footer) |footer| {
+        const footer_container = materializeContainer(footer);
+
+        if (self.content_frame_map.get(footer_container.getId())) |footer_frame| {
+            has_footer = true;
+            footer_height = footer_frame.height;
+        }
+    }
+
+    const rect = orig_page.frame;
+    var body_frame = Rect.init(rect.minX, rect.minY + footer_height, rect.width, rect.height - header_height - footer_height);
+    _ = body_frame;
+
+    const body_container = materializeContainer(report.body);
+
+    switch (body_container) {
+        .column => {
+            // pages[0] = Page.init(Container.wrap(report), orig_page.frame.size, orig_page.background_color, orig_page.padding, orig_page.alignment, orig_page.border);
+            // used_size += 1;
+        },
+        else => {},
+    }
+
+    return try self.allocator.realloc(pages, used_size);
+}
+
+fn materializeContainer(any: *anyopaque) Container.Container {
+    const pointer: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), any));
+
+    return pointer.*;
 }
 
 fn emToPoint(em: f32, text_size: f32) f32 {
@@ -1365,8 +1447,6 @@ test "report" {
         opaque_footer,
         false,
     );
-
-    // TODO: Report から Pages 配列を作り、 renderContainer 内で Page を追加しなくて済むようにする。
 
     var pages = [_]Page{
         Page.init(Container.wrap(report), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
