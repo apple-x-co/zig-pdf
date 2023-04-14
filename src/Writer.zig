@@ -59,10 +59,17 @@ pub fn save(self: *Self, file_name: []const u8) !void {
     for (self.pdf.pages) |page| {
         switch (page.container) {
             .report => {
-                var r_pages = try self.generatePagesFromReport(hpdf, page);
-                defer self.allocator.free(r_pages);
+                var arena = std.heap.ArenaAllocator.init(std.heap.c_allocator);
+                defer arena.deinit();
+                var allocator = arena.allocator();
+                var r_pages = try self.generatePagesFromReport(allocator, hpdf, page);
                 for (r_pages) |r_page| {
                     const hpage = c.HPDF_AddPage(hpdf);
+                    // debug
+                    // std.log.warn("{any}", .{r_page.container});
+                    // var a = materializeContainer(r_page.container.report.body);
+                    // std.log.warn("{any}", .{a});
+                    // debug
 
                     try self.renderPage(hpdf, hpage, r_page);
                     try self.renderContainer(hpdf, hpage, r_page.content_frame, r_page.alignment, r_page.container);
@@ -886,12 +893,7 @@ fn drawBorder(self: Self, hpage: c.HPDF_Page, border: Border, rect: Rect) !void 
     }
 }
 
-fn generatePagesFromReport(self: *Self, hpdf: c.HPDF_Doc, orig_page: Page) ![]Page {
-    var init_size: usize = 10;
-    var used_size: usize = 0;
-
-    var pages: []Page = try self.allocator.alloc(Page, init_size);
-
+fn generatePagesFromReport(self: *Self, allocator: std.mem.Allocator, hpdf: c.HPDF_Doc, orig_page: Page) ![]Page {
     _ = try self.layoutContainer(hpdf, orig_page.frame, orig_page.container);
 
     const report = orig_page.container.report;
@@ -921,19 +923,79 @@ fn generatePagesFromReport(self: *Self, hpdf: c.HPDF_Doc, orig_page: Page) ![]Pa
 
     const rect = orig_page.frame;
     var body_frame = Rect.init(rect.minX, rect.minY + footer_height, rect.width, rect.height - header_height - footer_height);
-    _ = body_frame;
+
+    var numbers = std.ArrayList(u8).init(self.allocator);
+    defer numbers.deinit();
 
     const body_container = materializeContainer(report.body);
-
     switch (body_container) {
         .column => {
-            // pages[0] = Page.init(Container.wrap(report), orig_page.frame.size, orig_page.background_color, orig_page.padding, orig_page.alignment, orig_page.border);
-            // used_size += 1;
+            try numbers.append(0);
+
+            var max_height = body_frame.height;
+
+            const column = body_container.column;
+            for (column.children) |child| {
+                const child_container = materializeContainer(child);
+
+                if (self.content_frame_map.get(child_container.getId())) |child_frame| {
+                    if (max_height - child_frame.height < 0) {
+                        try numbers.append(0);
+                        max_height = body_frame.height;
+                    }
+
+                    numbers.items[numbers.items.len - 1] += 1;
+                    max_height -= child_frame.height;
+                }
+            }
         },
         else => {},
     }
 
-    return try self.allocator.realloc(pages, used_size);
+    if (numbers.items.len == 0) {
+        return try allocator.alloc(Page, 0);
+    }
+    
+    var pages: []Page = try allocator.alloc(Page, numbers.items.len);
+    var start_index: u8 = 0;
+
+    switch (body_container) {
+        .column => {
+            var children = body_container.column.children;
+            
+            for (numbers.items) |num, i| {
+                var column_children_opaque: []*anyopaque = try allocator.alloc(*anyopaque, num);
+                column_children_opaque = children[start_index..start_index+num];
+
+                const column = try allocator.create(Container.Column);
+                column.* = Container.Column.init(column_children_opaque, null);
+
+                const column_container = try allocator.create(Container.Container);
+                column_container.* = Container.wrap(column.*);
+
+                const r = try allocator.create(Container.Report);
+                r.* = Container.Report.init(
+                    report.header,
+                    report.fixedHeader,
+                    column_container,
+                    report.footer,
+                    report.fixedFooter,
+                );
+
+                const container = try allocator.create(Container.Container);
+                container.* = Container.wrap(r.*);
+
+                const page = try allocator.create(Page);
+                page.* = Page.init(container.*, orig_page.frame.size, orig_page.background_color, orig_page.padding, orig_page.alignment, orig_page.border);
+                pages[i] = page.*;
+
+                start_index += num;
+            }
+        },
+        else => {},
+    }
+
+    return pages;
 }
 
 fn materializeContainer(any: *anyopaque) Container.Container {
@@ -1364,52 +1426,84 @@ test "report" {
     var header = Container.wrap(Container.Box.init(false, null, Color.init("FFF0F0"), null, opaque_header_text, null, Size.init(595 - 10 - 10, 100)));
     const opaque_header: *anyopaque = &header;
 
-    var box1 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text1 = Container.wrap(Container.Text.init("TEXT1", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text1: *anyopaque = &text1;
+    var box1 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text1, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box1: *anyopaque = &box1;
 
-    var box2 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text2 = Container.wrap(Container.Text.init("TEXT2", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text2: *anyopaque = &text2;
+    var box2 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text2, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box2: *anyopaque = &box2;
 
-    var box3 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text3 = Container.wrap(Container.Text.init("TEXT3", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text3: *anyopaque = &text3;
+    var box3 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text3, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box3: *anyopaque = &box3;
 
-    var box4 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text4 = Container.wrap(Container.Text.init("TEXT4", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text4: *anyopaque = &text4;
+    var box4 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text4, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box4: *anyopaque = &box4;
 
-    var box5 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text5 = Container.wrap(Container.Text.init("TEXT5", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text5: *anyopaque = &text5;
+    var box5 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text5, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box5: *anyopaque = &box5;
 
-    var box6 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text6 = Container.wrap(Container.Text.init("TEXT6", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text6: *anyopaque = &text6;
+    var box6 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text6, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box6: *anyopaque = &box6;
 
-    var box7 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text7 = Container.wrap(Container.Text.init("TEXT7", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text7: *anyopaque = &text7;
+    var box7 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text7, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box7: *anyopaque = &box7;
 
-    var box8 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text8 = Container.wrap(Container.Text.init("TEXT8", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text8: *anyopaque = &text8;
+    var box8 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text8, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box8: *anyopaque = &box8;
 
-    var box9 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text9 = Container.wrap(Container.Text.init("TEXT9", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text9: *anyopaque = &text9;
+    var box9 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text9, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box9: *anyopaque = &box9;
 
-    var box10 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text10 = Container.wrap(Container.Text.init("TEXT10", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text10: *anyopaque = &text10;
+    var box10 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text10, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box10: *anyopaque = &box10;
 
-    var box11 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text11 = Container.wrap(Container.Text.init("TEXT11", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text11: *anyopaque = &text11;
+    var box11 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text11, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box11: *anyopaque = &box11;
 
-    var box12 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text12 = Container.wrap(Container.Text.init("TEXT12", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text12: *anyopaque = &text12;
+    var box12 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text12, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box12: *anyopaque = &box12;
 
-    var box13 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text13 = Container.wrap(Container.Text.init("TEXT13", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text13: *anyopaque = &text13;
+    var box13 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text13, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box13: *anyopaque = &box13;
 
-    var box14 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text14 = Container.wrap(Container.Text.init("TEXT14", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text14: *anyopaque = &text14;
+    var box14 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text14, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box14: *anyopaque = &box14;
 
-    var box15 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text15 = Container.wrap(Container.Text.init("TEXT15", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text15: *anyopaque = &text15;
+    var box15 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text15, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box15: *anyopaque = &box15;
 
-    var box16 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, null, null, Size.init(595 - 10 - 10, 50)));
+    var text16 = Container.wrap(Container.Text.init("TEXT16", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text16: *anyopaque = &text16;
+    var box16 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text16, null, Size.init(595 - 10 - 10, 50)));
     const opaque_box16: *anyopaque = &box16;
 
     var boxes = [_]*anyopaque{
