@@ -955,17 +955,17 @@ fn generatePagesFromReport(self: *Self, allocator: std.mem.Allocator, hpdf: c.HP
     if (numbers.items.len == 0) {
         return try allocator.alloc(Page, 0);
     }
-    
+
     var pages: []Page = try allocator.alloc(Page, numbers.items.len);
     var start_index: u8 = 0;
 
     switch (body_container) {
         .column => {
             var children = body_container.column.children;
-            
+
             for (numbers.items) |num, i| {
                 var column_children_opaque: []*anyopaque = try allocator.alloc(*anyopaque, num);
-                column_children_opaque = children[start_index..start_index+num];
+                column_children_opaque = children[start_index .. start_index + num];
 
                 const column = try allocator.create(Container.Column);
                 column.* = Container.Column.init(column_children_opaque, null);
