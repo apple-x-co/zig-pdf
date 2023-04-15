@@ -30,7 +30,7 @@ pub fn encodeSjis(allocator: std.mem.Allocator, utf8: []const u8) ![:0]const u8 
     return encode(allocator, cd, &slice);
 }
 
-test {
+test "encode" {
     const allocator: std.mem.Allocator = std.testing.allocator;
     const utf8: []const u8 = "こんにちは";
     const sjis = try encodeSjis(allocator, utf8);

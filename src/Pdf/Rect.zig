@@ -67,7 +67,7 @@ pub fn offsetCenterXYWH(self: Self, x: f32, y: f32, width: f32, height: f32) Sel
     return init(self.midX + x, self.midY + y, width, height);
 }
 
-test {
+test "rect1" {
     const rect = init(10.0, 20.0, 100.0, 200.0);
     try std.testing.expectEqual(@floatCast(f32, 10), rect.minX);
     try std.testing.expectEqual(@floatCast(f32, 60), rect.midX);
@@ -77,7 +77,7 @@ test {
     try std.testing.expectEqual(@floatCast(f32, 220), rect.maxY);
 }
 
-test {
+test "recct2" {
     const rect = init(10.0, 20.0, 100.0, 200.0).insets(5, 5, 5, 5);
     try std.testing.expectEqual(@floatCast(f32, 15), rect.minX);
     try std.testing.expectEqual(@floatCast(f32, 60), rect.midX);
@@ -87,7 +87,7 @@ test {
     try std.testing.expectEqual(@floatCast(f32, 215), rect.maxY);
 }
 
-test {
+test "rect3" {
     const rect = init(0, 0, 100.0, 200.0).offsetLTWH(5, 5, 50, 100);
     try std.testing.expectEqual(@floatCast(f32, 5), rect.minX);
     try std.testing.expectEqual(@floatCast(f32, 30), rect.midX);
@@ -97,7 +97,7 @@ test {
     try std.testing.expectEqual(@floatCast(f32, 195), rect.maxY);
 }
 
-test {
+test "rect4" {
     const rect = init(0, 0, 100.0, 200.0).offsetCenterXYWH(-5, -5, 50, 100);
     try std.testing.expectEqual(@floatCast(f32, 45), rect.minX);
     try std.testing.expectEqual(@floatCast(f32, 70), rect.midX);
@@ -107,7 +107,7 @@ test {
     try std.testing.expectEqual(@floatCast(f32, 195), rect.maxY);
 }
 
-test {
+test "rect5" {
     const rect = fromPoints(1, 6, 6, 3);
     try std.testing.expectEqual(@floatCast(f32, 1), rect.minX);
     try std.testing.expectEqual(@floatCast(f32, 3.5), rect.midX);

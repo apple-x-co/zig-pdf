@@ -9,6 +9,6 @@ pub const Enctyption = @import("Encryption.zig");
 pub const Encode = @import("Encode.zig");
 pub const Permission = @import("Permission.zig");
 
-test {
+test "all test" {
     std.testing.refAllDecls(@This());
 }

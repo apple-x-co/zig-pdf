@@ -29,7 +29,7 @@ pub fn now() Self {
     return init(@intCast(u64, std.time.timestamp()));
 }
 
-test {
+test "date" {
     // Epoch timestamp: 1672628645
     // Timestamp in milliseconds: 1672628645000
     // Date and time (GMT): 2023年1月2日 Monday 03:04:05

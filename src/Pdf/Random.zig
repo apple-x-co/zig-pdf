@@ -8,7 +8,7 @@ pub fn generate(comptime T: type) T {
     return static.rand.random().int(T);
 }
 
-test {
+test "random" {
     const one = generate(u32);
     const two = generate(u32);
 

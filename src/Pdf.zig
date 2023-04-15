@@ -37,7 +37,7 @@ pub fn init(author: ?[]const u8, creator: ?[]const u8, title: ?[]const u8, subje
     };
 }
 
-test {
+test "pdf" {
     const permissions = [_]PermissionName{
         PermissionName.copy,
         PermissionName.print,
