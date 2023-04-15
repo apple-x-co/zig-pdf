@@ -975,11 +975,11 @@ fn generatePagesFromReport(self: *Self, allocator: std.mem.Allocator, hpdf: c.HP
 
                 const r = try allocator.create(Container.Report);
                 r.* = Container.Report.init(
-                    report.header,
-                    report.fixedHeader,
+                    if (i == 0 or report.fixedHeader) report.header else null,
+                    false,
                     column_container,
-                    report.footer,
-                    report.fixedFooter,
+                    if (i == 0 or report.fixedFooter) report.footer else null,
+                    false,
                 );
 
                 const container = try allocator.create(Container.Container);
@@ -1536,7 +1536,7 @@ test "report" {
 
     var report = Container.Report.init(
         opaque_header,
-        false,
+        true,
         opaque_column,
         opaque_footer,
         false,
