@@ -243,14 +243,14 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
             const column = container.column;
 
             var flex: u8 = 0;
-            var size = Size.zeroSize;
+            var fixed_size = Size.zeroSize;
 
             for (column.children) |child| {
                 const child_container = materializeContainer(child);
 
                 var child_size = try self.layoutContainer(hpdf, Rect.zeroRect, child_container);
-                size.width = if (size.width < child_size.width) child_size.width else size.width;
-                size.height += child_size.height;
+                fixed_size.width = if (fixed_size.width < child_size.width) child_size.width else fixed_size.width;
+                fixed_size.height += child_size.height;
 
                 flex += switch (child_container) {
                     .flexible => child_container.flexible.flex,
@@ -259,7 +259,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
             }
 
             if (flex > 0) {
-                const flex_height = (parent_rect.size.height - size.height) / @intToFloat(f32, flex);
+                const flex_height = (parent_rect.size.height - fixed_size.height) / @intToFloat(f32, flex);
 
                 for (column.children) |child| {
                     const child_container = materializeContainer(child);
@@ -267,27 +267,27 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
                     switch (child_container) {
                         .flexible => {
                             const flexible = child_container.flexible;
-                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, size.width, flex_height * @intToFloat(f32, flexible.flex)));
+                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, fixed_size.width, flex_height * @intToFloat(f32, flexible.flex)));
                         },
                         else => {},
                     }
                 }
             }
 
-            return if (flex > 0) Size.init(size.width, parent_rect.size.height) else size;
+            return if (flex > 0) Size.init(fixed_size.width, parent_rect.size.height) else fixed_size;
         },
         .row => {
             const row = container.row;
 
             var flex: u8 = 0;
-            var size = Size.zeroSize;
+            var fixed_size = Size.zeroSize;
 
             for (row.children) |child| {
                 const child_container = materializeContainer(child);
 
                 var child_size = try self.layoutContainer(hpdf, Rect.zeroRect, child_container);
-                size.width += child_size.width;
-                size.height = if (size.height < child_size.height) child_size.height else size.height;
+                fixed_size.width += child_size.width;
+                fixed_size.height = if (fixed_size.height < child_size.height) child_size.height else fixed_size.height;
 
                 flex += switch (child_container) {
                     .flexible => child_container.flexible.flex,
@@ -296,7 +296,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
             }
 
             if (flex > 0) {
-                const flex_width = (parent_rect.size.width - size.width) / @intToFloat(f32, flex);
+                const flex_width = (parent_rect.size.width - fixed_size.width) / @intToFloat(f32, flex);
 
                 for (row.children) |child| {
                     const child_container = materializeContainer(child);
@@ -304,14 +304,14 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
                     switch (child_container) {
                         .flexible => {
                             const flexible = child_container.flexible;
-                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, flex_width * @intToFloat(f32, flexible.flex), size.height));
+                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, flex_width * @intToFloat(f32, flexible.flex), fixed_size.height));
                         },
                         else => {},
                     }
                 }
             }
 
-            return if (flex > 0) Size.init(parent_rect.size.width, size.height) else size;
+            return if (flex > 0) Size.init(parent_rect.size.width, fixed_size.height) else fixed_size;
         },
         .image => {
             const image = container.image;
@@ -1328,7 +1328,13 @@ test "flexible" {
     var flexible3 = Container.wrap(Container.Flexible.init(opaque_box3, 3));
     const opaque_flexible3: *anyopaque = &flexible3;
 
-    var children = [_]*anyopaque{
+    var children1 = [_]*anyopaque{
+        opaque_flexible1,
+        opaque_flexible2,
+        opaque_flexible3,
+    };
+
+    var children2 = [_]*anyopaque{
         opaque_box0,
         opaque_flexible1,
         opaque_flexible2,
@@ -1336,8 +1342,10 @@ test "flexible" {
     };
 
     var pages = [_]Page{
-        Page.init(Container.wrap(Container.Row.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
-        Page.init(Container.wrap(Container.Column.init(&children, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+        Page.init(Container.wrap(Container.Row.init(&children1, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+        Page.init(Container.wrap(Container.Row.init(&children2, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+        Page.init(Container.wrap(Container.Column.init(&children1, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+        Page.init(Container.wrap(Container.Column.init(&children2, null)), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
     };
 
     var fonts = [_]Font.FontFace{Font.wrap(Font.NamedFont.init("Default", "Helvetica", null))};
