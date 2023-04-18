@@ -261,6 +261,21 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
             if (flex > 0) {
                 const flex_height = (parent_rect.size.height - fixed_size.height) / @intToFloat(f32, flex);
 
+                if (fixed_size.height == 0) {
+                    for (column.children) |child| {
+                        const child_container = materializeContainer(child);
+                        switch (child_container) {
+                            .flexible => {
+                                const flexible = child_container.flexible;
+                                const grandchild = materializeContainer(flexible.child);
+                                var child_size = try self.layoutContainer(hpdf, Rect.init(0, 0, 0, flex_height * @intToFloat(f32, flexible.flex)), grandchild);
+                                fixed_size.width = if (fixed_size.width < child_size.width) child_size.width else fixed_size.width;
+                            },
+                            else => {},
+                        }
+                    }    
+                }
+
                 for (column.children) |child| {
                     const child_container = materializeContainer(child);
 
@@ -297,6 +312,21 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
 
             if (flex > 0) {
                 const flex_width = (parent_rect.size.width - fixed_size.width) / @intToFloat(f32, flex);
+
+                if (fixed_size.height == 0) {
+                    for (row.children) |child| {
+                        const child_container = materializeContainer(child);
+                        switch (child_container) {
+                            .flexible => {
+                                const flexible = child_container.flexible;
+                                const grandchild = materializeContainer(flexible.child);
+                                var child_size = try self.layoutContainer(hpdf, Rect.init(0, 0, flex_width * @intToFloat(f32, flexible.flex), 0), grandchild);
+                                fixed_size.height = if (fixed_size.height < child_size.height) child_size.height else fixed_size.height;
+                            },
+                            else => {},
+                        }
+                    }    
+                }
 
                 for (row.children) |child| {
                     const child_container = materializeContainer(child);
@@ -342,6 +372,15 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
             const width = ((@intToFloat(f32, text_width.width) / 1000) * text_size) + (word_space * @intToFloat(f32, text_width.numwords - 1)) + (char_space * @intToFloat(f32, text_width.numchars - 1));
             const b_box = c.HPDF_Font_GetBBox(hfont);
             const line_height = ((b_box.top + (b_box.bottom * -1)) / 1000) * text_size;
+
+            if (text.soft_wrap) {
+                var real_width: c.HPDF_REAL = 0;
+                _ = c.HPDF_Font_MeasureText(hfont, text.content.ptr, text_len, parent_rect.width, text_size, char_space, word_space, c.HPDF_FALSE, &real_width);
+                if (width - real_width > 1.0) {
+                    const number_lines = @ceil(width / real_width);
+                    return Size.init(real_width, line_height * number_lines);
+                }
+            }
 
             return Size.init(width, line_height);
         },
