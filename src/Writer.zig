@@ -1461,134 +1461,282 @@ test "row_column" {
     try pdfWriter.save("demo/row_column.pdf");
 }
 
+// test "report" {
+//     const permissions = [_]PermissionName{
+//         PermissionName.read,
+//         PermissionName.edit_all,
+//     };
+
+//     var header_text = Container.wrap(Container.Text.init("HEADER", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_header_text: *anyopaque = &header_text;
+
+//     var header = Container.wrap(Container.Box.init(false, null, Color.init("FFF0F0"), null, opaque_header_text, null, Size.init(595 - 10 - 10, 100)));
+//     const opaque_header: *anyopaque = &header;
+
+//     var text1 = Container.wrap(Container.Text.init("TEXT1", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text1: *anyopaque = &text1;
+//     var box1 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text1, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box1: *anyopaque = &box1;
+
+//     var text2 = Container.wrap(Container.Text.init("TEXT2", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text2: *anyopaque = &text2;
+//     var box2 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text2, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box2: *anyopaque = &box2;
+
+//     var text3 = Container.wrap(Container.Text.init("TEXT3", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text3: *anyopaque = &text3;
+//     var box3 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text3, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box3: *anyopaque = &box3;
+
+//     var text4 = Container.wrap(Container.Text.init("TEXT4", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text4: *anyopaque = &text4;
+//     var box4 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text4, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box4: *anyopaque = &box4;
+
+//     var text5 = Container.wrap(Container.Text.init("TEXT5", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text5: *anyopaque = &text5;
+//     var box5 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text5, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box5: *anyopaque = &box5;
+
+//     var text6 = Container.wrap(Container.Text.init("TEXT6", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text6: *anyopaque = &text6;
+//     var box6 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text6, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box6: *anyopaque = &box6;
+
+//     var text7 = Container.wrap(Container.Text.init("TEXT7", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text7: *anyopaque = &text7;
+//     var box7 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text7, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box7: *anyopaque = &box7;
+
+//     var text8 = Container.wrap(Container.Text.init("TEXT8", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text8: *anyopaque = &text8;
+//     var box8 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text8, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box8: *anyopaque = &box8;
+
+//     var text9 = Container.wrap(Container.Text.init("TEXT9", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text9: *anyopaque = &text9;
+//     var box9 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text9, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box9: *anyopaque = &box9;
+
+//     var text10 = Container.wrap(Container.Text.init("TEXT10", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text10: *anyopaque = &text10;
+//     var box10 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text10, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box10: *anyopaque = &box10;
+
+//     var text11 = Container.wrap(Container.Text.init("TEXT11", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text11: *anyopaque = &text11;
+//     var box11 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text11, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box11: *anyopaque = &box11;
+
+//     var text12 = Container.wrap(Container.Text.init("TEXT12", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text12: *anyopaque = &text12;
+//     var box12 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text12, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box12: *anyopaque = &box12;
+
+//     var text13 = Container.wrap(Container.Text.init("TEXT13", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text13: *anyopaque = &text13;
+//     var box13 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text13, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box13: *anyopaque = &box13;
+
+//     var text14 = Container.wrap(Container.Text.init("TEXT14", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text14: *anyopaque = &text14;
+//     var box14 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text14, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box14: *anyopaque = &box14;
+
+//     var text15 = Container.wrap(Container.Text.init("TEXT15", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text15: *anyopaque = &text15;
+//     var box15 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text15, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box15: *anyopaque = &box15;
+
+//     var text16 = Container.wrap(Container.Text.init("TEXT16", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_text16: *anyopaque = &text16;
+//     var box16 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text16, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_box16: *anyopaque = &box16;
+
+//     var boxes = [_]*anyopaque{
+//         opaque_box1,
+//         opaque_box2,
+//         opaque_box3,
+//         opaque_box4,
+//         opaque_box5,
+//         opaque_box6,
+//         opaque_box7,
+//         opaque_box8,
+//         opaque_box9,
+//         opaque_box10,
+//         opaque_box11,
+//         opaque_box12,
+//         opaque_box13,
+//         opaque_box14,
+//         opaque_box15,
+//         opaque_box16,
+//     };
+
+//     var column = Container.wrap(Container.Column.init(&boxes, null));
+//     const opaque_column: *anyopaque = &column;
+
+//     var footer_text = Container.wrap(Container.Text.init("FOOTER", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+//     const opaque_footer_text: *anyopaque = &footer_text;
+
+//     var footer = Container.wrap(Container.Box.init(false, null, Color.init("FFF0F0"), null, opaque_footer_text, null, Size.init(595 - 10 - 10, 50)));
+//     const opaque_footer: *anyopaque = &footer;
+
+//     var report = Container.Report.init(
+//         opaque_header,
+//         true,
+//         opaque_column,
+//         opaque_footer,
+//         false,
+//     );
+
+//     var pages = [_]Page{
+//         Page.init(Container.wrap(report), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
+//     };
+
+//     var fonts = [_]Font.FontFace{Font.wrap(Font.NamedFont.init("Default", "Helvetica", null))};
+
+//     const pdf = Pdf.init("apple-x-co", "zig-pdf", "demo", "report", CompressionMode.none, "password", null, EncryptionMode.Revision2, null, &permissions, &fonts, &pages);
+//     var pdfWriter = init(std.testing.allocator, pdf, true);
+//     defer pdfWriter.deinit();
+//     try pdfWriter.save("demo/report.pdf");
+// }
+
 test "report" {
     const permissions = [_]PermissionName{
         PermissionName.read,
         PermissionName.edit_all,
     };
 
-    var header_text = Container.wrap(Container.Text.init("HEADER", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
-    const opaque_header_text: *anyopaque = &header_text;
+    // header
+    var header_text = Container.wrap(Container.Text.init("Sales Report", Color.init("1E313B"), null, .fill, 18, "Default", true, 1, 0));
+    const header_text_ptr: *anyopaque = &header_text;
 
-    var header = Container.wrap(Container.Box.init(false, null, Color.init("FFF0F0"), null, opaque_header_text, null, Size.init(595 - 10 - 10, 100)));
-    const opaque_header: *anyopaque = &header;
+    var header_box = Container.wrap(Container.Box.init(false, Alignment.center, null, null, header_text_ptr, null, Size.init(595 - 10 - 10, 50)));
+    const header_box_ptr: *anyopaque = &header_box;
 
-    var text1 = Container.wrap(Container.Text.init("TEXT1", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    var header = Container.wrap(Container.Box.init(false, null, null, null, header_box_ptr, null, Size.init(595 - 10 - 10, 50)));
+    const header_ptr: *anyopaque = &header;
+
+    // body - line1 - col1
+    var text1 = Container.wrap(Container.Text.init("D No", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", true, 0, 0));
     const opaque_text1: *anyopaque = &text1;
-    var box1 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text1, null, Size.init(595 - 10 - 10, 50)));
+
+    var box1 = Container.wrap(Container.Box.init(true, Alignment.center, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text1, null, null));
     const opaque_box1: *anyopaque = &box1;
 
-    var text2 = Container.wrap(Container.Text.init("TEXT2", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    var flexible1 = Container.wrap(Container.Flexible.init(opaque_box1, 1));
+    const opaque_flexible1: *anyopaque = &flexible1;
+
+    // body - line1 - col2
+    var text2 = Container.wrap(Container.Text.init("Dept", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", true, 0, 0));
     const opaque_text2: *anyopaque = &text2;
-    var box2 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text2, null, Size.init(595 - 10 - 10, 50)));
+
+    var box2 = Container.wrap(Container.Box.init(true, Alignment.center, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text2, null, null));
     const opaque_box2: *anyopaque = &box2;
 
-    var text3 = Container.wrap(Container.Text.init("TEXT3", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    var flexible2 = Container.wrap(Container.Flexible.init(opaque_box2, 1));
+    const opaque_flexible2: *anyopaque = &flexible2;
+
+    // body - line1 - col3
+    var text3 = Container.wrap(Container.Text.init("Order", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", true, 0, 0));
     const opaque_text3: *anyopaque = &text3;
-    var box3 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text3, null, Size.init(595 - 10 - 10, 50)));
+
+    var box3 = Container.wrap(Container.Box.init(true, Alignment.center, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text3, null, null));
     const opaque_box3: *anyopaque = &box3;
 
-    var text4 = Container.wrap(Container.Text.init("TEXT4", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    var flexible3 = Container.wrap(Container.Flexible.init(opaque_box3, 2));
+    const opaque_flexible3: *anyopaque = &flexible3;
+
+    // body - line1 - col4
+    var text4 = Container.wrap(Container.Text.init("Stock", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", true, 0, 0));
     const opaque_text4: *anyopaque = &text4;
-    var box4 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text4, null, Size.init(595 - 10 - 10, 50)));
+
+    var box4 = Container.wrap(Container.Box.init(true, Alignment.center, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text4, null, null));
     const opaque_box4: *anyopaque = &box4;
 
-    var text5 = Container.wrap(Container.Text.init("TEXT5", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    var flexible4 = Container.wrap(Container.Flexible.init(opaque_box4, 1));
+    const opaque_flexible4: *anyopaque = &flexible4;
+
+    // body - line1 - col5
+    var text5 = Container.wrap(Container.Text.init("Name", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", true, 0, 0));
     const opaque_text5: *anyopaque = &text5;
-    var box5 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text5, null, Size.init(595 - 10 - 10, 50)));
+
+    var box5 = Container.wrap(Container.Box.init(true, Alignment.center, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text5, null, null));
     const opaque_box5: *anyopaque = &box5;
 
-    var text6 = Container.wrap(Container.Text.init("TEXT6", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    var flexible5 = Container.wrap(Container.Flexible.init(opaque_box5, 2));
+    const opaque_flexible5: *anyopaque = &flexible5;
+
+    // body - line1 - col6
+    var text6 = Container.wrap(Container.Text.init("Unit Price", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", true, 0, 0));
     const opaque_text6: *anyopaque = &text6;
-    var box6 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text6, null, Size.init(595 - 10 - 10, 50)));
+
+    var box6 = Container.wrap(Container.Box.init(true, Alignment.center, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text6, null, null));
     const opaque_box6: *anyopaque = &box6;
 
-    var text7 = Container.wrap(Container.Text.init("TEXT7", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    var flexible6 = Container.wrap(Container.Flexible.init(opaque_box6, 1));
+    const opaque_flexible6: *anyopaque = &flexible6;
+
+    // body - line1 - col7
+    var text7 = Container.wrap(Container.Text.init("Qty", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", true, 0, 0));
     const opaque_text7: *anyopaque = &text7;
-    var box7 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text7, null, Size.init(595 - 10 - 10, 50)));
+
+    var box7 = Container.wrap(Container.Box.init(true, Alignment.center, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text7, null, null));
     const opaque_box7: *anyopaque = &box7;
 
-    var text8 = Container.wrap(Container.Text.init("TEXT8", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
+    var flexible7 = Container.wrap(Container.Flexible.init(opaque_box7, 1));
+    const opaque_flexible7: *anyopaque = &flexible7;
+
+    // body - line1 - col8
+    var text8 = Container.wrap(Container.Text.init("Amount", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", true, 0, 0));
     const opaque_text8: *anyopaque = &text8;
-    var box8 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text8, null, Size.init(595 - 10 - 10, 50)));
+
+    var box8 = Container.wrap(Container.Box.init(true, Alignment.center, null, Border.init(Color.init("0FF0FF"), Border.Style.dot, 1, 1, 1, 1), opaque_text8, null, null));
     const opaque_box8: *anyopaque = &box8;
 
-    var text9 = Container.wrap(Container.Text.init("TEXT9", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
-    const opaque_text9: *anyopaque = &text9;
-    var box9 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text9, null, Size.init(595 - 10 - 10, 50)));
-    const opaque_box9: *anyopaque = &box9;
+    var flexible8 = Container.wrap(Container.Flexible.init(opaque_box8, 1));
+    const opaque_flexible8: *anyopaque = &flexible8;
 
-    var text10 = Container.wrap(Container.Text.init("TEXT10", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
-    const opaque_text10: *anyopaque = &text10;
-    var box10 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text10, null, Size.init(595 - 10 - 10, 50)));
-    const opaque_box10: *anyopaque = &box10;
-
-    var text11 = Container.wrap(Container.Text.init("TEXT11", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
-    const opaque_text11: *anyopaque = &text11;
-    var box11 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text11, null, Size.init(595 - 10 - 10, 50)));
-    const opaque_box11: *anyopaque = &box11;
-
-    var text12 = Container.wrap(Container.Text.init("TEXT12", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
-    const opaque_text12: *anyopaque = &text12;
-    var box12 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text12, null, Size.init(595 - 10 - 10, 50)));
-    const opaque_box12: *anyopaque = &box12;
-
-    var text13 = Container.wrap(Container.Text.init("TEXT13", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
-    const opaque_text13: *anyopaque = &text13;
-    var box13 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text13, null, Size.init(595 - 10 - 10, 50)));
-    const opaque_box13: *anyopaque = &box13;
-
-    var text14 = Container.wrap(Container.Text.init("TEXT14", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
-    const opaque_text14: *anyopaque = &text14;
-    var box14 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text14, null, Size.init(595 - 10 - 10, 50)));
-    const opaque_box14: *anyopaque = &box14;
-
-    var text15 = Container.wrap(Container.Text.init("TEXT15", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
-    const opaque_text15: *anyopaque = &text15;
-    var box15 = Container.wrap(Container.Box.init(false, null, Color.init("00F0F0"), null, opaque_text15, null, Size.init(595 - 10 - 10, 50)));
-    const opaque_box15: *anyopaque = &box15;
-
-    var text16 = Container.wrap(Container.Text.init("TEXT16", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
-    const opaque_text16: *anyopaque = &text16;
-    var box16 = Container.wrap(Container.Box.init(false, null, Color.init("F00FFF"), null, opaque_text16, null, Size.init(595 - 10 - 10, 50)));
-    const opaque_box16: *anyopaque = &box16;
-
-    var boxes = [_]*anyopaque{
-        opaque_box1,
-        opaque_box2,
-        opaque_box3,
-        opaque_box4,
-        opaque_box5,
-        opaque_box6,
-        opaque_box7,
-        opaque_box8,
-        opaque_box9,
-        opaque_box10,
-        opaque_box11,
-        opaque_box12,
-        opaque_box13,
-        opaque_box14,
-        opaque_box15,
-        opaque_box16,
+    // body - line1
+    var line1_children_ptr = [_]*anyopaque{
+        opaque_flexible1,
+        opaque_flexible2,
+        opaque_flexible3,
+        opaque_flexible4,
+        opaque_flexible5,
+        opaque_flexible6,
+        opaque_flexible7,
+        opaque_flexible8,
     };
+    var line1 = Container.wrap(Container.Row.init(&line1_children_ptr, null));
+    var line1_ptr: *anyopaque = &line1;
+    
+    var column_children_ptr = [_]*anyopaque{
+        line1_ptr,
+    };
+    var column = Container.wrap(Container.Column.init(&column_children_ptr, null));
+    const column_ptr: *anyopaque = &column;
 
-    var column = Container.wrap(Container.Column.init(&boxes, null));
-    const opaque_column: *anyopaque = &column;
+    // footer
+    var footer_text = Container.wrap(Container.Text.init("Created 2023-04-16", Color.init("1E313B"), null, .fill, 6, "Default", true, 1, 0));
+    const footer_text_ptr: *anyopaque = &footer_text;
 
-    var footer_text = Container.wrap(Container.Text.init("FOOTER", Color.init("000FFF"), null, .fill, Default.text_size, "Default", true, 0, 0));
-    const opaque_footer_text: *anyopaque = &footer_text;
+    var footer_box = Container.wrap(Container.Box.init(false, Alignment.bottomRight, null, null, footer_text_ptr, null, Size.init(595 - 10 - 10, 10)));
+    const footer_box_ptr: *anyopaque = &footer_box;
 
-    var footer = Container.wrap(Container.Box.init(false, null, Color.init("FFF0F0"), null, opaque_footer_text, null, Size.init(595 - 10 - 10, 50)));
-    const opaque_footer: *anyopaque = &footer;
+    var footer = Container.wrap(Container.Box.init(false, null, null, null, footer_box_ptr, null, Size.init(595 - 10 - 10, 10)));
+    const footer_ptr: *anyopaque = &footer;
 
+    // report
     var report = Container.Report.init(
-        opaque_header,
+        header_ptr,
         true,
-        opaque_column,
-        opaque_footer,
-        false,
+        column_ptr,
+        footer_ptr,
+        true,
     );
 
+    // pages
     var pages = [_]Page{
         Page.init(Container.wrap(report), Size.init(@as(f32, 595), @as(f32, 842)), null, Padding.init(10, 10, 10, 10), null, null),
     };
