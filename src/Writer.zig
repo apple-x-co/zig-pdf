@@ -1791,7 +1791,7 @@ test "report" {
     var flexible16 = Container.wrap(Container.Flexible.init(opaque_box16, 1));
     const opaque_flexible16: *anyopaque = &flexible16;
 
-    // body - line1
+    // body - line2
     var line2_children_ptr = [_]*anyopaque{
         opaque_flexible9,
         opaque_flexible10,
@@ -1805,9 +1805,40 @@ test "report" {
     var line2 = Container.wrap(Container.Row.init(&line2_children_ptr, null));
     var line2_ptr: *anyopaque = &line2;
 
+    // body - line3 - col1
+    var text17 = Container.wrap(Container.Text.init("Total", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text17: *anyopaque = &text17;
+
+    var box17 = Container.wrap(Container.Box.init(true, Alignment.centerRight, null, null, opaque_text17, null, null));
+    const opaque_box17: *anyopaque = &box17;
+
+    var flexible17 = Container.wrap(Container.Flexible.init(opaque_box17, 9));
+    const opaque_flexible17: *anyopaque = &flexible17;
+
+    // body - line3 - col2
+    var text18 = Container.wrap(Container.Text.init("2742.20", Color.init(Default.text_color), null, .fill, Default.text_size, "Default", true, 0, 0));
+    const opaque_text18: *anyopaque = &text18;
+
+    var box18 = Container.wrap(Container.Box.init(true, Alignment.centerRight, null, null, opaque_text18, null, null));
+    const opaque_box18: *anyopaque = &box18;
+
+    var flexible18 = Container.wrap(Container.Flexible.init(opaque_box18, 1));
+    const opaque_flexible18: *anyopaque = &flexible18;
+
+    // body - line3
+    var line3_children_ptr = [_]*anyopaque{
+        opaque_flexible17,
+        opaque_flexible18,
+    };
+    var line3 = Container.wrap(Container.Row.init(&line3_children_ptr, null));
+    var line3_ptr: *anyopaque = &line3;
+
     var column_children_ptr = [_]*anyopaque{
         line1_ptr,
         line2_ptr,
+        line2_ptr,
+        line2_ptr,
+        line3_ptr,
     };
     var column = Container.wrap(Container.Column.init(&column_children_ptr, null));
     const column_ptr: *anyopaque = &column;
