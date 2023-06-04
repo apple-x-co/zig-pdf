@@ -161,6 +161,11 @@
           "title": "標準フォント",
           "type": "object",
           "properties": {
+            "type": {
+              "title": "フォントタイプ",
+              "type": "string",
+              "enum": ["default"]
+            },
             "family": {
               "title": "フォントファミリー",
               "type": "string",
@@ -182,6 +187,7 @@
             }  
           },
           "required": [
+            "type",
             "family",
             "name",
             "encodingName"
@@ -191,6 +197,11 @@
           "title": "TTCフォト",
           "type": "object",
           "properties": {
+            "type": {
+              "title": "フォントタイプ",
+              "type": "string",
+              "enum": ["ttc"]
+            },
             "family": {
               "title": "フォントファミリー",
               "type": "string",
@@ -218,9 +229,17 @@
                 "null"
               ],
               "enum": ["90ms-RKSJ-H", "90ms-RKSJ-V", "90msp-RKSJ-H", "EUC-H", "EUC-V", null]
+            },
+            "soft_wrap": {
+              "title": "折り返し",
+              "type": [
+                "boolean",
+                "null"
+              ]
             }
           },
           "required": [
+            "type",
             "family",
             "filePath",
             "index",
@@ -232,6 +251,11 @@
           "title": "TTFフォント",
           "type": "object",
           "properties": {
+            "type": {
+              "title": "フォントタイプ",
+              "type": "string",
+              "enum": ["ttf"]
+            },
             "family": {
               "title": "フォントファミリー",
               "type": "string",
@@ -255,6 +279,7 @@
             }
           },
           "required": [
+            "type",
             "family",
             "filePath",
             "embedding",
@@ -294,8 +319,8 @@
         "container": {
           "$ref": "#/definitions/box"
         },
-        "size": {
-          "$ref": "#/definitions/size"
+        "pageSize": {
+          "$ref": "#/definitions/page_size"
         },
         "backgroundColor": {
           "$ref": "#/definitions/color"
@@ -309,7 +334,28 @@
       },
       "required": [
         "container",
-        "size"
+        "pageSize"
+      ]
+    },
+    "page_size": {
+      "title": "サイズ",
+      "description": "幅と高さを設定",
+      "type": "object",
+      "properties": {
+        "width": {
+          "title": "幅",
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "title": "高さ",
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "width",
+        "height"
       ]
     },
     "padding": {
@@ -423,6 +469,8 @@
       ]
     },
     "size": {
+      "title": "サイズ",
+      "description": "幅と高さを設定",
       "type": "object",
       "properties": {
         "width": {
@@ -441,7 +489,7 @@
       "title": "テキストサイズ",
       "description": "テキストサイズを設定",
       "type": "integer",
-      "minimum": 1
+      "minimum": 10
     },
     "text": {
       "type": "object",
@@ -460,7 +508,7 @@
           "type": "string",
           "minLength": 1
         },
-        "color": {
+        "fill_color": {
           "$ref": "#/definitions/color"
         },
         "font_family": {
@@ -468,8 +516,16 @@
           "type": "string",
           "minLength": 1
         },
-        "textSize": {
+        "stroke_color": {
+          "$ref": "#/definitions/color"
+        },
+        "text_size": {
           "$ref": "#/definitions/textSize"
+        },
+        "text_style": {
+          "title": "テキストスタイル",
+          "type": "string",
+          "enum": ["fill", "stroke", "fill_and_stroke"]
         },
         "word_space": {
           "title": "単語間幅",
@@ -566,7 +622,7 @@
       }
     },
     "pages": {
-      "title": "ページ",
+      "title": "全ページ",
       "type": "array",
       "items": {
         "$ref": "#/definitions/page"

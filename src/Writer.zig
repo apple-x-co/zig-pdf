@@ -141,9 +141,9 @@ fn setPdfAttributes(self: Self, hpdf: c.HPDF_Doc) void {
         }
     }
 
-    if (self.pdf.permission_names) |_| {
+    if (self.pdf.permission_names) |permission_names| {
         var hpermission: c.HPDF_UINT = 0;
-        for (self.pdf.permission_names.?) |permission_name| {
+        for (permission_names) |permission_name| {
             switch (permission_name) {
                 PermissionName.read => {
                     hpermission |= c.HPDF_ENABLE_READ;

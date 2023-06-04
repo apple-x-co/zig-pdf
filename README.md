@@ -25,8 +25,8 @@
   - [x] Password
   - [x] Permission
   - [x] Layout
-- [ ] Load JSON
-- [ ] Renderer
+- [ ] Load JSON (WIP)
+- [x] Renderer
   - [x] Meta:Date
   - [x] Meta:Author
   - [x] Meta:Creator
@@ -97,4 +97,4 @@
         - [ ] Alignment
       - [ ] Layout:Col
         - [ ] Alignment
-- [ ] libharu's demo
+- [ ] Demo's JSON

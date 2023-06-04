@@ -18,6 +18,7 @@
   ],
   "fonts": [
     {
+      "type": "default",
       "family": "font1",
       "name": "Helvetica",
       "encodingName": null
@@ -33,7 +34,7 @@
           "height": 100
         }
       },
-      "size": {
+      "pageSize": {
         "width": 595,
         "height": 842
       }
@@ -46,7 +47,7 @@
           "content": "HELLO WORLD."
         }
       },
-      "size": {
+      "pageSize": {
         "width": 595,
         "height": 842
       }
@@ -63,6 +64,19 @@
       "container": {
         "type": "box",
         "backgroundColor": "DDDDDD",
+        "border": {
+          "color": "AAFF00",
+          "top": 1,
+          "right": 1,
+          "bottom": 1,
+          "left": 1
+        },
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
         "child": {
           "type": "positioned_box",
           "child": {
@@ -70,7 +84,8 @@
             "child": {
               "type": "text",
               "content": "HELLO WORLD",
-              "color": "FFCC00",
+              "fill_color": "FFCC00",
+              "stroke_color": "000000",
               "font_family": "font1"
             },
             "top": 100,
@@ -78,7 +93,7 @@
           }
         }
       },
-      "size": {
+      "pageSize": {
         "width": 595,
         "height": 842
       },
