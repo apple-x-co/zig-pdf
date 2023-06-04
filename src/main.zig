@@ -281,165 +281,55 @@ fn generatePdf(in: std.fs.File, out: std.fs.File, errOut: std.fs.File, allocator
             }
 
             if (jv.Object.get("border")) |v| {
-                var border_top: ?f32 = null;
-                var border_right: ?f32 = null;
-                var border_bottom: ?f32 = null;
-                var border_left: ?f32 = null;
+                var page_border_top: ?f32 = null;
+                var page_border_right: ?f32 = null;
+                var page_border_bottom: ?f32 = null;
+                var page_border_left: ?f32 = null;
                 if (v.Object.get("top")) |vv| {
-                    border_top = @intToFloat(f32, vv.Integer);
+                    page_border_top = @intToFloat(f32, vv.Integer);
                 }
                 if (v.Object.get("right")) |vv| {
-                    border_right = @intToFloat(f32, vv.Integer);
+                    page_border_right = @intToFloat(f32, vv.Integer);
                 }
                 if (v.Object.get("bottom")) |vv| {
-                    border_bottom = @intToFloat(f32, vv.Integer);
+                    page_border_bottom = @intToFloat(f32, vv.Integer);
                 }
                 if (v.Object.get("left")) |vv| {
-                    border_left = @intToFloat(f32, vv.Integer);
+                    page_border_left = @intToFloat(f32, vv.Integer);
                 }
 
                 page_border = Border.init(
                     Color.init(v.Object.get("color").?.String),
                     Border.Style.solid,
-                    border_top orelse 0,
-                    border_right orelse 0,
-                    border_bottom orelse 0,
-                    border_left orelse 0,
+                    page_border_top orelse 0,
+                    page_border_right orelse 0,
+                    page_border_bottom orelse 0,
+                    page_border_left orelse 0,
                 );
             }
 
             if (jv.Object.get("padding")) |v| {
-                var padding_top: f32 = 0;
-                var padding_right: f32 = 0;
-                var padding_bottom: f32 = 0;
-                var padding_left: f32 = 0;
+                var page_padding_top: f32 = 0;
+                var page_padding_right: f32 = 0;
+                var page_padding_bottom: f32 = 0;
+                var page_padding_left: f32 = 0;
                 if (v.Object.get("top")) |vv| {
-                    padding_top = @intToFloat(f32, vv.Integer);
+                    page_padding_top = @intToFloat(f32, vv.Integer);
                 }
                 if (v.Object.get("right")) |vv| {
-                    padding_right = @intToFloat(f32, vv.Integer);
+                    page_padding_right = @intToFloat(f32, vv.Integer);
                 }
                 if (v.Object.get("bottom")) |vv| {
-                    padding_bottom = @intToFloat(f32, vv.Integer);
+                    page_padding_bottom = @intToFloat(f32, vv.Integer);
                 }
                 if (v.Object.get("left")) |vv| {
-                    padding_left = @intToFloat(f32, vv.Integer);
+                    page_padding_left = @intToFloat(f32, vv.Integer);
                 }
 
-                page_padding = Padding.init(padding_top, padding_right, padding_bottom, padding_left);
+                page_padding = Padding.init(page_padding_top, page_padding_right, page_padding_bottom, page_padding_left);
             }
 
             var container: Container.Container = makeContainer(jv.Object.get("container").?);
-            // if (jv.Object.get("container")) |v| {
-            //     if (v.Object.get("type")) |vv| {
-            //         if (!std.mem.eql(u8, vv.String, "box")) {
-            //             continue;
-            //         }
-            //     }
-
-            //     var box_alignment: ?Alignment = null;
-            //     var box_background_color: ?Color = null;
-            //     var box_border: ?Border = null;
-            //     var box_padding: ?Padding = null;
-            //     var box_size: ?Size = null;
-
-            //     if (v.Object.get("alignment")) |vv| {
-            //         if (std.mem.eql(u8, vv.String, "bottom_center")) {
-            //             box_alignment = Alignment.bottomCenter;
-            //         }
-            //         if (std.mem.eql(u8, vv.String, "bottom_left")) {
-            //             box_alignment = Alignment.bottomLeft;
-            //         }
-            //         if (std.mem.eql(u8, vv.String, "bottom_right")) {
-            //             box_alignment = Alignment.bottomRight;
-            //         }
-            //         if (std.mem.eql(u8, vv.String, "center")) {
-            //             box_alignment = Alignment.center;
-            //         }
-            //         if (std.mem.eql(u8, vv.String, "center_left")) {
-            //             box_alignment = Alignment.centerLeft;
-            //         }
-            //         if (std.mem.eql(u8, vv.String, "center_right")) {
-            //             box_alignment = Alignment.centerRight;
-            //         }
-            //         if (std.mem.eql(u8, vv.String, "top_center")) {
-            //             box_alignment = Alignment.topCenter;
-            //         }
-            //         if (std.mem.eql(u8, vv.String, "top_left")) {
-            //             box_alignment = Alignment.topLeft;
-            //         }
-            //         if (std.mem.eql(u8, vv.String, "top_right")) {
-            //             box_alignment = Alignment.topRight;
-            //         }
-            //     }
-
-            //     if (v.Object.get("backgroundColor")) |vv| {
-            //         box_background_color = Color.init(vv.String);
-            //     }
-
-            //     if (v.Object.get("border")) |vv| {
-            //         var border_top: ?f32 = null;
-            //         var border_right: ?f32 = null;
-            //         var border_bottom: ?f32 = null;
-            //         var border_left: ?f32 = null;
-            //         if (vv.Object.get("top")) |vvv| {
-            //             border_top = @intToFloat(f32, vvv.Integer);
-            //         }
-            //         if (vv.Object.get("right")) |vvv| {
-            //             border_right = @intToFloat(f32, vvv.Integer);
-            //         }
-            //         if (vv.Object.get("bottom")) |vvv| {
-            //             border_bottom = @intToFloat(f32, vvv.Integer);
-            //         }
-            //         if (vv.Object.get("left")) |vvv| {
-            //             border_left = @intToFloat(f32, vvv.Integer);
-            //         }
-
-            //         box_border = Border.init(
-            //             Color.init(vv.Object.get("color").?.String),
-            //             Border.Style.solid,
-            //             border_top orelse 0,
-            //             border_right orelse 0,
-            //             border_bottom orelse 0,
-            //             border_left orelse 0,
-            //         );
-            //     }
-
-            //     if (v.Object.get("padding")) |vv| {
-            //         var padding_top: f32 = 0;
-            //         var padding_right: f32 = 0;
-            //         var padding_bottom: f32 = 0;
-            //         var padding_left: f32 = 0;
-            //         if (vv.Object.get("top")) |vvv| {
-            //             padding_top = @intToFloat(f32, vvv.Integer);
-            //         }
-            //         if (vv.Object.get("right")) |vvv| {
-            //             padding_right = @intToFloat(f32, vvv.Integer);
-            //         }
-            //         if (vv.Object.get("bottom")) |vvv| {
-            //             padding_bottom = @intToFloat(f32, vvv.Integer);
-            //         }
-            //         if (vv.Object.get("left")) |vvv| {
-            //             padding_left = @intToFloat(f32, vvv.Integer);
-            //         }
-
-            //         box_padding = Padding.init(padding_top, padding_right, padding_bottom, padding_left);
-            //     }
-
-            //     if (v.Object.get("size")) |vv| {
-            //         var width: f32 = 0;
-            //         var height: f32 = 0;
-            //         if (vv.Object.get("width")) |vvv| {
-            //             width = @intToFloat(f32, vvv.Integer);
-            //         }
-            //         if (vv.Object.get("height")) |vvv| {
-            //             height = @intToFloat(f32, vvv.Integer);
-            //         }
-            //         box_size = Size.init(width, height);
-            //     }
-
-            //     container = Container.wrap(Container.Box.init(false, box_alignment, box_background_color, box_border, null, box_padding, box_size));
-            // }
 
             pages[i] = Page.init(container, page_size, page_background_color, page_padding, null, page_border);
         }
@@ -785,7 +675,7 @@ fn makeContainer(jv: std.json.Value) Container.Container {
         if (jv.Object.get("hite_space")) |v| {
             text_white_space = @intToFloat(f32, v.Integer);
         }
-   
+
         if (jv.Object.get("soft_wrap")) |v| {
             text_soft_wrap = v.Bool;
         }
