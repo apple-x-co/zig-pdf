@@ -329,9 +329,11 @@ fn generatePdf(in: std.fs.File, out: std.fs.File, errOut: std.fs.File, allocator
                 page_padding = Padding.init(page_padding_top, page_padding_right, page_padding_bottom, page_padding_left);
             }
 
-            var container: Container.Container = makeContainer(jv.Object.get("container").?);
+            var container: Container.Container = try makeContainer(arena_allocator, jv.Object.get("container").?);
 
-            pages[i] = Page.init(container, page_size, page_background_color, page_padding, null, page_border);
+            const page = try arena_allocator.create(Page);
+            page.* = Page.init(container, page_size, page_background_color, page_padding, null, page_border);
+            pages[i] = page.*;
         }
     }
     defer allocator.free(pages);
@@ -345,7 +347,7 @@ fn generatePdf(in: std.fs.File, out: std.fs.File, errOut: std.fs.File, allocator
     try err_writer_buffer.flush();
 }
 
-fn makeContainer(jv: std.json.Value) Container.Container {
+fn makeContainer(allocator: std.mem.Allocator, jv: std.json.Value) !Container.Container {
     var container_type = jv.Object.get("type").?.String;
 
     if (std.mem.eql(u8, container_type, "box")) {
@@ -450,184 +452,245 @@ fn makeContainer(jv: std.json.Value) Container.Container {
             box_size = Size.init(width, height);
         }
 
-        // TODO: box.child
-        const opaque_box_child: ?*anyopaque = null;
+        if (jv.Object.get("child")) |v| {
+            // zig build run -- schema/demo/pdf.json
 
-        return Container.wrap(Container.Box.init(false, box_alignment, box_background_color, box_border, opaque_box_child, box_padding, box_size));
+            // TODO: fix below error
+            // thread 3819843 panic: access of inactive union field
+            // /Users/sanokouhei/Documents/Repository/GitHub/apple-x-co/zig-pdf/src/Writer.zig:429:34: 0x10ef292fd in renderContainer (zig-pdf)
+            //             const box = container.box;
+            //                                  ^
+            // /Users/sanokouhei/Documents/Repository/GitHub/apple-x-co/zig-pdf/src/Writer.zig:445:73: 0x10ef29601 in renderContainer (zig-pdf)
+            //                 try self.renderContainer(hpdf, hpage, content_frame, box.alignment, child_container);
+            //                                                                         ^
+            // /Users/sanokouhei/Documents/Repository/GitHub/apple-x-co/zig-pdf/src/Writer.zig:86:87: 0x10ef2bda3 in save (zig-pdf)
+            //         try self.renderContainer(hpdf, hpage, page.content_frame, page.alignment, page.container);
+            //                                                                                       ^
+            // /Users/sanokouhei/Documents/Repository/GitHub/apple-x-co/zig-pdf/src/main.zig:344:23: 0x10ef0c626 in generatePdf (zig-pdf)
+            //     try pdfWriter.save("/tmp/zig-pdf-sample.pdf");
+            //                       ^
+            // /Users/sanokouhei/Documents/Repository/GitHub/apple-x-co/zig-pdf/src/main.zig:64:20: 0x10ef06e12 in main (zig-pdf)
+            //         generatePdf(file, stdout, stderr, allocator) catch |err| {
+            //                    ^
+            // /Users/sanokouhei/.local/zig-macos-x86_64-0.10.1/lib/std/start.zig:614:37: 0x10ef0d258 in main (zig-pdf)
+            //             const result = root.main() catch |err| {
+            //                                     ^
+            // ?
+
+            var box_child = try makeContainer(allocator, v);
+            const opaque_box_child_ptr: *anyopaque = &box_child;
+            
+            const box_ptr = try allocator.create(Container.Box);
+            box_ptr.* = Container.Box.init(false, box_alignment, box_background_color, box_border, opaque_box_child_ptr, box_padding, box_size);
+
+            const box_container_ptr = try allocator.create(Container.Container);
+            box_container_ptr.* = Container.wrap(box_ptr.*);
+
+            return box_container_ptr.*;
+
+
+            // TODO: fix below error
+            // thread 3035144 panic: access of inactive union field
+            // /path-to/zig-pdf/src/Writer.zig:429:34: 0x108b1843d in renderContainer (zig-pdf)
+
+            // var box_child = try makeContainer(allocator, v);
+            // // const opaque_box_child_ptr: *anyopaque = &box_child;
+            // const opaque_box_child: *anyopaque = try allocator.create(anyopaque);
+            // _ = opaque_box_child;
+            // opaque_box_child.* = &box_child;
+
+            // const box_ptr = try allocator.create(Container.Box);
+            // box_ptr.* = Container.Box.init(false, box_alignment, box_background_color, box_border, opaque_box_child, box_padding, box_size);
+
+            // const box_container_ptr = try allocator.create(Container.Container);
+            // box_container_ptr.* = Container.wrap(box_ptr.*);
+            
+            // std.log.warn("box_container_ptr:{any}", .{box_container_ptr});
+
+            // return box_container_ptr.*;
+        }
+
+        const box_ptr = try allocator.create(Container.Box);
+        box_ptr.* = Container.Box.init(false, box_alignment, box_background_color, box_border, null, box_padding, box_size);
+
+        const box_container_ptr = try allocator.create(Container.Container);
+        box_container_ptr.* = Container.wrap(box_ptr.*);
+
+        return box_container_ptr.*;
     }
 
-    if (std.mem.eql(u8, container_type, "col")) {
-        var column_alignment: ?Alignment = null;
+    // if (std.mem.eql(u8, container_type, "col")) {
+    //     var column_alignment: ?Alignment = null;
 
-        if (jv.Object.get("alignment")) |v| {
-            if (std.mem.eql(u8, v.String, "bottom_center")) {
-                column_alignment = Alignment.bottomCenter;
-            }
-            if (std.mem.eql(u8, v.String, "bottom_left")) {
-                column_alignment = Alignment.bottomLeft;
-            }
-            if (std.mem.eql(u8, v.String, "bottom_right")) {
-                column_alignment = Alignment.bottomRight;
-            }
-            if (std.mem.eql(u8, v.String, "center")) {
-                column_alignment = Alignment.center;
-            }
-            if (std.mem.eql(u8, v.String, "center_left")) {
-                column_alignment = Alignment.centerLeft;
-            }
-            if (std.mem.eql(u8, v.String, "center_right")) {
-                column_alignment = Alignment.centerRight;
-            }
-            if (std.mem.eql(u8, v.String, "top_center")) {
-                column_alignment = Alignment.topCenter;
-            }
-            if (std.mem.eql(u8, v.String, "top_left")) {
-                column_alignment = Alignment.topLeft;
-            }
-            if (std.mem.eql(u8, v.String, "top_right")) {
-                column_alignment = Alignment.topRight;
-            }
-        }
+    //     if (jv.Object.get("alignment")) |v| {
+    //         if (std.mem.eql(u8, v.String, "bottom_center")) {
+    //             column_alignment = Alignment.bottomCenter;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "bottom_left")) {
+    //             column_alignment = Alignment.bottomLeft;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "bottom_right")) {
+    //             column_alignment = Alignment.bottomRight;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "center")) {
+    //             column_alignment = Alignment.center;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "center_left")) {
+    //             column_alignment = Alignment.centerLeft;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "center_right")) {
+    //             column_alignment = Alignment.centerRight;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "top_center")) {
+    //             column_alignment = Alignment.topCenter;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "top_left")) {
+    //             column_alignment = Alignment.topLeft;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "top_right")) {
+    //             column_alignment = Alignment.topRight;
+    //         }
+    //     }
 
-        // TODO: column.children
-        var column_children: []*anyopaque = undefined;
+    //     // TODO: column.children
+    //     var column_children: []*anyopaque = undefined;
 
-        return Container.wrap(Container.Column.init(column_children, column_alignment));
-    }
+    //     return Container.wrap(Container.Column.init(column_children, column_alignment));
+    // }
 
-    if (std.mem.eql(u8, container_type, "image")) {
-        var image_path = jv.Object.get("path").?.String;
-        var image_size: ?Size = null;
+    // if (std.mem.eql(u8, container_type, "image")) {
+    //     var image_path = jv.Object.get("path").?.String;
+    //     var image_size: ?Size = null;
 
-        if (jv.Object.get("size")) |v| {
-            var width: f32 = 0;
-            var height: f32 = 0;
+    //     if (jv.Object.get("size")) |v| {
+    //         var width: f32 = 0;
+    //         var height: f32 = 0;
 
-            if (v.Object.get("width")) |vv| {
-                width = @intToFloat(f32, vv.Integer);
-            }
-            if (v.Object.get("height")) |vv| {
-                height = @intToFloat(f32, vv.Integer);
-            }
+    //         if (v.Object.get("width")) |vv| {
+    //             width = @intToFloat(f32, vv.Integer);
+    //         }
+    //         if (v.Object.get("height")) |vv| {
+    //             height = @intToFloat(f32, vv.Integer);
+    //         }
 
-            image_size = Size.init(width, height);
-        }
+    //         image_size = Size.init(width, height);
+    //     }
 
-        return Container.wrap(Container.Image.init(image_path, image_size));
-    }
+    //     return Container.wrap(Container.Image.init(image_path, image_size));
+    // }
 
-    if (std.mem.eql(u8, container_type, "positioned_box")) {
-        var pbox_alignment: ?Alignment = null;
-        var pbox_top: ?f32 = null;
-        var pbox_right: ?f32 = null;
-        var pbox_bottom: ?f32 = null;
-        var pbox_left: ?f32 = null;
-        var pbox_size: ?Size = null;
+    // if (std.mem.eql(u8, container_type, "positioned_box")) {
+    //     var pbox_alignment: ?Alignment = null;
+    //     var pbox_top: ?f32 = null;
+    //     var pbox_right: ?f32 = null;
+    //     var pbox_bottom: ?f32 = null;
+    //     var pbox_left: ?f32 = null;
+    //     var pbox_size: ?Size = null;
 
-        // alignment
-        if (jv.Object.get("alignment")) |v| {
-            if (std.mem.eql(u8, v.String, "bottom_center")) {
-                pbox_alignment = Alignment.bottomCenter;
-            }
-            if (std.mem.eql(u8, v.String, "bottom_left")) {
-                pbox_alignment = Alignment.bottomLeft;
-            }
-            if (std.mem.eql(u8, v.String, "bottom_right")) {
-                pbox_alignment = Alignment.bottomRight;
-            }
-            if (std.mem.eql(u8, v.String, "center")) {
-                pbox_alignment = Alignment.center;
-            }
-            if (std.mem.eql(u8, v.String, "center_left")) {
-                pbox_alignment = Alignment.centerLeft;
-            }
-            if (std.mem.eql(u8, v.String, "center_right")) {
-                pbox_alignment = Alignment.centerRight;
-            }
-            if (std.mem.eql(u8, v.String, "top_center")) {
-                pbox_alignment = Alignment.topCenter;
-            }
-            if (std.mem.eql(u8, v.String, "top_left")) {
-                pbox_alignment = Alignment.topLeft;
-            }
-            if (std.mem.eql(u8, v.String, "top_right")) {
-                pbox_alignment = Alignment.topRight;
-            }
-        }
+    //     // alignment
+    //     if (jv.Object.get("alignment")) |v| {
+    //         if (std.mem.eql(u8, v.String, "bottom_center")) {
+    //             pbox_alignment = Alignment.bottomCenter;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "bottom_left")) {
+    //             pbox_alignment = Alignment.bottomLeft;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "bottom_right")) {
+    //             pbox_alignment = Alignment.bottomRight;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "center")) {
+    //             pbox_alignment = Alignment.center;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "center_left")) {
+    //             pbox_alignment = Alignment.centerLeft;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "center_right")) {
+    //             pbox_alignment = Alignment.centerRight;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "top_center")) {
+    //             pbox_alignment = Alignment.topCenter;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "top_left")) {
+    //             pbox_alignment = Alignment.topLeft;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "top_right")) {
+    //             pbox_alignment = Alignment.topRight;
+    //         }
+    //     }
 
-        if (jv.Object.get("top")) |v| {
-            pbox_top = @intToFloat(f32, v.Integer);
-        }
+    //     if (jv.Object.get("top")) |v| {
+    //         pbox_top = @intToFloat(f32, v.Integer);
+    //     }
 
-        if (jv.Object.get("right")) |v| {
-            pbox_right = @intToFloat(f32, v.Integer);
-        }
+    //     if (jv.Object.get("right")) |v| {
+    //         pbox_right = @intToFloat(f32, v.Integer);
+    //     }
 
-        if (jv.Object.get("bottom")) |v| {
-            pbox_bottom = @intToFloat(f32, v.Integer);
-        }
+    //     if (jv.Object.get("bottom")) |v| {
+    //         pbox_bottom = @intToFloat(f32, v.Integer);
+    //     }
 
-        if (jv.Object.get("left")) |v| {
-            pbox_left = @intToFloat(f32, v.Integer);
-        }
+    //     if (jv.Object.get("left")) |v| {
+    //         pbox_left = @intToFloat(f32, v.Integer);
+    //     }
 
-        if (jv.Object.get("size")) |v| {
-            var width: f32 = 0;
-            var height: f32 = 0;
+    //     if (jv.Object.get("size")) |v| {
+    //         var width: f32 = 0;
+    //         var height: f32 = 0;
 
-            if (v.Object.get("width")) |vv| {
-                width = @intToFloat(f32, vv.Integer);
-            }
-            if (v.Object.get("height")) |vv| {
-                height = @intToFloat(f32, vv.Integer);
-            }
+    //         if (v.Object.get("width")) |vv| {
+    //             width = @intToFloat(f32, vv.Integer);
+    //         }
+    //         if (v.Object.get("height")) |vv| {
+    //             height = @intToFloat(f32, vv.Integer);
+    //         }
 
-            pbox_size = Size.init(width, height);
-        }
+    //         pbox_size = Size.init(width, height);
+    //     }
 
-        // TODO: positioned_box.child
+    //     // TODO: positioned_box.child
 
-        return Container.wrap(Container.PositionedBox.init(null, pbox_top, pbox_right, pbox_bottom, pbox_left, pbox_size));
-    }
+    //     return Container.wrap(Container.PositionedBox.init(null, pbox_top, pbox_right, pbox_bottom, pbox_left, pbox_size));
+    // }
 
-    if (std.mem.eql(u8, container_type, "row")) {
-        var row_alignment: ?Alignment = null;
+    // if (std.mem.eql(u8, container_type, "row")) {
+    //     var row_alignment: ?Alignment = null;
 
-        if (jv.Object.get("alignment")) |v| {
-            if (std.mem.eql(u8, v.String, "bottom_center")) {
-                row_alignment = Alignment.bottomCenter;
-            }
-            if (std.mem.eql(u8, v.String, "bottom_left")) {
-                row_alignment = Alignment.bottomLeft;
-            }
-            if (std.mem.eql(u8, v.String, "bottom_right")) {
-                row_alignment = Alignment.bottomRight;
-            }
-            if (std.mem.eql(u8, v.String, "center")) {
-                row_alignment = Alignment.center;
-            }
-            if (std.mem.eql(u8, v.String, "center_left")) {
-                row_alignment = Alignment.centerLeft;
-            }
-            if (std.mem.eql(u8, v.String, "center_right")) {
-                row_alignment = Alignment.centerRight;
-            }
-            if (std.mem.eql(u8, v.String, "top_center")) {
-                row_alignment = Alignment.topCenter;
-            }
-            if (std.mem.eql(u8, v.String, "top_left")) {
-                row_alignment = Alignment.topLeft;
-            }
-            if (std.mem.eql(u8, v.String, "top_right")) {
-                row_alignment = Alignment.topRight;
-            }
-        }
+    //     if (jv.Object.get("alignment")) |v| {
+    //         if (std.mem.eql(u8, v.String, "bottom_center")) {
+    //             row_alignment = Alignment.bottomCenter;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "bottom_left")) {
+    //             row_alignment = Alignment.bottomLeft;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "bottom_right")) {
+    //             row_alignment = Alignment.bottomRight;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "center")) {
+    //             row_alignment = Alignment.center;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "center_left")) {
+    //             row_alignment = Alignment.centerLeft;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "center_right")) {
+    //             row_alignment = Alignment.centerRight;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "top_center")) {
+    //             row_alignment = Alignment.topCenter;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "top_left")) {
+    //             row_alignment = Alignment.topLeft;
+    //         }
+    //         if (std.mem.eql(u8, v.String, "top_right")) {
+    //             row_alignment = Alignment.topRight;
+    //         }
+    //     }
 
-        // TODO: row.children
-        var row_children: []*anyopaque = undefined;
+    //     // TODO: row.children
+    //     var row_children: []*anyopaque = undefined;
 
-        return Container.wrap(Container.Row.init(row_children, row_alignment));
-    }
+    //     return Container.wrap(Container.Row.init(row_children, row_alignment));
+    // }
 
     if (std.mem.eql(u8, container_type, "text")) {
         var text_char_space: f32 = 0;
@@ -680,10 +743,22 @@ fn makeContainer(jv: std.json.Value) Container.Container {
             text_soft_wrap = v.Bool;
         }
 
-        return Container.wrap(Container.Text.init(text_content, text_fill_color, text_stroke_color, text_style, text_size, text_font_family, text_soft_wrap, text_char_space, text_white_space));
+        const text_ptr = try allocator.create(Container.Text);
+        text_ptr.* = Container.Text.init(text_content, text_fill_color, text_stroke_color, text_style, text_size, text_font_family, text_soft_wrap, text_char_space, text_white_space);
+
+        const text_container_ptr = try allocator.create(Container.Container);
+        text_container_ptr.* = Container.wrap(text_ptr.*);
+
+        return text_container_ptr.*;
     }
 
-    return Container.wrap(Container.Box.init(false, null, null, null, null, null, null));
+    const empty_box_ptr = try allocator.create(Container.Box);
+    empty_box_ptr.* = Container.Box.init(false, null, null, null, null, null, null);
+
+    const empty_box_container_ptr = try allocator.create(Container.Container);
+    empty_box_container_ptr.* = Container.wrap(empty_box_ptr.*);
+
+    return empty_box_container_ptr.*;
 }
 
 test {

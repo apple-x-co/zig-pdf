@@ -872,6 +872,10 @@ fn drawBackground(self: Self, hpage: c.HPDF_Page, color: Color, rect: Rect) !voi
 fn drawBorder(self: Self, hpage: c.HPDF_Page, border: Border, rect: Rect) !void {
     _ = self;
 
+    if (border.color.value == null) {
+        return;
+    }
+
     const rgb = try Rgb.hex(border.color.value.?);
     const red = @intToFloat(f32, rgb.red) / 255;
     const green = @intToFloat(f32, rgb.green) / 255;
