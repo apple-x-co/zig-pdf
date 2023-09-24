@@ -67,9 +67,9 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
-    // unit_tests.addIncludePath(std.Build.LazyPath{ .path = "/opt/homebrew/Cellar/libharu/2.4.3/include" }); // ex: hpdf.h
+    unit_tests.addIncludePath(std.Build.LazyPath{ .path = "/opt/homebrew/Cellar/libharu/2.4.3/include" }); // ex: hpdf.h
     unit_tests.addIncludePath(std.Build.LazyPath{ .path = "/usr/local/include" }); // ex: hpdf.h
-    // unit_tests.addLibraryPath(std.Build.LazyPath{ .path = "/opt/homebrew/Cellar/libharu/2.4.3/lib" }); // ex: libhpdf.a
+    unit_tests.addLibraryPath(std.Build.LazyPath{ .path = "/opt/homebrew/Cellar/libharu/2.4.3/lib" }); // ex: libhpdf.a
     unit_tests.addLibraryPath(std.Build.LazyPath{ .path = "/usr/local/lib" }); // ex: libhpdf.a
     unit_tests.addLibraryPath(std.Build.LazyPath{ .path = "/usr/local/libiconv/lib" });
     unit_tests.linkSystemLibrary("hpdf");
