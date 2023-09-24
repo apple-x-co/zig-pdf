@@ -26,12 +26,6 @@ jobs:
         with:
           libiconv-version: 1.7
 
-      - run: ls -l /usr/local/lib
-      - run: ls -l /etc/ld.so.conf.d
-      - run: cat /etc/ld.so.conf.d/*
-      - run: cat /etc/ld.so.conf
-      - run: ldconfig -p
-
       - name: Set shared libraries path
         run: echo "LD_LIBRARY_PATH=/usr/local/lib" >> "$GITHUB_ENV"
 
