@@ -26,6 +26,7 @@ jobs:
         with:
           libiconv-version: 1.7
 
+      - run: ls -l /usr/local/lib
       - run: zig build test
 
   lint:
