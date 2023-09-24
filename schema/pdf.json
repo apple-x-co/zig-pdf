@@ -4,16 +4,538 @@
   "title": "zig-pdf schema",
   "type": "object",
   "definitions": {
-    "layout_width": {
+    "alignment": {
+      "title": "子要素の配置",
+      "description": "子要素の配置を設定",
+      "type": "string",
       "enum": [
-        "match_parent",
-        "wrap_content"
+        "bottom_center",
+        "bottom_left",
+        "bottom_right",
+        "center",
+        "center_left",
+        "center_right",
+        "top_center",
+        "top_left",
+        "top_right"
       ]
     },
-    "layout_height": {
-      "enum": [
-        "match_parent",
-        "wrap_content"
+    "any_container": {
+      "title": "コンテナ",
+      "description": "レイアウトコンテナやコンテントコンテナ",
+      "oneOf": [
+        {
+          "$ref": "#/definitions/box"
+        },
+        {
+          "$ref": "#/definitions/col"
+        },
+        {
+          "$ref": "#/definitions/image"
+        },
+        {
+          "$ref": "#/definitions/positioned_box"
+        },
+        {
+          "$ref": "#/definitions/row"
+        },
+        {
+          "$ref": "#/definitions/text"
+        }
+      ]
+    },
+    "border": {
+      "title": "線",
+      "description": "線を設定",
+      "type": "object",
+      "properties": {
+        "color": {
+          "$ref": "#/definitions/color"
+        },
+        "top": {
+          "title": "上の線幅",
+          "type": "integer",
+          "default": 0
+        },
+        "right": {
+          "title": "右の線幅",
+          "type": "integer",
+          "default": 0
+        },
+        "bottom": {
+          "title": "下の線幅",
+          "type": "integer",
+          "default": 0
+        },
+        "left": {
+          "title": "左の線幅",
+          "type": "integer",
+          "default": 0
+        }
+      }
+    },
+    "box": {
+      "title": "単一レイアウトコンテナ",
+      "description": "レイアウトコンテナまたはコンテントコンテナを0個または1個保持",
+      "type": "object",
+      "properties": {
+        "alignment": {
+          "$ref": "#/definitions/alignment"
+        },
+        "backgroundColor": {
+          "$ref": "#/definitions/color"
+        },
+        "border": {
+          "$ref": "#/definitions/border"
+        },
+        "child": {
+          "$ref": "#/definitions/any_container"
+        },
+        "type": {
+          "$ref": "#/definitions/container_type",
+          "enum": ["box"]
+        },
+        "expanded": {
+          "$ref": "#/definitions/expanded"
+        },
+        "padding": {
+          "$ref": "#/definitions/padding"
+        },
+        "size": {
+          "$ref": "#/definitions/size"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "col": {
+      "title": "列レイアウトコンテナ",
+      "description": "複数のコンテントコンテナを1つ以上保持",
+      "properties": {
+        "alignment": {
+          "$ref": "#/definitions/alignment"
+        },
+        "type": {
+          "$ref": "#/definitions/container_type",
+          "enum": ["col"]
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/any_container"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "children"
+      ]
+    },
+    "color": {
+      "title": "色",
+      "description": "色を設定",
+      "default": "000000",
+      "type": "string",
+      "minLength": 6,
+      "maxLength": 6,
+      "pattern": "[a-zA-Z0-9]{6}"
+    },
+    "container_type": {
+      "description": "コンテナータイプ",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 20
+    },
+    "expanded": {
+      "title": "拡大",
+      "description": "幅または高さを可変にするか否か",
+      "type": "boolean"
+    },
+    "font": {
+      "title": "フォント",
+      "description": "フォントを設定",
+      "oneOf": [
+        {
+          "title": "標準フォント",
+          "type": "object",
+          "properties": {
+            "type": {
+              "title": "フォントタイプ",
+              "type": "string",
+              "enum": ["default"]
+            },
+            "family": {
+              "title": "フォントファミリー",
+              "type": "string",
+              "minLength": 1
+            },
+            "name": {
+              "title": "フォント名",
+              "type": "string",
+              "minLength": 1,
+              "enum": ["Courie", "Courier-Bold", "Courier-Oblique", "Courier-BoldOblique", "Helvetica", "Helvetica-Bold", "Helvetica-Oblique", "Helvetica-BoldOblique", "Times-Roman", "Times-Bold", "Times-Italic", "Times-BoldItalic", "Symbol", "ZapfDingbats"]
+            },
+            "encodingName": {
+              "title": "エンコーディング名",
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": ["90ms-RKSJ-H", "90ms-RKSJ-V", "90msp-RKSJ-H", "EUC-H", "EUC-V", null]
+            }  
+          },
+          "required": [
+            "type",
+            "family",
+            "name",
+            "encodingName"
+          ]
+        },
+        {
+          "title": "TTCフォト",
+          "type": "object",
+          "properties": {
+            "type": {
+              "title": "フォントタイプ",
+              "type": "string",
+              "enum": ["ttc"]
+            },
+            "family": {
+              "title": "フォントファミリー",
+              "type": "string",
+              "minLength": 1
+            },
+            "filePath": {
+              "title": "フォントファイルパス",
+              "type": "string",
+              "minLength": 1
+            },
+            "index": {
+              "title": "インデックス",
+              "type": "integer",
+              "minimum": 0
+            },
+            "embedding": {
+              "title": "埋め込み",
+              "type": "boolean",
+              "default": false
+            },
+            "encodingName": {
+              "title": "エンコーディング名",
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": ["90ms-RKSJ-H", "90ms-RKSJ-V", "90msp-RKSJ-H", "EUC-H", "EUC-V", null]
+            },
+            "soft_wrap": {
+              "title": "折り返し",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "family",
+            "filePath",
+            "index",
+            "embedding",
+            "encodingName"
+          ]
+        },
+        {
+          "title": "TTFフォント",
+          "type": "object",
+          "properties": {
+            "type": {
+              "title": "フォントタイプ",
+              "type": "string",
+              "enum": ["ttf"]
+            },
+            "family": {
+              "title": "フォントファミリー",
+              "type": "string",
+              "minLength": 1
+            },
+            "filePath": {
+              "title": "フォントファイルパス",
+              "type": "string"
+            },
+            "embedding": {
+              "title": "埋め込み",
+              "type": "boolean"
+            },
+            "encodingName": {
+              "title": "エンコーディング名",
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": ["90ms-RKSJ-H", "90ms-RKSJ-V", "90msp-RKSJ-H", "EUC-H", "EUC-V", null]
+            }
+          },
+          "required": [
+            "type",
+            "family",
+            "filePath",
+            "embedding",
+            "encodingName"
+          ]
+        }
+      ]
+    },
+    "image": {
+      "title": "画像",
+      "description": "画像を設定",
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/container_type",
+          "enum": ["image"]
+        },
+        "path": {
+          "title": "画像のファイルパス",
+          "type": "string",
+          "minLength": 1
+        },
+        "size": {
+          "$ref": "#/definitions/size"
+        }
+      },
+      "required": [
+        "type",
+        "path"
+      ]
+    },
+    "page": {
+      "title": "ページ",
+      "description": "ページを設定",
+      "type": "object",
+      "properties": {
+        "container": {
+          "$ref": "#/definitions/box"
+        },
+        "pageSize": {
+          "$ref": "#/definitions/page_size"
+        },
+        "backgroundColor": {
+          "$ref": "#/definitions/color"
+        },
+        "border": {
+          "$ref": "#/definitions/border"
+        },
+        "padding": {
+          "$ref": "#/definitions/padding"
+        }
+      },
+      "required": [
+        "container",
+        "pageSize"
+      ]
+    },
+    "page_size": {
+      "title": "サイズ",
+      "description": "幅と高さを設定",
+      "type": "object",
+      "properties": {
+        "width": {
+          "title": "幅",
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "title": "高さ",
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "width",
+        "height"
+      ]
+    },
+    "padding": {
+      "title": "padding",
+      "description": "パディングを設定",
+      "type": "object",
+      "properties": {
+        "top": {
+          "title": "上",
+          "type": "number",
+          "minimum": 1
+        },
+        "right": {
+          "title": "右",
+          "type": "number",
+          "minimum": 1
+        },
+        "bottom": {
+          "title": "下",
+          "type": "number",
+          "minimum": 1
+        },
+        "left": {
+          "title": "左",
+          "type": "number",
+          "minimum": 1
+        }
+      }
+    },
+    "point": {
+      "title": "座標",
+      "description": "座標を設定",
+      "type": "object",
+      "properties": {
+        "x": {
+          "title": "X座標",
+          "type": "integer"
+        },
+        "y": {
+          "title": "Y座標",
+          "type": "integer"
+        }
+      }
+    },
+    "positioned_box": {
+      "title": "単一レイアウトコンテナ",
+      "description": "レイアウトコンテナまたはコンテントコンテナを1つ保持し任意の場所に配置",
+      "type": "object",
+      "properties": {
+        "alignment": {
+          "$ref": "#/definitions/alignment"
+        },
+        "type": {
+          "$ref": "#/definitions/container_type",
+          "enum": ["positioned_box"]
+        },
+        "top": {
+          "title": "上",
+          "type": "number",
+          "minimum": 1
+        },
+        "right": {
+          "title": "右",
+          "type": "number",
+          "minimum": 1
+        },
+        "bottom": {
+          "title": "下",
+          "type": "number",
+          "minimum": 1
+        },
+        "left": {
+          "title": "左",
+          "type": "number",
+          "minimum": 1
+        },
+        "size": {
+          "$ref": "#/definitions/size"
+        },
+        "child": {
+          "$ref": "#/definitions/any_container"
+        }
+      },
+      "required": [
+        "type",
+        "child"
+      ]
+    },
+    "row": {
+      "title": "行レイアウトコンテナ",
+      "description": "複数のコンテントコンテナを1つ以上保持",
+      "properties": {
+        "alignment": {
+          "$ref": "#/definitions/alignment"
+        },
+        "type": {
+          "$ref": "#/definitions/container_type",
+          "enum": ["row"]
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/any_container"
+          },
+          "minItems": 1
+        }
+      },
+      "required": [
+        "type",
+        "children"
+      ]
+    },
+    "size": {
+      "title": "サイズ",
+      "description": "幅と高さを設定",
+      "type": "object",
+      "properties": {
+        "width": {
+          "title": "幅",
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "title": "高さ",
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "textSize": {
+      "title": "テキストサイズ",
+      "description": "テキストサイズを設定",
+      "type": "integer",
+      "minimum": 10
+    },
+    "text": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "$ref": "#/definitions/container_type",
+          "enum": ["text"]
+        },
+        "char_space": {
+          "title": "文字間幅",
+          "type": "number",
+          "minimum": 0
+        },
+        "content": {
+          "title": "テキスト内容",
+          "type": "string",
+          "minLength": 1
+        },
+        "fill_color": {
+          "$ref": "#/definitions/color"
+        },
+        "font_family": {
+          "title": "フォントファミリー名",
+          "type": "string",
+          "minLength": 1
+        },
+        "stroke_color": {
+          "$ref": "#/definitions/color"
+        },
+        "text_size": {
+          "$ref": "#/definitions/textSize"
+        },
+        "text_style": {
+          "title": "テキストスタイル",
+          "type": "string",
+          "enum": ["fill", "stroke", "fill_and_stroke"]
+        },
+        "word_space": {
+          "title": "単語間幅",
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "type",
+        "content"
       ]
     }
   },
@@ -47,37 +569,66 @@
     "encryption": {
       "title": "暗号化モード",
       "description": "ドキュメントの暗号化モードを設定",
-      "properties": {
-        "mode": {
-          "title": "アルゴリズム",
-          "type": "string",
-          "enum": [
-            "Revision2",
-            "Revision3"
+      "oneOf": [
+        {
+          "properties": {
+            "mode": {
+              "title": "アルゴリズム",
+              "type": "string",
+              "enum": [
+                "Revision2"
+              ]
+            },
+            "length": {
+              "title": "暗号キーの長さ",
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 5
+            }
+          },
+          "required": [
+            "mode",
+            "length"
           ]
         },
-        "length": {
-          "title": "暗号キーの長さ",
-          "type": "integer",
-          "minimum": 5,
-          "maximum": 16
+        {
+          "properties": {
+            "mode": {
+              "title": "アルゴリズム",
+              "type": "string",
+              "enum": [
+                "Revision3"
+              ]
+            },
+            "length": {
+              "title": "暗号キーの長さ",
+              "type": "integer",
+              "minimum": 5,
+              "maximum": 16
+            }
+          },
+          "required": [
+            "mode",
+            "length"
+          ]
         }
-      },
-      "required": [
-        "mode"
-      ],
-      "if": {
-        "properties": {
-          "mode": {
-            "const": "Revision3"
-          }
-        }
-      },
-      "then": {
-        "required": [
-          "length"
-        ]
+      ]
+    },
+    "fonts": {
+      "title": "フォント定義",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/font"
       }
+    },
+    "pages": {
+      "title": "全ページ",
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/page"
+      },
+      "minItems": 1,
+      "maxItems": 8191
     },
     "password": {
       "title": "パスワード",
@@ -108,21 +659,19 @@
     "permission": {
       "title": "使用権限",
       "description": "ドキュメントの使用権限を設定",
-      "type": "string",
-      "enum": [
-        "read",
-        "print",
-        "edit_all",
-        "copy",
-        "edit"
-      ]
-    },
-    "title": {
-      "title": "タイトル",
-      "description": "ドキュメントの情報属性を設定",
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 100
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "read",
+          "print",
+          "edit_all",
+          "copy",
+          "edit"
+        ]
+      },
+      "minItems": 1,
+      "maxItems": 5
     },
     "subject": {
       "title": "サブタイトル",
@@ -131,45 +680,17 @@
       "minLength": 1,
       "maxLength": 100
     },
-    "pages": {
-      "title": "ページ",
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "width": {
-            "type": "integer"
-          },
-          "height": {
-            "type": "integer"
-          },
-          "constraint": {
-            "properties": {
-              "layout_width": {
-                "$ref": "#/definitions/layout_width"
-              },
-              "layout_height": {
-                "$ref": "#/definitions/layout_height"
-              }
-            },
-            "required": [
-              "layout_width",
-              "layout_height"
-            ]
-          }
-        },
-        "required": [
-          "width",
-          "height",
-          "constraint"
-        ]
-      },
-      "minItems": 1
+    "title": {
+      "title": "タイトル",
+      "description": "ドキュメントの情報属性を設定",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
     }
   },
   "required": [
     "author",
-    "title",
-    "pages"
+    "pages",
+    "title"
   ]
 }

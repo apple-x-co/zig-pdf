@@ -5,20 +5,103 @@
   "title": "demo",
   "subject": "demo1",
   "compression": "all",
-  "encryption": {
-    "mode": "Revision2"
-  },
   "password": {
     "owner": "password"
   },
-  "permission": "read",
+  "encryption": {
+    "mode": "Revision2",
+    "length": 5
+  },
+  "permission": [
+    "read",
+    "print"
+  ],
+  "fonts": [
+    {
+      "type": "default",
+      "family": "font1",
+      "name": "Helvetica",
+      "encodingName": null
+    }
+  ],
   "pages": [
     {
-      "width": 595,
-      "height": 842,
-      "constraint": {
-        "layout_width": "match_parent",
-        "layout_height": "match_parent"
+      "container": {
+        "type": "box",
+        "backgroundColor": "000000",
+        "size": {
+          "width": 100,
+          "height": 100
+        }
+      },
+      "pageSize": {
+        "width": 595,
+        "height": 842
+      }
+    },
+    {
+      "container": {
+        "type": "box",
+        "child": {
+          "type": "text",
+          "content": "HELLO WORLD."
+        }
+      },
+      "pageSize": {
+        "width": 595,
+        "height": 842
+      }
+    },
+    {
+      "backgroundColor": "EFEFEF",
+      "border": {
+        "color": "000000",
+        "top": 1,
+        "right": 1,
+        "bottom": 1,
+        "left": 1
+      },
+      "container": {
+        "type": "box",
+        "backgroundColor": "DDDDDD",
+        "border": {
+          "color": "AAFF00",
+          "top": 1,
+          "right": 1,
+          "bottom": 1,
+          "left": 1
+        },
+        "padding": {
+          "top": 10,
+          "right": 10,
+          "bottom": 10,
+          "left": 10
+        },
+        "child": {
+          "type": "positioned_box",
+          "child": {
+            "type": "positioned_box",
+            "child": {
+              "type": "text",
+              "content": "HELLO WORLD",
+              "fill_color": "FFCC00",
+              "stroke_color": "000000",
+              "font_family": "font1"
+            },
+            "top": 100,
+            "left": 100
+          }
+        }
+      },
+      "pageSize": {
+        "width": 595,
+        "height": 842
+      },
+      "padding": {
+        "top": 10,
+        "right": 10,
+        "bottom": 10,
+        "left": 10
       }
     }
   ]
