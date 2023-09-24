@@ -29,7 +29,7 @@ jobs:
       - run: ls -l /usr/local/lib
       - run: ls -l /etc/ld.so.conf.d
       - run: cat /etc/ld.so.conf.d/*
-      - run: ldconfig
+      - run: cat /etc/ld.so.conf
       - run: ldconfig -p
 
       - run: zig build test
