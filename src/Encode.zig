@@ -12,7 +12,7 @@ fn encode(allocator: std.mem.Allocator, iconv: c.iconv_t, string: *[]const u8) !
     var output = output_ptr;
     var output_length: usize = string.len * 4;
 
-    _ = c.iconv(iconv, @ptrCast([*c][*c]u8, &input_ptr), &input_length, @ptrCast([*c][*c]u8, &output_ptr), &output_length);
+    _ = c.iconv(iconv, @as([*c][*c]u8, @ptrCast(&input_ptr)), &input_length, @as([*c][*c]u8, @ptrCast(&output_ptr)), &output_length);
 
     var index = std.mem.indexOf(u8, output, "\x00").?;
     var buff = try allocator.dupeZ(u8, output[0..index]);

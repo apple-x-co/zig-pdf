@@ -69,50 +69,50 @@ pub fn offsetCenterXYWH(self: Self, x: f32, y: f32, width: f32, height: f32) Sel
 
 test "rect1" {
     const rect = init(10.0, 20.0, 100.0, 200.0);
-    try std.testing.expectEqual(@floatCast(f32, 10), rect.minX);
-    try std.testing.expectEqual(@floatCast(f32, 60), rect.midX);
-    try std.testing.expectEqual(@floatCast(f32, 110), rect.maxX);
-    try std.testing.expectEqual(@floatCast(f32, 20), rect.minY);
-    try std.testing.expectEqual(@floatCast(f32, 120), rect.midY);
-    try std.testing.expectEqual(@floatCast(f32, 220), rect.maxY);
+    try std.testing.expectEqual(@as(f32, @floatCast(10)), rect.minX);
+    try std.testing.expectEqual(@as(f32, @floatCast(60)), rect.midX);
+    try std.testing.expectEqual(@as(f32, @floatCast(110)), rect.maxX);
+    try std.testing.expectEqual(@as(f32, @floatCast(20)), rect.minY);
+    try std.testing.expectEqual(@as(f32, @floatCast(120)), rect.midY);
+    try std.testing.expectEqual(@as(f32, @floatCast(220)), rect.maxY);
 }
 
 test "recct2" {
     const rect = init(10.0, 20.0, 100.0, 200.0).insets(5, 5, 5, 5);
-    try std.testing.expectEqual(@floatCast(f32, 15), rect.minX);
-    try std.testing.expectEqual(@floatCast(f32, 60), rect.midX);
-    try std.testing.expectEqual(@floatCast(f32, 105), rect.maxX);
-    try std.testing.expectEqual(@floatCast(f32, 25), rect.minY);
-    try std.testing.expectEqual(@floatCast(f32, 120), rect.midY);
-    try std.testing.expectEqual(@floatCast(f32, 215), rect.maxY);
+    try std.testing.expectEqual(@as(f32, @floatCast(15)), rect.minX);
+    try std.testing.expectEqual(@as(f32, @floatCast(60)), rect.midX);
+    try std.testing.expectEqual(@as(f32, @floatCast(105)), rect.maxX);
+    try std.testing.expectEqual(@as(f32, @floatCast(25)), rect.minY);
+    try std.testing.expectEqual(@as(f32, @floatCast(120)), rect.midY);
+    try std.testing.expectEqual(@as(f32, @floatCast(215)), rect.maxY);
 }
 
 test "rect3" {
     const rect = init(0, 0, 100.0, 200.0).offsetLTWH(5, 5, 50, 100);
-    try std.testing.expectEqual(@floatCast(f32, 5), rect.minX);
-    try std.testing.expectEqual(@floatCast(f32, 30), rect.midX);
-    try std.testing.expectEqual(@floatCast(f32, 55), rect.maxX);
-    try std.testing.expectEqual(@floatCast(f32, 95), rect.minY);
-    try std.testing.expectEqual(@floatCast(f32, 145), rect.midY);
-    try std.testing.expectEqual(@floatCast(f32, 195), rect.maxY);
+    try std.testing.expectEqual(@as(f32, @floatCast(5)), rect.minX);
+    try std.testing.expectEqual(@as(f32, @floatCast(30)), rect.midX);
+    try std.testing.expectEqual(@as(f32, @floatCast(55)), rect.maxX);
+    try std.testing.expectEqual(@as(f32, @floatCast(95)), rect.minY);
+    try std.testing.expectEqual(@as(f32, @floatCast(145)), rect.midY);
+    try std.testing.expectEqual(@as(f32, @floatCast(195)), rect.maxY);
 }
 
 test "rect4" {
     const rect = init(0, 0, 100.0, 200.0).offsetCenterXYWH(-5, -5, 50, 100);
-    try std.testing.expectEqual(@floatCast(f32, 45), rect.minX);
-    try std.testing.expectEqual(@floatCast(f32, 70), rect.midX);
-    try std.testing.expectEqual(@floatCast(f32, 95), rect.maxX);
-    try std.testing.expectEqual(@floatCast(f32, 95), rect.minY);
-    try std.testing.expectEqual(@floatCast(f32, 145), rect.midY);
-    try std.testing.expectEqual(@floatCast(f32, 195), rect.maxY);
+    try std.testing.expectEqual(@as(f32, @floatCast(45)), rect.minX);
+    try std.testing.expectEqual(@as(f32, @floatCast(70)), rect.midX);
+    try std.testing.expectEqual(@as(f32, @floatCast(95)), rect.maxX);
+    try std.testing.expectEqual(@as(f32, @floatCast(95)), rect.minY);
+    try std.testing.expectEqual(@as(f32, @floatCast(145)), rect.midY);
+    try std.testing.expectEqual(@as(f32, @floatCast(195)), rect.maxY);
 }
 
 test "rect5" {
     const rect = fromPoints(1, 6, 6, 3);
-    try std.testing.expectEqual(@floatCast(f32, 1), rect.minX);
-    try std.testing.expectEqual(@floatCast(f32, 3.5), rect.midX);
-    try std.testing.expectEqual(@floatCast(f32, 6), rect.maxX);
-    try std.testing.expectEqual(@floatCast(f32, 3), rect.minY);
-    try std.testing.expectEqual(@floatCast(f32, 4.5), rect.midY);
-    try std.testing.expectEqual(@floatCast(f32, 6), rect.maxY);
+    try std.testing.expectEqual(@as(f32, @floatCast(1)), rect.minX);
+    try std.testing.expectEqual(@as(f32, @floatCast(3.5)), rect.midX);
+    try std.testing.expectEqual(@as(f32, @floatCast(6)), rect.maxX);
+    try std.testing.expectEqual(@as(f32, @floatCast(3)), rect.minY);
+    try std.testing.expectEqual(@as(f32, @floatCast(4.5)), rect.midY);
+    try std.testing.expectEqual(@as(f32, @floatCast(6)), rect.maxY);
 }

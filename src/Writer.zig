@@ -259,7 +259,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
             }
 
             if (flex > 0) {
-                const flex_height = (parent_rect.size.height - fixed_size.height) / @intToFloat(f32, flex);
+                const flex_height = (parent_rect.size.height - fixed_size.height) / @as(f32, @floatFromInt(flex));
 
                 if (fixed_size.height == 0) {
                     for (column.children) |child| {
@@ -268,7 +268,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
                             .flexible => {
                                 const flexible = child_container.flexible;
                                 const grandchild = materializeContainer(flexible.child);
-                                var child_size = try self.layoutContainer(hpdf, Rect.init(0, 0, 0, flex_height * @intToFloat(f32, flexible.flex)), grandchild);
+                                var child_size = try self.layoutContainer(hpdf, Rect.init(0, 0, 0, flex_height * @as(f32, @floatFromInt(flexible.flex))), grandchild);
                                 fixed_size.width = if (fixed_size.width < child_size.width) child_size.width else fixed_size.width;
                             },
                             else => {},
@@ -282,7 +282,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
                     switch (child_container) {
                         .flexible => {
                             const flexible = child_container.flexible;
-                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, fixed_size.width, flex_height * @intToFloat(f32, flexible.flex)));
+                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, fixed_size.width, flex_height * @as(f32, @floatFromInt(flexible.flex))));
                         },
                         else => {},
                     }
@@ -311,7 +311,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
             }
 
             if (flex > 0) {
-                const flex_width = (parent_rect.size.width - fixed_size.width) / @intToFloat(f32, flex);
+                const flex_width = (parent_rect.size.width - fixed_size.width) / @as(f32, @floatFromInt(flex));
 
                 if (fixed_size.height == 0) {
                     for (row.children) |child| {
@@ -320,7 +320,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
                             .flexible => {
                                 const flexible = child_container.flexible;
                                 const grandchild = materializeContainer(flexible.child);
-                                var child_size = try self.layoutContainer(hpdf, Rect.init(0, 0, flex_width * @intToFloat(f32, flexible.flex), 0), grandchild);
+                                var child_size = try self.layoutContainer(hpdf, Rect.init(0, 0, flex_width * @as(f32, @floatFromInt(flexible.flex)), 0), grandchild);
                                 fixed_size.height = if (fixed_size.height < child_size.height) child_size.height else fixed_size.height;
                             },
                             else => {},
@@ -334,7 +334,7 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
                     switch (child_container) {
                         .flexible => {
                             const flexible = child_container.flexible;
-                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, flex_width * @intToFloat(f32, flexible.flex), fixed_size.height));
+                            try self.content_frame_map.put(flexible.id, Rect.init(0, 0, flex_width * @as(f32, @floatFromInt(flexible.flex)), fixed_size.height));
                         },
                         else => {},
                     }
@@ -352,8 +352,8 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
 
             const extension = std.fs.path.extension(image.path);
             const himage = if (std.mem.eql(u8, extension, ".png")) c.HPDF_LoadPngImageFromFile2(hpdf, image.path.ptr) else c.HPDF_LoadJpegImageFromFile(hpdf, image.path.ptr);
-            const imageWidth: f32 = @intToFloat(f32, c.HPDF_Image_GetWidth(himage));
-            const imageHeight: f32 = @intToFloat(f32, c.HPDF_Image_GetHeight(himage));
+            const imageWidth: f32 = @as(f32, @floatFromInt(c.HPDF_Image_GetWidth(himage)));
+            const imageHeight: f32 = @as(f32, @floatFromInt(c.HPDF_Image_GetHeight(himage)));
 
             return Size.init(imageWidth, imageHeight);
         },
@@ -367,9 +367,9 @@ fn layoutContainer(self: *Self, hpdf: c.HPDF_Doc, parent_rect: Rect, container: 
             const word_space = text.word_space;
             const char_space = text.char_space;
 
-            const text_len = @intCast(c_uint, text.content.len);
+            const text_len = @as(c_uint, @intCast(text.content.len));
             const text_width = c.HPDF_Font_TextWidth(hfont, text.content.ptr, text_len);
-            const width = ((@intToFloat(f32, text_width.width) / 1000) * text_size) + (word_space * @intToFloat(f32, text_width.numwords - 1)) + (char_space * @intToFloat(f32, text_width.numchars - 1));
+            const width = ((@as(f32, @floatFromInt(text_width.width)) / 1000) * text_size) + (word_space * @as(f32, @floatFromInt(text_width.numwords - 1))) + (char_space * @as(f32, @floatFromInt(text_width.numchars - 1)));
             const b_box = c.HPDF_Font_GetBBox(hfont);
             const line_height = ((b_box.top + (b_box.bottom * -1)) / 1000) * text_size;
 
@@ -686,8 +686,8 @@ fn renderImage(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Re
 
     const extension = std.fs.path.extension(image.path);
     const himage = if (std.mem.eql(u8, extension, ".png")) c.HPDF_LoadPngImageFromFile(hpdf, image.path.ptr) else c.HPDF_LoadJpegImageFromFile(hpdf, image.path.ptr);
-    const imageWidth: f32 = @intToFloat(f32, c.HPDF_Image_GetWidth(himage));
-    const imageHeight: f32 = @intToFloat(f32, c.HPDF_Image_GetHeight(himage));
+    const imageWidth: f32 = @as(f32, @floatFromInt(c.HPDF_Image_GetWidth(himage)));
+    const imageHeight: f32 = @as(f32, @floatFromInt(c.HPDF_Image_GetHeight(himage)));
 
     const size = image.size orelse Size.init(imageWidth, imageHeight);
 
@@ -719,11 +719,11 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
     _ = c.HPDF_Page_SetWordSpace(hpage, word_space);
     _ = c.HPDF_Page_SetCharSpace(hpage, char_space);
 
-    const text_len = @intCast(c_uint, text.content.len);
+    const text_len = @as(c_uint, @intCast(text.content.len));
     const text_width = c.HPDF_Font_TextWidth(hfont, text.content.ptr, text_len);
-    const width = ((@intToFloat(f32, text_width.width) / 1000) * text_size) + (word_space * @intToFloat(f32, text_width.numwords - 1)) + (char_space * @intToFloat(f32, text_width.numchars - 1));
+    const width = ((@as(f32, @floatFromInt(text_width.width)) / 1000) * text_size) + (word_space * @as(f32, @floatFromInt(text_width.numwords - 1))) + (char_space * @as(f32, @floatFromInt(text_width.numchars - 1)));
     // const ascent = ((@intToFloat(f32, c.HPDF_Font_GetAscent(hfont)) / 1000) * text_size);
-    const descent = (@intToFloat(f32, c.HPDF_Font_GetDescent(hfont) * -1) / 1000) * text_size;
+    const descent = (@as(f32, @floatFromInt(c.HPDF_Font_GetDescent(hfont) * -1)) / 1000) * text_size;
     // const font_height = ascent + descent;
     const b_box = c.HPDF_Font_GetBBox(hfont);
     const line_height = ((b_box.top + (b_box.bottom * -1)) / 1000) * text_size;
@@ -758,9 +758,9 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
             _ = c.HPDF_Page_SetRGBFill(hpage, 0.0, 0.0, 0.0);
             if (text.fill_color.value) |hex| {
                 const rgb = try Rgb.hex(hex);
-                const red = @intToFloat(f32, rgb.red) / 255;
-                const green = @intToFloat(f32, rgb.green) / 255;
-                const blue = @intToFloat(f32, rgb.blue) / 255;
+                const red = @as(f32, @floatFromInt(rgb.red)) / 255;
+                const green = @as(f32, @floatFromInt(rgb.green)) / 255;
+                const blue = @as(f32, @floatFromInt(rgb.blue)) / 255;
                 _ = c.HPDF_Page_SetRGBFill(hpage, red, green, blue);
             }
 
@@ -770,9 +770,9 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
             _ = c.HPDF_Page_SetRGBStroke(hpage, 0.0, 0.0, 0.0);
             if (text.stroke_color.value) |hex| {
                 const rgb = try Rgb.hex(hex);
-                const red = @intToFloat(f32, rgb.red) / 255;
-                const green = @intToFloat(f32, rgb.green) / 255;
-                const blue = @intToFloat(f32, rgb.blue) / 255;
+                const red = @as(f32, @floatFromInt(rgb.red)) / 255;
+                const green = @as(f32, @floatFromInt(rgb.green)) / 255;
+                const blue = @as(f32, @floatFromInt(rgb.blue)) / 255;
                 _ = c.HPDF_Page_SetRGBStroke(hpage, red, green, blue);
             }
 
@@ -782,18 +782,18 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
             _ = c.HPDF_Page_SetRGBFill(hpage, 0.0, 0.0, 0.0);
             if (text.fill_color.value) |hex| {
                 const rgb = try Rgb.hex(hex);
-                const red = @intToFloat(f32, rgb.red) / 255;
-                const green = @intToFloat(f32, rgb.green) / 255;
-                const blue = @intToFloat(f32, rgb.blue) / 255;
+                const red = @as(f32, @floatFromInt(rgb.red)) / 255;
+                const green = @as(f32, @floatFromInt(rgb.green)) / 255;
+                const blue = @as(f32, @floatFromInt(rgb.blue)) / 255;
                 _ = c.HPDF_Page_SetRGBFill(hpage, red, green, blue);
             }
 
             _ = c.HPDF_Page_SetRGBStroke(hpage, 0.0, 0.0, 0.0);
             if (text.stroke_color.value) |hex| {
                 const rgb = try Rgb.hex(hex);
-                const red = @intToFloat(f32, rgb.red) / 255;
-                const green = @intToFloat(f32, rgb.green) / 255;
-                const blue = @intToFloat(f32, rgb.blue) / 255;
+                const red = @as(f32, @floatFromInt(rgb.red)) / 255;
+                const green = @as(f32, @floatFromInt(rgb.green)) / 255;
+                const blue = @as(f32, @floatFromInt(rgb.blue)) / 255;
                 _ = c.HPDF_Page_SetRGBStroke(hpage, red, green, blue);
             }
 
@@ -826,7 +826,7 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
                 defer self.allocator.free(sjis);
 
                 x = c.HPDF_Page_GetCurrentTextPos(hpage).x;
-                w = emToPoint(@intToFloat(f32, c.HPDF_Font_TextWidth(hfont, sjis.ptr, 1).width), text_size);
+                w = emToPoint(@as(f32, @floatFromInt(c.HPDF_Font_TextWidth(hfont, sjis.ptr, 1).width)), text_size);
                 if (x + w > content_frame.maxX) {
                     _ = c.HPDF_Page_MoveToNextLine(hpage);
                 }
@@ -837,7 +837,7 @@ fn renderText(self: Self, hpdf: c.HPDF_Doc, hpage: c.HPDF_Page, parent_rect: Rec
 
             var s = try std.fmt.bufPrintZ(&buf, "{u}", .{cp});
             x = c.HPDF_Page_GetCurrentTextPos(hpage).x;
-            w = emToPoint(@intToFloat(f32, c.HPDF_Font_TextWidth(hfont, s.ptr, 1).width), text_size);
+            w = emToPoint(@as(f32, @floatFromInt(c.HPDF_Font_TextWidth(hfont, s.ptr, 1).width)), text_size);
             if (x + w > content_frame.maxX) {
                 _ = c.HPDF_Page_MoveToNextLine(hpage);
             }
@@ -860,7 +860,7 @@ fn drawBackground(self: Self, hpage: c.HPDF_Page, color: Color, rect: Rect) !voi
 
     if (color.value) |hex| {
         const rgb = try Rgb.hex(hex);
-        _ = c.HPDF_Page_SetRGBFill(hpage, @intToFloat(f32, rgb.red) / 255, @intToFloat(f32, rgb.green) / 255, @intToFloat(f32, rgb.blue) / 255);
+        _ = c.HPDF_Page_SetRGBFill(hpage, @as(f32, @floatFromInt(rgb.red)) / 255, @as(f32, @floatFromInt(rgb.green)) / 255, @as(f32, @floatFromInt(rgb.blue)) / 255);
         _ = c.HPDF_Page_MoveTo(hpage, rect.minX, rect.minY);
         _ = c.HPDF_Page_LineTo(hpage, rect.minX, rect.maxY);
         _ = c.HPDF_Page_LineTo(hpage, rect.maxX, rect.maxY);
@@ -877,9 +877,9 @@ fn drawBorder(self: Self, hpage: c.HPDF_Page, border: Border, rect: Rect) !void 
     }
 
     const rgb = try Rgb.hex(border.color.value.?);
-    const red = @intToFloat(f32, rgb.red) / 255;
-    const green = @intToFloat(f32, rgb.green) / 255;
-    const blue = @intToFloat(f32, rgb.blue) / 255;
+    const red = @as(f32, @floatFromInt(rgb.red)) / 255;
+    const green = @as(f32, @floatFromInt(rgb.green)) / 255;
+    const blue = @as(f32, @floatFromInt(rgb.blue)) / 255;
 
     switch (border.style) {
         Border.Style.dash => {
@@ -1006,7 +1006,7 @@ fn generatePagesFromReport(self: *Self, allocator: std.mem.Allocator, hpdf: c.HP
         .column => {
             var children = body_container.column.children;
 
-            for (numbers.items) |num, i| {
+            for (numbers.items, 0..) |num, i| {
                 var column_children_opaque: []*anyopaque = try allocator.alloc(*anyopaque, num);
                 column_children_opaque = children[start_index .. start_index + num];
 
@@ -1042,7 +1042,7 @@ fn generatePagesFromReport(self: *Self, allocator: std.mem.Allocator, hpdf: c.HP
 }
 
 fn materializeContainer(any: *anyopaque) Container.Container {
-    const pointer: *Container.Container = @ptrCast(*Container.Container, @alignCast(@alignOf(Container.Container), any));
+    const pointer: *Container.Container = @ptrCast(@alignCast(any));
 
     return pointer.*;
 }

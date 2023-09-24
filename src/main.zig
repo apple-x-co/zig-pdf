@@ -185,7 +185,7 @@ fn generatePdf(in: std.fs.File, out: std.fs.File, errOut: std.fs.File, allocator
                 else => 0,
             };
             if (i > 0) {
-                encryption_length = @intCast(u32, i);
+                encryption_length = @as(u32, @intCast(i));
             }
         }
     }
@@ -193,7 +193,7 @@ fn generatePdf(in: std.fs.File, out: std.fs.File, errOut: std.fs.File, allocator
     var permission_names: []PermissionName = undefined;
     if (parsed.root.Object.get("permission")) |arr| {
         permission_names = try allocator.alloc(PermissionName, arr.Array.items.len);
-        for (arr.Array.items) |jv, i| {
+        for (arr.Array.items, 0..) |jv, i| {
             var s = switch (jv) {
                 .String => jv.String,
                 else => "",
@@ -223,7 +223,7 @@ fn generatePdf(in: std.fs.File, out: std.fs.File, errOut: std.fs.File, allocator
     var fonts: []Font.FontFace = undefined;
     if (parsed.root.Object.get("fonts")) |arr| {
         fonts = try allocator.alloc(Font.FontFace, arr.Array.items.len);
-        for (arr.Array.items) |jv, i| {
+        for (arr.Array.items, 0..) |jv, i| {
             var fontType = jv.Object.get("type").?.String;
 
             if (std.mem.eql(u8, fontType, "default")) {
@@ -241,7 +241,7 @@ fn generatePdf(in: std.fs.File, out: std.fs.File, errOut: std.fs.File, allocator
             if (std.mem.eql(u8, fontType, "ttc")) {
                 var font_family = try arena_allocator.dupe(u8, jv.Object.get("family").?.String);
                 var font_file_path = try arena_allocator.dupe(u8, jv.Object.get("file_path").?.String);
-                var font_index = @intCast(u32, jv.Object.get("index").?.Integer);
+                var font_index = @as(u32, @intCast(jv.Object.get("index").?.Integer));
                 var font_embedding = jv.Object.get("embedding").?.Bool;
                 var font_encoding_name = try arena_allocator.dupe(u8, jv.Object.get("encoding_name").?.String);
                 fonts[i] = Font.wrap(Font.Ttc.init(font_family, font_file_path, font_index, font_embedding, font_encoding_name));
@@ -266,10 +266,10 @@ fn generatePdf(in: std.fs.File, out: std.fs.File, errOut: std.fs.File, allocator
     var pages: []Page = undefined;
     if (parsed.root.Object.get("pages")) |arr| {
         pages = try allocator.alloc(Page, arr.Array.items.len);
-        for (arr.Array.items) |jv, i| {
+        for (arr.Array.items, 0..) |jv, i| {
             var page_size = Size.init(
-                @intToFloat(f32, jv.Object.get("pageSize").?.Object.get("width").?.Integer),
-                @intToFloat(f32, jv.Object.get("pageSize").?.Object.get("height").?.Integer),
+                @as(f32, @floatFromInt(jv.Object.get("pageSize").?.Object.get("width").?.Integer)),
+                @as(f32, @floatFromInt(jv.Object.get("pageSize").?.Object.get("height").?.Integer)),
             );
 
             var page_background_color = Color.init("ffffff");
@@ -286,16 +286,16 @@ fn generatePdf(in: std.fs.File, out: std.fs.File, errOut: std.fs.File, allocator
                 var page_border_bottom: ?f32 = null;
                 var page_border_left: ?f32 = null;
                 if (v.Object.get("top")) |vv| {
-                    page_border_top = @intToFloat(f32, vv.Integer);
+                    page_border_top = @as(f32, @floatFromInt(vv.Integer));
                 }
                 if (v.Object.get("right")) |vv| {
-                    page_border_right = @intToFloat(f32, vv.Integer);
+                    page_border_right = @as(f32, @floatFromInt(vv.Integer));
                 }
                 if (v.Object.get("bottom")) |vv| {
-                    page_border_bottom = @intToFloat(f32, vv.Integer);
+                    page_border_bottom = @as(f32, @floatFromInt(vv.Integer));
                 }
                 if (v.Object.get("left")) |vv| {
-                    page_border_left = @intToFloat(f32, vv.Integer);
+                    page_border_left = @as(f32, @floatFromInt(vv.Integer));
                 }
 
                 page_border = Border.init(
@@ -314,16 +314,16 @@ fn generatePdf(in: std.fs.File, out: std.fs.File, errOut: std.fs.File, allocator
                 var page_padding_bottom: f32 = 0;
                 var page_padding_left: f32 = 0;
                 if (v.Object.get("top")) |vv| {
-                    page_padding_top = @intToFloat(f32, vv.Integer);
+                    page_padding_top = @as(f32, @floatFromInt(vv.Integer));
                 }
                 if (v.Object.get("right")) |vv| {
-                    page_padding_right = @intToFloat(f32, vv.Integer);
+                    page_padding_right = @as(f32, @floatFromInt(vv.Integer));
                 }
                 if (v.Object.get("bottom")) |vv| {
-                    page_padding_bottom = @intToFloat(f32, vv.Integer);
+                    page_padding_bottom = @as(f32, @floatFromInt(vv.Integer));
                 }
                 if (v.Object.get("left")) |vv| {
-                    page_padding_left = @intToFloat(f32, vv.Integer);
+                    page_padding_left = @as(f32, @floatFromInt(vv.Integer));
                 }
 
                 page_padding = Padding.init(page_padding_top, page_padding_right, page_padding_bottom, page_padding_left);
@@ -397,16 +397,16 @@ fn makeContainer(allocator: std.mem.Allocator, jv: std.json.Value) !Container.Co
             var border_bottom: ?f32 = null;
             var border_left: ?f32 = null;
             if (v.Object.get("top")) |vv| {
-                border_top = @intToFloat(f32, vv.Integer);
+                border_top = @as(f32, @floatFromInt(vv.Integer));
             }
             if (v.Object.get("right")) |vv| {
-                border_right = @intToFloat(f32, vv.Integer);
+                border_right = @as(f32, @floatFromInt(vv.Integer));
             }
             if (v.Object.get("bottom")) |vv| {
-                border_bottom = @intToFloat(f32, vv.Integer);
+                border_bottom = @as(f32, @floatFromInt(vv.Integer));
             }
             if (v.Object.get("left")) |vv| {
-                border_left = @intToFloat(f32, vv.Integer);
+                border_left = @as(f32, @floatFromInt(vv.Integer));
             }
 
             box_border = Border.init(
@@ -425,16 +425,16 @@ fn makeContainer(allocator: std.mem.Allocator, jv: std.json.Value) !Container.Co
             var padding_bottom: f32 = 0;
             var padding_left: f32 = 0;
             if (v.Object.get("top")) |vv| {
-                padding_top = @intToFloat(f32, vv.Integer);
+                padding_top = @as(f32, @floatFromInt(vv.Integer));
             }
             if (v.Object.get("right")) |vv| {
-                padding_right = @intToFloat(f32, vv.Integer);
+                padding_right = @as(f32, @floatFromInt(vv.Integer));
             }
             if (v.Object.get("bottom")) |vv| {
-                padding_bottom = @intToFloat(f32, vv.Integer);
+                padding_bottom = @as(f32, @floatFromInt(vv.Integer));
             }
             if (v.Object.get("left")) |vv| {
-                padding_left = @intToFloat(f32, vv.Integer);
+                padding_left = @as(f32, @floatFromInt(vv.Integer));
             }
 
             box_padding = Padding.init(padding_top, padding_right, padding_bottom, padding_left);
@@ -444,10 +444,10 @@ fn makeContainer(allocator: std.mem.Allocator, jv: std.json.Value) !Container.Co
             var width: f32 = 0;
             var height: f32 = 0;
             if (v.Object.get("width")) |vv| {
-                width = @intToFloat(f32, vv.Integer);
+                width = @as(f32, @floatFromInt(vv.Integer));
             }
             if (v.Object.get("height")) |vv| {
-                height = @intToFloat(f32, vv.Integer);
+                height = @as(f32, @floatFromInt(vv.Integer));
             }
             box_size = Size.init(width, height);
         }
@@ -479,7 +479,7 @@ fn makeContainer(allocator: std.mem.Allocator, jv: std.json.Value) !Container.Co
 
             var box_child = try makeContainer(allocator, v);
             const opaque_box_child_ptr: *anyopaque = &box_child;
-            
+
             const box_ptr = try allocator.create(Container.Box);
             box_ptr.* = Container.Box.init(false, box_alignment, box_background_color, box_border, opaque_box_child_ptr, box_padding, box_size);
 
@@ -487,7 +487,6 @@ fn makeContainer(allocator: std.mem.Allocator, jv: std.json.Value) !Container.Co
             box_container_ptr.* = Container.wrap(box_ptr.*);
 
             return box_container_ptr.*;
-
 
             // TODO: fix below error
             // thread 3035144 panic: access of inactive union field
@@ -504,7 +503,7 @@ fn makeContainer(allocator: std.mem.Allocator, jv: std.json.Value) !Container.Co
 
             // const box_container_ptr = try allocator.create(Container.Container);
             // box_container_ptr.* = Container.wrap(box_ptr.*);
-            
+
             // std.log.warn("box_container_ptr:{any}", .{box_container_ptr});
 
             // return box_container_ptr.*;
@@ -704,7 +703,7 @@ fn makeContainer(allocator: std.mem.Allocator, jv: std.json.Value) !Container.Co
         var text_soft_wrap: bool = false;
 
         if (jv.Object.get("char_space")) |v| {
-            text_char_space = @intToFloat(f32, v.Integer);
+            text_char_space = @as(f32, @floatFromInt(v.Integer));
         }
 
         if (jv.Object.get("fill_color")) |v| {
@@ -720,7 +719,7 @@ fn makeContainer(allocator: std.mem.Allocator, jv: std.json.Value) !Container.Co
         }
 
         if (jv.Object.get("text_size")) |v| {
-            text_size = @intToFloat(f32, v.Integer);
+            text_size = @as(f32, @floatFromInt(v.Integer));
         }
 
         if (jv.Object.get("text_style")) |v| {
@@ -736,7 +735,7 @@ fn makeContainer(allocator: std.mem.Allocator, jv: std.json.Value) !Container.Co
         }
 
         if (jv.Object.get("hite_space")) |v| {
-            text_white_space = @intToFloat(f32, v.Integer);
+            text_white_space = @as(f32, @floatFromInt(v.Integer));
         }
 
         if (jv.Object.get("soft_wrap")) |v| {

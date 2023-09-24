@@ -26,7 +26,7 @@ pub fn init(secs: u64) Self {
 }
 
 pub fn now() Self {
-    return init(@intCast(u64, std.time.timestamp()));
+    return init(@as(u64, @intCast(std.time.timestamp())));
 }
 
 test "date" {
@@ -35,10 +35,10 @@ test "date" {
     // Date and time (GMT): 2023年1月2日 Monday 03:04:05
     // Date and time (your time zone): 2023年1月2日 月曜日 12:04:05 GMT+09:00
     const date = init(1672628645);
-    try std.testing.expectEqual(@intCast(u16, 2023), date.year);
-    try std.testing.expectEqual(@intCast(u8, 1), date.month);
-    try std.testing.expectEqual(@intCast(u8, 2), date.day);
-    try std.testing.expectEqual(@intCast(u8, 3), date.hours);
-    try std.testing.expectEqual(@intCast(u8, 4), date.minutes);
-    try std.testing.expectEqual(@intCast(u8, 5), date.seconds);
+    try std.testing.expectEqual(@as(u16, @intCast(2023)), date.year);
+    try std.testing.expectEqual(@as(u8, @intCast(1)), date.month);
+    try std.testing.expectEqual(@as(u8, @intCast(2)), date.day);
+    try std.testing.expectEqual(@as(u8, @intCast(3)), date.hours);
+    try std.testing.expectEqual(@as(u8, @intCast(4)), date.minutes);
+    try std.testing.expectEqual(@as(u8, @intCast(5)), date.seconds);
 }

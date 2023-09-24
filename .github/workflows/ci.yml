@@ -16,7 +16,7 @@ jobs:
 
       - uses: goto-bus-stop/setup-zig@v2
         with:
-          version: 0.10.1
+          version: 0.11.0
 
       - uses: apple-x-co/setup-libharu@v1
         with:
@@ -35,6 +35,6 @@ jobs:
 
       - uses: goto-bus-stop/setup-zig@v2
         with:
-          version: 0.10.1
+          version: 0.11.0
 
       - run: zig fmt --check src/*.zig
