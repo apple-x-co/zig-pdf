@@ -2,7 +2,7 @@
 
 ## Versions
 
-* ziglang: 0.10.1
+* ziglang: 0.11.0
 * libHaru: 2.4.3
 
 ## Reference
